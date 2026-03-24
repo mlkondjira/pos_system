@@ -1,0 +1,82 @@
+name: pos_system
+description: Système de Point de Vente & Facturation — Multi-plateforme
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+  flutter: '>=3.16.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Base de données locale
+  drift: ^2.32.0
+  drift_flutter: ^0.3.0
+  sqlite3_flutter_libs: ^0.6.0
+
+  # Navigation
+  go_router: ^17.1.0
+
+  # State Management
+  bloc: ^9.0.0
+  flutter_bloc: ^9.1.1
+  equatable: ^2.0.5
+
+  # Injection de dépendances
+  get_it: ^9.2.1
+
+  # Utilitaires
+  uuid: ^4.3.0
+  intl: ^0.20.2
+  path_provider: ^2.1.2
+  path: ^1.9.0
+  shared_preferences: ^2.2.2
+  collection: ^1.18.0
+  crypto: ^3.0.3
+  encrypt: ^5.0.3
+
+  # Scan code-barres
+  mobile_scanner: ^7.2.0
+
+  # Impression Bluetooth thermique
+  flutter_bluetooth_serial: ^0.4.0
+  permission_handler: ^12.0.1
+  esc_pos_utils_plus: ^2.0.3
+
+  # PDF & Export
+  pdf: ^3.10.8
+  printing: ^5.14.2
+  share_plus: ^12.0.1
+
+  supabase_flutter: ^2.5.0
+  connectivity_plus: ^6.0.2   # déjà présent
+  internet_connection_checker_plus: ^2.0.0
+
+  # UI
+  fl_chart: ^1.2.0
+  image_picker: ^1.0.7
+  image: ^4.1.7 # Ajouté pour la manipulation d'images (logo)
+  google_fonts: ^8.0.2
+  flutter_slidable: ^4.0.3
+  badges: ^3.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  analyzer: ^10.0.1
+  drift_dev: ^2.32.0
+  build_runner: ^2.12.2
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  fonts:
+    - family: SpaceGrotesk
+      fonts:
+        - asset: assets/fonts/SpaceGrotesk-Regular.ttf
+        - asset: assets/fonts/SpaceGrotesk-Bold.ttf
+          weight: 700
+  assets:
+    - assets/

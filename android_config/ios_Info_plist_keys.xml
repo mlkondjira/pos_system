@@ -1,0 +1,13 @@
+<!-- Ajouter dans ios/Runner/Info.plist -->
+
+<key>NSCameraUsageDescription</key>
+<string>Scanner les codes-barres des produits</string>
+
+<key>NSBluetoothAlwaysUsageDescription</key>
+<string>Connexion à l'imprimante thermique Bluetooth</string>
+
+<key>NSBluetoothPeripheralUsageDescription</key>
+<string>Connexion à l'imprimante thermique Bluetooth</string>
+
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>Détection des périphériques Bluetooth à proximité</string>
