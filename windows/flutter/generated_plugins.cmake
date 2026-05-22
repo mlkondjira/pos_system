@@ -4,15 +4,22 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
+  audioplayers_windows
   connectivity_plus
   file_selector_windows
+  flutter_pos_printer_platform_image_3_sdt
+  local_notifier
   permission_handler_windows
   printing
   share_plus
+  tray_manager
+  universal_ble
   url_launcher_windows
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
+  flutter_local_notifications_windows
+  jni
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)

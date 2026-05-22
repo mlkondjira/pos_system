@@ -1,16 +1,21 @@
 name: pos_system
 description: Système de Point de Vente & Facturation — Multi-plateforme
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
-  sdk: '>=3.2.0 <4.0.0'
+  sdk: '>=3.10.0 <4.0.0'
   flutter: '>=3.16.0'
 
+
+  
 dependencies:
   flutter:
     sdk: flutter
 
+  flutter_localizations: # Ajout de flutter_localizations comme dépendance
+    sdk: flutter
+    
   # Base de données locale
   drift: ^2.32.0
   drift_flutter: ^0.3.0
@@ -30,47 +35,84 @@ dependencies:
   # Utilitaires
   uuid: ^4.3.0
   intl: ^0.20.2
+  url_launcher: ^6.3.0
   path_provider: ^2.1.2
   path: ^1.9.0
   shared_preferences: ^2.2.2
   collection: ^1.18.0
   crypto: ^3.0.3
+  win32: ^5.10.0
+  ffi: ^2.1.2
   encrypt: ^5.0.3
 
   # Scan code-barres
   mobile_scanner: ^7.2.0
+  file_picker: ^11.0.2
+  csv: ^8.0.0
+  tray_manager: ^0.2.2
 
+  flutter_native_splash: ^2.4.4
+  flutter_local_notifications: ^21.0.0
+  local_notifier: ^0.1.6
   # Impression Bluetooth thermique
-  flutter_bluetooth_serial: ^0.4.0
+  blue_thermal_printer: ^1.2.3
   permission_handler: ^12.0.1
   esc_pos_utils_plus: ^2.0.3
 
+  flutter_pos_printer_platform_image_3_sdt: ^1.2.25
   # PDF & Export
   pdf: ^3.10.8
   printing: ^5.14.2
   share_plus: ^12.0.1
 
   supabase_flutter: ^2.5.0
-  connectivity_plus: ^6.0.2   # déjà présent
+  connectivity_plus: ^7.1.1   # déjà présent
   internet_connection_checker_plus: ^2.0.0
 
   # UI
   fl_chart: ^1.2.0
   image_picker: ^1.0.7
-  image: ^4.1.7 # Ajouté pour la manipulation d'images (logo)
+  image: ^4.1.7 # Mise à jour pour la compatibilité avec flutter_launcher_icons
   google_fonts: ^8.0.2
   flutter_slidable: ^4.0.3
   badges: ^3.1.2
+  flutter_animate: ^4.5.0
+  audioplayers: ^6.1.1 # Utilisation de la version de maintenance corrective
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  analyzer: ^10.0.1
   drift_dev: ^2.32.0
   build_runner: ^2.12.2
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+  msix: ^3.16.1
+mockito: ^5.4.4
+
+msix_config:
+  display_name: Gpos System
+  publisher_display_name: Emelka Tech
+  identity_name: com.gpos.pos_system
+  publisher: CN=GposTech
+  certificate_path: certs/gpos_release.pfx
+  certificate_password: ${MSIX_CERT_PASSWORD}
+  install_certificate: true
+  logo_path: assets/icon_square.png
+  capabilities: internetClient, location, bluetooth
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  image_path_android: "assets/icon_square.png"
+  ios: true
+  image_path_ios: "assets/icon_square.png"
+  min_sdk_android: 21
+  windows:
+    generate: true
+    image_path: "assets/icon_square.png"
+    icon_size: 256 # Génère une icône haute définition pour Windows
 
 flutter:
+  generate: true # Correction de l'indentation
   uses-material-design: true
   fonts:
     - family: SpaceGrotesk
@@ -78,5 +120,13 @@ flutter:
         - asset: assets/fonts/SpaceGrotesk-Regular.ttf
         - asset: assets/fonts/SpaceGrotesk-Bold.ttf
           weight: 700
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700
   assets:
     - assets/
+    - assets/sounds/
+    - assets/fonts/Inter-Regular.ttf
+    - assets/fonts/Inter-Bold.ttf

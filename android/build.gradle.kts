@@ -3,6 +3,19 @@ allprojects {
         google()
         mavenCentral()
     }
+
+    // Correction pour AGP 8+ : Injecter le namespace manquant pour les plugins obsolètes
+    plugins.withType<com.android.build.gradle.BasePlugin> {
+        project.extensions.configure<com.android.build.gradle.BaseExtension>("android") {
+            if (namespace == null) {
+                namespace = when (project.name) {
+                    "blue_thermal_printer" -> "id.kakzaki.blue_thermal_printer"
+                    // Fallback pour d'autres plugins potentiellement problématiques
+                    else -> project.group.toString()
+                }
+            }
+        }
+    }
 }
 
 val newBuildDir: Directory =
@@ -15,29 +28,7 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
-subprojects {
-    project.evaluationDependsOn(":app")
-}
 
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
-}
-
-// ... votre code existant (plugins, etc) ...
-
-subprojects {
-    // Correctif pour la compatibilité de flutter_bluetooth_serial avec Android Gradle Plugin 8+
-    if (project.name == "flutter_bluetooth_serial") {
-        val applyFix = {
-            val android = project.extensions.findByName("android")
-            if (android != null && android is com.android.build.gradle.LibraryExtension) {
-                android.namespace = "io.github.edufolly.flutterbluetoothserial"
-            }
-        }
-        if (project.state.executed) {
-            applyFix()
-        } else {
-            project.afterEvaluate { applyFix() }
-        }
-    }
 }

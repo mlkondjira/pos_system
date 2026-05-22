@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../data/database/pos_database.dart';
+import '../../core/utils/error_formatter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 // ── EVENTS ─────────────────────────────────────────
@@ -39,6 +40,8 @@ class PasswordResetRequested extends AuthEvent {
 
 class LogoutRequested extends AuthEvent {}
 
+class ShopSetupCompleted extends AuthEvent {}
+
 // Événement interne pour gérer les changements de statut de l'utilisateur
 class _UserStatusChanged extends AuthEvent {
   final User? user;
@@ -52,6 +55,7 @@ class AuthState extends Equatable {
   final String? error;
   final bool isBeingForceLoggedOut;
   final String? info; // Message d'information (ex: succès envoi email)
+  final DateTime? setupTimestamp; // Pour forcer le rafraîchissement UI après setup
 
   const AuthState({
     this.user,
@@ -59,6 +63,7 @@ class AuthState extends Equatable {
     this.error,
     this.isBeingForceLoggedOut = false,
     this.info,
+    this.setupTimestamp,
   });
 
   AuthState copyWith({
@@ -67,6 +72,7 @@ class AuthState extends Equatable {
     String? error,
     bool? isBeingForceLoggedOut,
     String? info,
+    DateTime? setupTimestamp,
     bool clearError = false,
     bool clearInfo = false,
   }) {
@@ -76,11 +82,12 @@ class AuthState extends Equatable {
       error: clearError ? null : error ?? this.error,
       isBeingForceLoggedOut: isBeingForceLoggedOut ?? this.isBeingForceLoggedOut,
       info: clearInfo ? null : info ?? this.info,
+      setupTimestamp: setupTimestamp ?? this.setupTimestamp,
     );
   }
 
   @override
-  List<Object?> get props => [user, isAuthenticated, error, isBeingForceLoggedOut, info];
+  List<Object?> get props => [user, isAuthenticated, error, isBeingForceLoggedOut, info, setupTimestamp];
 }
 
 // ── BLOC ───────────────────────────────────────────
@@ -93,6 +100,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginWithEmailRequested>(_onLoginWithEmailRequested);
     on<PasswordResetRequested>(_onPasswordResetRequested);
     on<LogoutRequested>(_onLogoutRequested);
+    on<ShopSetupCompleted>((event, emit) => emit(state.copyWith(setupTimestamp: DateTime.now())));
     on<_UserStatusChanged>(_onUserStatusChanged);
   }
 
@@ -105,15 +113,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onLoginRequested(LoginRequested event, Emitter<AuthState> emit) async {
     try {
       final user = await _db.verifyUserPin(event.userId, event.pin);
-      if (user != null) {
-        emit(AuthState(user: user, isAuthenticated: true));
-        // Démarrer la surveillance du statut de l'utilisateur connecté
-        _watchUserStatus(user.id);
-      } else {
-        emit(state.copyWith(error: 'Code PIN incorrect.'));
-      }
+      emit(AuthState(user: user, isAuthenticated: true));
+      _watchUserStatus(user.id);
     } catch (e) {
-      emit(state.copyWith(error: 'Erreur de connexion: $e'));
+      // e contient maintenant le message précis : "Code PIN incorrect (1/5)" ou "Compte verrouillé..."
+      emit(state.copyWith(error: ErrorFormatter.format(e)));
     }
   }
 
@@ -140,10 +144,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       } else {
          emit(state.copyWith(error: 'Échec de la connexion cloud.'));
       }
-    } on sb.AuthException catch (e) {
-      emit(state.copyWith(error: e.message)); // Erreur lisible (ex: Mot de passe incorrect)
     } catch (e) {
-      emit(state.copyWith(error: 'Erreur: $e'));
+      emit(state.copyWith(error: ErrorFormatter.format(e)));
     }
   }
 

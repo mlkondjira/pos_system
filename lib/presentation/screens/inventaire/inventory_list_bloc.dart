@@ -138,6 +138,7 @@ class InventoryListBloc
 
       // Récupère tous les produits actifs pour créer les lignes
       final products = await _db.watchActiveProducts().first;
+      final terminalId = await _db.getSetting('terminal_id') ?? '';
 
       await _db.transaction(() async {
         // Insertion de la session — sans 'label' (absent de la table)
@@ -145,6 +146,7 @@ class InventoryListBloc
               InventorySessionsCompanion.insert(
                 ref: ref,
                 userId: event.userId,
+                terminalId: Value(terminalId),
                 totalProducts: Value(products.length),
                 status: const Value('in_progress'), // <-- CORRECTION: Démarrer en 'in_progress'
                 notes: Value(event.notes),
@@ -158,6 +160,7 @@ class InventoryListBloc
                   sessionId: sessionId,
                   productId: p.id,
                   productName: p.name,
+                  terminalId: Value(terminalId), // Nettoyage de la syntaxe
                   barcode: Value(p.barcode),
                   expectedQty: p.stockQty,
                 ),

@@ -1,9 +1,11 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/di/injection.dart';
+import '../../../data/services/sync_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/database/pos_database.dart';
+import '../../widgets/shared_widgets.dart';
 
 class CreateTransferScreen extends StatefulWidget {
   const CreateTransferScreen({super.key});
@@ -16,7 +18,8 @@ class _CreateTransferScreenState extends State<CreateTransferScreen> {
   final _db = getIt<PosDatabase>();
   final _notesCtrl = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final GlobalKey<SliverAnimatedListState> _listKey = GlobalKey<SliverAnimatedListState>();
+  final GlobalKey<SliverAnimatedListState> _listKey =
+      GlobalKey<SliverAnimatedListState>();
 
   String? _sourceShopId;
   String? _targetShopId;
@@ -34,12 +37,45 @@ class _CreateTransferScreenState extends State<CreateTransferScreen> {
     final myShopId = await _db.getSetting('shop_id');
     if (myShopId == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Erreur: Magasin actuel non configuré.'), backgroundColor: AppColors.danger));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Erreur: Magasin actuel non configuré.'),
+            backgroundColor: AppColors.danger));
         Navigator.pop(context);
       }
       return;
     }
-    final shops = await _db.getOtherShops(myShopId);
+
+    setState(() => _isLoading = true);
+
+    // 1. Tenter de charger depuis la base locale
+    List<Shop> shops = await _db.getOtherShops(myShopId);
+
+    // 2. Si vide, on tente un fetch direct depuis Supabase (comme sur le dashboard)
+    // Cela garantit que si l'utilisateur est en ligne, il voit ses magasins immédiatement.
+    if (shops.isEmpty) {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        try {
+          final response = await Supabase.instance.client
+              .from('shops')
+              .select()
+              .eq('owner_id', user.id)
+              .neq('id', myShopId);
+
+          shops = (response as List)
+              .map((s) => Shop(
+                    id: s['id'] as String,
+                    name: s['name'] as String,
+                    address: s['address'] as String?,
+                    isCurrent: false,
+                  ))
+              .toList();
+        } catch (e) {
+          debugPrint('Erreur fetch cloud shops: $e');
+        }
+      }
+    }
+
     setState(() {
       _sourceShopId = myShopId;
       _otherShops = shops;
@@ -56,11 +92,14 @@ class _CreateTransferScreenState extends State<CreateTransferScreen> {
   void _addProduct(Product product) {
     if (product.stockQty <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Stock insuffisant pour ce produit.'), backgroundColor: AppColors.danger),
+        const SnackBar(
+            content: Text('Stock insuffisant pour ce produit.'),
+            backgroundColor: AppColors.danger),
       );
       return;
     }
-    final existingIndex = _itemsToTransfer.indexWhere((item) => item.product.id == product.id);
+    final existingIndex =
+        _itemsToTransfer.indexWhere((item) => item.product.id == product.id);
     if (existingIndex != -1) {
       _updateQuantity(product.id, 1);
     } else {
@@ -83,7 +122,8 @@ class _CreateTransferScreenState extends State<CreateTransferScreen> {
   }
 
   void _updateQuantity(int productId, int delta) {
-    final index = _itemsToTransfer.indexWhere((item) => item.product.id == productId);
+    final index =
+        _itemsToTransfer.indexWhere((item) => item.product.id == productId);
     if (index != -1) {
       final item = _itemsToTransfer[index];
       final newQty = item.item.quantitySent + delta;
@@ -92,7 +132,10 @@ class _CreateTransferScreenState extends State<CreateTransferScreen> {
       if (delta > 0 && newQty > item.product.stockQty) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Quantité insuffisante en stock (Max: ${item.product.stockQty})'), backgroundColor: AppColors.warning),
+          SnackBar(
+              content: Text(
+                  'Quantité insuffisante en stock (Max: ${item.product.stockQty})'),
+              backgroundColor: AppColors.warning),
         );
         return;
       }
@@ -110,7 +153,8 @@ class _CreateTransferScreenState extends State<CreateTransferScreen> {
         _itemsToTransfer.removeAt(index);
         _listKey.currentState?.removeItem(
           index,
-          (context, animation) => _buildItemTile(removedItem, animation: animation),
+          (context, animation) =>
+              _buildItemTile(removedItem, animation: animation),
         );
         setState(() {}); // Pour mettre à jour l'état vide si nécessaire
       }
@@ -120,13 +164,17 @@ class _CreateTransferScreenState extends State<CreateTransferScreen> {
   Future<void> _submitTransfer() async {
     if (!_formKey.currentState!.validate()) return;
     if (_itemsToTransfer.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Veuillez ajouter au moins un produit.'), backgroundColor: AppColors.warning));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Veuillez ajouter au moins un produit.'),
+          backgroundColor: AppColors.warning));
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
+      final terminalId = await _db.getSetting('terminal_id') ?? '';
+
       final itemsPayload = _itemsToTransfer.map((item) {
         return {'productId': item.product.id, 'qty': item.item.quantitySent};
       }).toList();
@@ -135,16 +183,23 @@ class _CreateTransferScreenState extends State<CreateTransferScreen> {
         sourceShopId: _sourceShopId!,
         targetShopId: _targetShopId!,
         items: itemsPayload,
+        terminalId: terminalId,
         notes: _notesCtrl.text.trim(),
       );
 
+      // Déclencher la synchronisation immédiate
+      getIt<SyncService>().syncPending();
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Transfert créé avec succès.'), backgroundColor: AppColors.success));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Transfert créé avec succès.'),
+            backgroundColor: AppColors.success));
         Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e'), backgroundColor: AppColors.danger));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Erreur: $e'), backgroundColor: AppColors.danger));
       }
     } finally {
       if (mounted) {
@@ -158,6 +213,13 @@ class _CreateTransferScreenState extends State<CreateTransferScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Nouveau Transfert'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: _loadInitialData,
+            tooltip: 'Actualiser les magasins',
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -175,7 +237,8 @@ class _CreateTransferScreenState extends State<CreateTransferScreen> {
                             initialValue: _targetShopId,
                             decoration: const InputDecoration(
                               labelText: 'Magasin de destination',
-                              prefixIcon: Icon(Icons.store_mall_directory_outlined),
+                              prefixIcon:
+                                  Icon(Icons.store_mall_directory_outlined),
                             ),
                             items: _otherShops.map((shop) {
                               return DropdownMenuItem(
@@ -183,17 +246,32 @@ class _CreateTransferScreenState extends State<CreateTransferScreen> {
                                 child: Text(shop.name),
                               );
                             }).toList(),
-                            onChanged: (value) => setState(() => _targetShopId = value),
-                            validator: (v) => v == null ? 'Veuillez choisir une destination' : null,
+                            onChanged: (value) =>
+                                setState(() => _targetShopId = value),
+                            validator: (v) => v == null
+                                ? 'Veuillez choisir une destination'
+                                : null,
                           ),
+                          if (!_isLoading && _otherShops.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                'Aucun autre magasin trouvé. Assurez-vous d\'avoir enregistré d\'autres magasins sur le Cloud via le compte Propriétaire.',
+                                style: TextStyle(
+                                    color: AppColors.warning, fontSize: 12),
+                              ),
+                            ),
                           const SizedBox(height: 24),
-                          Text('Produits à transférer', style: Theme.of(context).textTheme.titleMedium),
+                          Text('Produits à transférer',
+                              style: Theme.of(context).textTheme.titleMedium),
                           const Divider(height: 20),
                           if (_itemsToTransfer.isEmpty)
                             const Center(
                               child: Padding(
                                 padding: EdgeInsets.symmetric(vertical: 32.0),
-                                child: Text('Aucun produit ajouté.', style: TextStyle(color: AppColors.textMuted)),
+                                child: Text('Aucun produit ajouté.',
+                                    style:
+                                        TextStyle(color: AppColors.textMuted)),
                               ),
                             ),
                         ],
@@ -206,8 +284,11 @@ class _CreateTransferScreenState extends State<CreateTransferScreen> {
                       key: _listKey,
                       initialItemCount: _itemsToTransfer.length,
                       itemBuilder: (context, index, animation) {
-                        if (index >= _itemsToTransfer.length) return const SizedBox.shrink();
-                        return _buildItemTile(_itemsToTransfer[index], animation: animation);
+                        if (index >= _itemsToTransfer.length) {
+                          return const SizedBox.shrink();
+                        }
+                        return _buildItemTile(_itemsToTransfer[index],
+                            animation: animation);
                       },
                     ),
                   ),
@@ -261,31 +342,22 @@ class _CreateTransferScreenState extends State<CreateTransferScreen> {
     );
   }
 
-  Widget _buildItemTile(StockTransferItemWithProduct item, {Animation<double>? animation}) {
-    Widget child = Container(
+  Widget _buildItemTile(StockTransferItemWithProduct item,
+      {Animation<double>? animation}) {
+    final Widget child = Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: AppColors.surfaceCard(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
           // Image / Icône Produit
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: Colors.black12,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: item.product.imagePath != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.file(File(item.product.imagePath!), fit: BoxFit.cover),
-                  )
-                : const Icon(Icons.inventory_2_outlined, color: Colors.white70),
+          ProductImage(
+            imagePath: item.product.imagePath,
+            size: 52,
           ),
           const SizedBox(width: 16),
           // Infos
@@ -295,14 +367,18 @@ class _CreateTransferScreenState extends State<CreateTransferScreen> {
               children: [
                 Text(
                   item.product.name,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
+                  style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'En stock : ${item.product.stockQty}',
-                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  style: const TextStyle(
+                      color: AppColors.textSecondary, fontSize: 13),
                 ),
               ],
             ),
@@ -311,19 +387,24 @@ class _CreateTransferScreenState extends State<CreateTransferScreen> {
           Container(
             height: 38,
             decoration: BoxDecoration(
-              color: Colors.black26,
+              color: AppColors.bg,
               borderRadius: BorderRadius.circular(19),
+              border: Border.all(color: AppColors.border),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _qtyBtn(Icons.remove, () => _updateQuantity(item.product.id, -1)),
+                _qtyBtn(
+                    Icons.remove, () => _updateQuantity(item.product.id, -1)),
                 Container(
                   constraints: const BoxConstraints(minWidth: 24),
                   alignment: Alignment.center,
                   child: Text(
                     '${item.item.quantitySent}',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                    style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15),
                   ),
                 ),
                 _qtyBtn(Icons.add, () => _updateQuantity(item.product.id, 1)),
@@ -352,7 +433,7 @@ class _CreateTransferScreenState extends State<CreateTransferScreen> {
         borderRadius: BorderRadius.circular(19),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          child: Icon(icon, color: Colors.white, size: 18),
+          child: Icon(icon, color: AppColors.textPrimary, size: 18),
         ),
       ),
     );
@@ -385,11 +466,16 @@ class _CreateTransferScreenState extends State<CreateTransferScreen> {
     if (product != null) {
       _addProduct(product);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ajouté : ${product.name}'), backgroundColor: AppColors.success, duration: const Duration(milliseconds: 1500)),
+        SnackBar(
+            content: Text('Ajouté : ${product.name}'),
+            backgroundColor: AppColors.success,
+            duration: const Duration(milliseconds: 1500)),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Produit inconnu.'), backgroundColor: AppColors.warning),
+        const SnackBar(
+            content: Text('Produit inconnu.'),
+            backgroundColor: AppColors.warning),
       );
     }
   }
@@ -491,7 +577,9 @@ class _ProductSearchDialogState extends State<_ProductSearchDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Fermer')),
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Fermer')),
       ],
     );
   }

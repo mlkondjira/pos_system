@@ -258,8 +258,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           .select('id, name, address') 
           .order('name');
 
-      final shops =
-          (shopsRes as List<dynamic>).cast<Map<String, dynamic>>();
+      final shops = List<Map<String, dynamic>>.from(shopsRes);
 
       if (shops.isEmpty) {
         emit(state.copyWith(
@@ -287,9 +286,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           .filter('shop_id', 'in', shopIds);
 
       final summaryMap = <String, Map<String, dynamic>>{};
-      for (final row in (summaryRes as List<dynamic>)) {
-        final r = row as Map<String, dynamic>;
-        summaryMap[r['shop_id'] as String] = r;
+      for (final row in List<Map<String, dynamic>>.from(summaryRes)) {
+        summaryMap[row['shop_id'] as String] = row;
       }
 
       // 3. Stats 7 jours (Vue Postgres: store_weekly)
@@ -299,14 +297,13 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           .filter('shop_id', 'in', shopIds);
 
       final weeklyMap = <String, List<DailyStat>>{};
-      for (final row in (weeklyRes as List<dynamic>)) {
-        final r = row as Map<String, dynamic>;
-        final sid = r['shop_id'] as String;
+      for (final row in List<Map<String, dynamic>>.from(weeklyRes)) {
+        final sid = row['shop_id'] as String;
         weeklyMap.putIfAbsent(sid, () => []);
         weeklyMap[sid]!.add(DailyStat(
-          date: DateTime.parse(r['sale_date'] as String),
-          saleCount: (r['sale_count'] as num).toInt(),
-          revenue: (r['revenue'] as num).toDouble(),
+          date: DateTime.parse(row['sale_date'] as String),
+          saleCount: (row['sale_count'] as num).toInt(),
+          revenue: (row['revenue'] as num).toDouble(),
         ));
       }
 
@@ -317,10 +314,9 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           .filter('shop_id', 'in', shopIds);
 
       final alertsMap = <String, int>{};
-      for (final row in (alertsRes as List<dynamic>)) {
-        final r = row as Map<String, dynamic>;
-        alertsMap[r['shop_id'] as String] =
-            (r['low_stock_count'] as num).toInt();
+      for (final row in List<Map<String, dynamic>>.from(alertsRes)) {
+        alertsMap[row['shop_id'] as String] =
+            (row['low_stock_count'] as num).toInt();
       }
 
       // 5. Assembler StoreSummary
@@ -548,10 +544,8 @@ class StoreDetailBloc
 
       emit(state.copyWith(
         dailyStats: dailyStats,
-        topProducts:
-            (topRes as List<dynamic>).cast<Map<String, dynamic>>(),
-        recentSales:
-            (recentRes as List<dynamic>).cast<Map<String, dynamic>>(),
+        topProducts: List<Map<String, dynamic>>.from(topRes),
+        recentSales: List<Map<String, dynamic>>.from(recentRes),
         isLoading: false,
       ));
     } catch (e) {

@@ -3,6 +3,7 @@
 #include <windows.h>
 
 #include "flutter_window.h"
+#include "resource.h"
 #include "utils.h"
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
@@ -27,9 +28,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
-  if (!window.Create(L"pos_system", origin, size)) {
+  if (!window.Create(L"Gpos", origin, size)) {
     return EXIT_FAILURE;
   }
+
+  // Force le chargement de l'icône personnalisée définie dans les ressources
+  HICON hAppIcon = LoadIcon(instance, MAKEINTRESOURCE(IDI_APP_ICON));
+  SendMessage(window.GetHandle(), WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hAppIcon));
+  SendMessage(window.GetHandle(), WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hAppIcon));
+
   window.SetQuitOnClose(true);
 
   ::MSG msg;

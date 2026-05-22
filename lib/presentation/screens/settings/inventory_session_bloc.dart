@@ -45,9 +45,21 @@ class UpdateCountedQuantity extends InventorySessionEvent {
   final int lineId;
   final int quantity;
   final String notes;
-  const UpdateCountedQuantity(this.lineId, this.quantity, this.notes);
+  final int defectiveQty;
+  final int obsoleteQty;
+  final int expiredQty;
+
+  const UpdateCountedQuantity({
+    required this.lineId,
+    required this.quantity,
+    this.notes = '',
+    this.defectiveQty = 0,
+    this.obsoleteQty = 0,
+    this.expiredQty = 0,
+  });
+
   @override
-  List<Object?> get props => [lineId, quantity, notes];
+  List<Object?> get props => [lineId, quantity, notes, defectiveQty, obsoleteQty, expiredQty];
 }
 
 class _LinesUpdated extends InventorySessionEvent {
@@ -124,7 +136,14 @@ class InventorySessionBloc extends Bloc<InventorySessionEvent, InventorySessionS
   }
 
   Future<void> _onUpdateQuantity(UpdateCountedQuantity event, Emitter<InventorySessionState> emit) async {
-    await _db.updateInventoryLine(lineId: event.lineId, countedQty: event.quantity, notes: event.notes);
+    await _db.updateInventoryLine(
+      lineId: event.lineId,
+      countedQty: event.quantity,
+      defectiveQty: event.defectiveQty,
+      obsoleteQty: event.obsoleteQty,
+      expiredQty: event.expiredQty,
+      notes: event.notes,
+    );
   }
 
   Future<void> _onValidateSession(ValidateSession event, Emitter<InventorySessionState> emit) async {

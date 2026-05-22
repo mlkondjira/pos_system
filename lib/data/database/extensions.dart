@@ -4,8 +4,8 @@
 import 'pos_database.dart';
 
 extension InventoryLineX on InventoryLine {
-  /// Écart = quantité comptée - quantité théorique
-  int? get difference {
+  /// Calcul dynamique de l'écart (le champ 'difference' existe déjà en base)
+  int? get calculatedDifference {
     if (countedQty == null) return null;
     return countedQty! - expectedQty;
   }

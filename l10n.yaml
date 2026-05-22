@@ -1,0 +1,11 @@
+# l10n.yaml — Configuration de la localisation Flutter
+# À placer à la racine du projet (même niveau que pubspec.yaml)
+# ============================================================
+
+arb-dir: lib/l10n          # Dossier contenant les fichiers .arb
+template-arb-file: app_fr.arb  # Fichier de référence (français)
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+output-dir: lib/core/l10n  # Où Flutter génère les classes Dart
+nullable-getter: false
+use-deferred-loading: false  # true si app web (lazy loading)

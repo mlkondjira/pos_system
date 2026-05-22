@@ -23,6 +23,14 @@ class UpdateProductPrice extends ProductsEvent {
   });
 }
 
+class DeleteProduct extends ProductsEvent {
+  final int productId;
+  final int actorId;
+  const DeleteProduct(this.productId, this.actorId);
+  @override
+  List<Object?> get props => [productId, actorId];
+}
+
 // --- State ---
 class ProductsState extends Equatable {
   final bool isLoading;
@@ -49,6 +57,7 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
 
   ProductsBloc(this._db) : super(const ProductsState()) {
     on<UpdateProductPrice>(_onUpdateProductPrice);
+    on<DeleteProduct>(_onDeleteProduct);
   }
 
   Future<void> _onUpdateProductPrice(UpdateProductPrice event, Emitter<ProductsState> emit) async {
@@ -80,7 +89,17 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
       }
       emit(state.copyWith(isLoading: false, success: true));
     } catch (e) {
-      emit(state.copyWith(isLoading: false, error: "Erreur de mise à jour du prix: $e"));
+      emit(state.copyWith(isLoading: false, error: 'Erreur de mise à jour du prix: $e'));
+    }
+  }
+
+  Future<void> _onDeleteProduct(DeleteProduct event, Emitter<ProductsState> emit) async {
+    emit(state.copyWith(isLoading: true, success: false, clearError: true));
+    try {
+      await _db.deleteProduct(event.productId, event.actorId);
+      emit(state.copyWith(isLoading: false, success: true));
+    } catch (e) {
+      emit(state.copyWith(isLoading: false, error: 'Erreur lors de la suppression du produit : $e'));
     }
   }
 }

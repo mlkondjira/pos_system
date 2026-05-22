@@ -27,13 +27,13 @@ out/
 .pub-cache/
 .pub/
 build/
+android/app/build/
+android/build/
 
 # Android
 android/local.properties
 android/.gradle
 android/captures/
-android/gradlew
-android.gradlew.bat
 
 # iOS
 ios/Flutter/App.framework
@@ -47,6 +47,13 @@ windows/flutter/ephemeral/
 
 # Application keys (Sécurité)
 .env*
-key.properties
-**/*.keystore
-**/*.jks
+
+# Secrets — NE JAMAIS COMMITER
+lib/core/constants/supabase_config.dart
+android/app/*.jks
+android/key.properties
+*.jks
+*.keystore
+certs/
+*.pfx
+*_b64.txt

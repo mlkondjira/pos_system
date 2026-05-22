@@ -22,7 +22,7 @@ class GlassAlertDialog extends StatelessWidget {
           child: Container(
             constraints: const BoxConstraints(maxWidth: 400),
             decoration: BoxDecoration(
-              color: AppColors.surfaceCard, // 20% white
+              color: AppColors.surfaceCard(context), // 20% white
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
               boxShadow: [
@@ -41,11 +41,13 @@ class GlassAlertDialog extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
                     child: DefaultTextStyle(
-                      style: const TextStyle(
+                      // Ligne 48
+                      style: TextStyle(
+                        // Ligne 50
                         fontFamily: 'SpaceGrotesk',
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                       textAlign: TextAlign.center,
                       child: title!,
@@ -56,9 +58,9 @@ class GlassAlertDialog extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: DefaultTextStyle(
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
-                          color: Colors.white70,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           height: 1.4,
                         ),
                         child: SingleChildScrollView(child: content!),

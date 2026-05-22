@@ -1,4 +1,4 @@
-# 🛒 POS System — Point de Vente & Inventaire
+# 🛒 Gpos — Point de Vente & Inventaire
 
 Système de caisse complet pour petits et moyens commerces.  
 **Flutter multiplateforme** : Android · iOS · Windows · macOS · Linux
@@ -120,10 +120,14 @@ flutter pub run build_runner build --delete-conflicting-outputs
 
 **Android** (`android/app/src/main/AndroidManifest.xml`) :
 ```xml
-<uses-permission android:name="android.permission.BLUETOOTH" />
-<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+<!-- Bluetooth pour Android 11 et inférieur -->
+<uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+
+<!-- Bluetooth pour Android 12+ (API 31+) -->
 <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-<uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+<uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
+
 <uses-permission android:name="android.permission.CAMERA" />
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 ```
@@ -219,7 +223,33 @@ Chaque correction génère un mouvement de type `inventory` dans `stock_movement
 
 ---
 
-## 📞 Support
+## 🚀 Déploiement (Release)
+
+### Android
+1. Générer un Keystore : `keytool -genkey -v -keystore ~/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload`
+2. Configurer `android/key.properties`.
+3. Compiler l'APK :
+```bash
+flutter build apk --release --obfuscate --split-debug-info=build/app/outputs/symbols
+```
+
+### Windows
+1. Compiler la version Release :
+```bash
+flutter build windows --release
+```
+2. Le livrable se trouve dans `build\windows\x64\runner\Release`.
+3. Utiliser **Inno Setup** pour packager le dossier en un seul installeur `.exe`.
+
+### Base de données Cloud
+Avant tout déploiement, assurez-vous d'avoir exécuté `lib/supabase_setup.sql` sur votre instance Supabase de production pour :
+- Créer les tables et les extensions UUID.
+- Activer la sécurité RLS.
+- Déployer les fonctions RPC pour les statistiques et le stock.
+
+---
+
+## � Support
 
 Développé avec Flutter + Drift (SQLite)  
 Architecture : Clean Architecture + BLoC  

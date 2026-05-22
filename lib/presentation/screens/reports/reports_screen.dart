@@ -39,9 +39,11 @@ class _ReportsScreenState extends State<ReportsScreen>
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final today = await _db.salesDao.getDailySummary(DateTime.now());
-    final weekly = await _db.salesDao.getDailySalesChart(days: 7);
-    final top = await _db.salesDao.getTopProducts();
+    final shopId = await _db.getSetting('shop_id') ?? '';
+    final today = await _db.salesDao.getDailySummary(DateTime.now(), shopId);
+    final weekly =
+        await _db.salesDao.getDailySalesChart(days: 7, shopId: shopId);
+    final top = await _db.salesDao.getTopProducts(shopId: shopId);
     setState(() {
       _todaySummary = today;
       _weeklyData = weekly;
@@ -55,21 +57,17 @@ class _ReportsScreenState extends State<ReportsScreen>
     return Column(children: [
       // Header avec tabs
       Container(
-        color: AppColors.surface,
+        color: Theme.of(context).colorScheme.surface,
         child: Column(children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                const Text('Analytics', style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                )),
                 IconButton(
-                  icon: const Icon(Icons.refresh_rounded,
-                      size: 20, color: AppColors.textSecondary),
+                  icon: Icon(Icons.refresh_rounded,
+                      size: 20,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
                   onPressed: _load,
                   tooltip: 'Actualiser',
                 ),
@@ -83,9 +81,10 @@ class _ReportsScreenState extends State<ReportsScreen>
               Tab(text: '7 Jours'),
               Tab(text: 'Top produits'),
             ],
-            labelColor: AppColors.primaryLight,
-            unselectedLabelColor: AppColors.textMuted,
-            indicatorColor: AppColors.primaryLight,
+            labelColor: Theme.of(context).colorScheme.primary,
+            unselectedLabelColor:
+                Theme.of(context).colorScheme.onSurfaceVariant,
+            indicatorColor: Theme.of(context).colorScheme.primary,
             indicatorWeight: 2,
           ),
         ]),
@@ -93,8 +92,9 @@ class _ReportsScreenState extends State<ReportsScreen>
 
       Expanded(
         child: _loading
-            ? const Center(child: CircularProgressIndicator(
-                color: AppColors.primaryLight))
+            ? Center(
+                child: CircularProgressIndicator(
+                    color: Theme.of(context).colorScheme.primary))
             : TabBarView(
                 controller: _tab,
                 children: [
@@ -126,7 +126,7 @@ class _TodayTab extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       children: [
         Text(
-          'Bilan du ${DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(DateTime.now())}',
+          'Bilan du ${DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(DateTime.now())}', // Ligne 119
           style: const TextStyle(
             color: AppColors.textMuted,
             fontSize: 12,
@@ -186,7 +186,7 @@ class _TodayTab extends StatelessWidget {
               return Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: AppColors.card,
+                  color: AppColors.surfaceCard(context),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.border),
                 ),
@@ -237,7 +237,7 @@ class _WeeklyTab extends StatelessWidget {
           height: 200,
           padding: const EdgeInsets.fromLTRB(4, 16, 16, 8),
           decoration: BoxDecoration(
-            color: AppColors.card,
+            color: AppColors.surfaceCard(context),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: AppColors.border),
           ),
@@ -248,7 +248,8 @@ class _WeeklyTab extends StatelessWidget {
               drawVerticalLine: false,
               horizontalInterval: maxRev > 0 ? maxRev / 3 : 1,
               getDrawingHorizontalLine: (_) => const FlLine(
-                color: AppColors.border, strokeWidth: 0.5,
+                color: AppColors.border,
+                strokeWidth: 0.5,
               ),
             ),
             borderData: FlBorderData(show: false),
@@ -259,8 +260,9 @@ class _WeeklyTab extends StatelessWidget {
                   reservedSize: 58,
                   getTitlesWidget: (v, _) => Text(
                     _shortAmount(v),
-                    style: const TextStyle(
-                      color: AppColors.textMuted, fontSize: 9),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 9),
                   ),
                 ),
               ),
@@ -269,23 +271,25 @@ class _WeeklyTab extends StatelessWidget {
                   showTitles: true,
                   getTitlesWidget: (v, _) {
                     final i = v.toInt();
-                    if (i < 0 || i >= data.length) return const SizedBox();
+                    if (i < 0 || i >= data.length) {
+                      return const SizedBox();
+                    }
                     final d = DateTime.parse(data[i]['day'] as String);
                     return Padding(
                       padding: const EdgeInsets.only(top: 6),
                       child: Text(
                         DateFormat('E', 'fr_FR').format(d),
                         style: const TextStyle(
-                          color: AppColors.textMuted, fontSize: 10),
+                            color: AppColors.textMuted, fontSize: 10),
                       ),
                     );
                   },
                 ),
               ),
-              rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false)),
-              topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false)),
+              rightTitles:
+                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              topTitles:
+                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             ),
             barGroups: data.asMap().entries.map((e) {
               final isToday = e.key == data.length - 1;
@@ -294,11 +298,11 @@ class _WeeklyTab extends StatelessWidget {
                 BarChartRodData(
                   toY: rev,
                   color: isToday
-                      ? AppColors.accent
+                      ? AppColors.accent // Ligne 273
                       : AppColors.primaryLight.withValues(alpha: 0.65),
                   width: 20,
-                  borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(5)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(5)),
                 ),
               ]);
             }).toList(),
@@ -320,14 +324,14 @@ class _WeeklyTab extends StatelessWidget {
             decoration: BoxDecoration(
               color: isToday
                   ? AppColors.primaryLight.withValues(alpha: 0.06)
-                  : AppColors.card,
+                  : AppColors.surfaceCard(context),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: isToday
                     ? AppColors.primaryLight.withValues(alpha: 0.25)
-                    : AppColors.border,
+                    : Theme.of(context).dividerColor,
               ),
-            ),
+            ), // Ligne 300
             child: Row(children: [
               Text(
                 isToday
@@ -335,7 +339,7 @@ class _WeeklyTab extends StatelessWidget {
                     : DateFormat('EEE d MMM', 'fr_FR').format(date),
                 style: TextStyle(
                   color: isToday
-                      ? AppColors.primaryLight
+                      ? AppColors.primaryLight // Ligne 310
                       : AppColors.textPrimary,
                   fontWeight: isToday ? FontWeight.w600 : FontWeight.w400,
                   fontSize: 13,
@@ -344,7 +348,9 @@ class _WeeklyTab extends StatelessWidget {
               const Spacer(),
               Text('$cnt vente${cnt > 1 ? 's' : ''}',
                   style: const TextStyle(
-                    color: AppColors.textMuted, fontSize: 12)),
+                      // Ligne 317
+                      color: AppColors.textMuted,
+                      fontSize: 12)),
               const SizedBox(width: 14),
               Text(
                 Fmt.currency(rev),
@@ -391,6 +397,7 @@ class _TopProductsTab extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       itemCount: products.length + 1,
       itemBuilder: (ctx, i) {
+        // Ligne 351
         if (i == 0) {
           return const Padding(
             padding: EdgeInsets.only(bottom: 12),
@@ -407,7 +414,7 @@ class _TopProductsTab extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.card,
+            color: AppColors.surfaceCard(context),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppColors.border),
           ),
@@ -419,7 +426,10 @@ class _TopProductsTab extends StatelessWidget {
               decoration: BoxDecoration(
                 color: idx < 3
                     ? AppColors.accent.withValues(alpha: 0.18)
-                    : AppColors.surfaceLight,
+                    : Theme.of(context)
+                        .colorScheme
+                        .surface
+                        .withValues(alpha: 0.6),
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
@@ -427,46 +437,48 @@ class _TopProductsTab extends StatelessWidget {
                 '${idx + 1}',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
-                  fontSize: 12,
+                  fontSize: 12, // Ligne 394
                   color: idx < 3 ? AppColors.accentDark : AppColors.textMuted,
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(p['name'] as String,
-                    style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 13)),
-                const SizedBox(height: 5),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: LinearProgressIndicator(
-                    value: pct,
-                    backgroundColor: AppColors.border,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      idx < 3 ? AppColors.accent : AppColors.primaryLight,
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(p['name'] as String,
+                        style: const TextStyle(
+                            color: AppColors.textPrimary, // Ligne 400
+                            fontWeight: FontWeight.w500,
+                            fontSize: 13)),
+                    const SizedBox(height: 5),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: LinearProgressIndicator(
+                        value: pct,
+                        backgroundColor: Theme.of(context).dividerColor,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          idx < 3 ? AppColors.accent : AppColors.primaryLight,
+                        ),
+                        minHeight: 4,
+                      ),
                     ),
-                    minHeight: 4,
-                  ),
-                ),
-              ]),
+                  ]),
             ),
             const SizedBox(width: 12),
             Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
               Text(
                 '${p['total_qty']} ${p['unit']}',
                 style: const TextStyle(
-                    color: AppColors.textPrimary,
+                    color: AppColors.textPrimary, // Ligne 420
                     fontWeight: FontWeight.w700,
                     fontSize: 13),
               ),
               Text(
                 Fmt.currency(rev),
-                style: const TextStyle(
-                    color: AppColors.textMuted, fontSize: 11),
+                style:
+                    const TextStyle(color: AppColors.textMuted, fontSize: 11),
               ),
             ]),
           ]),
@@ -497,7 +509,7 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: AppColors.surfaceCard(context),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
@@ -511,15 +523,18 @@ class _StatCard extends StatelessWidget {
           child: Icon(icon, color: color, size: 16),
         ),
         const Spacer(),
-        Text(value, style: TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: small ? 16 : 22,
-          fontWeight: FontWeight.w700,
-        )),
+        Text(value,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
+              fontSize: small ? 16 : 22,
+              fontWeight: FontWeight.w700,
+            )),
         const SizedBox(height: 2),
-        Text(label, style: const TextStyle(
-          color: AppColors.textSecondary, fontSize: 11,
-        )),
+        Text(label,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 11,
+            )),
       ]),
     );
   }
@@ -535,6 +550,7 @@ class _SaleRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 5),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
+        // Ligne 500
         color: AppColors.card,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.border),
@@ -542,7 +558,7 @@ class _SaleRow extends StatelessWidget {
       child: Row(children: [
         Text(sale.ref,
             style: const TextStyle(
-                color: AppColors.textSecondary,
+                color: AppColors.textSecondary, // Ligne 503
                 fontSize: 11,
                 fontFamily: 'monospace')),
         const Spacer(),
@@ -550,7 +566,7 @@ class _SaleRow extends StatelessWidget {
           DateFormat('HH:mm').format(sale.createdAt),
           style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
         ),
-        const SizedBox(width: 14),
+        const SizedBox(width: 14), // Ligne 512
         Text(
           Fmt.currency(sale.totalTtc),
           style: const TextStyle(
@@ -569,11 +585,12 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(text, style: const TextStyle(
-      color: AppColors.textMuted,
-      fontSize: 10,
-      fontWeight: FontWeight.w600,
-      letterSpacing: 0.8,
-    ));
+    return Text(text,
+        style: const TextStyle(
+          color: AppColors.textMuted,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.8,
+        ));
   }
 }

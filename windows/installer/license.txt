@@ -1,0 +1,11 @@
+CONTRAT DE LICENCE UTILISATEUR FINAL (EULA)
+
+En installant "Gpos", vous acceptez les conditions suivantes :
+
+1. UTILISATION : Ce logiciel est fourni pour la gestion d'un point de vente.
+2. RESPONSABILITÉ : L'éditeur ne peut être tenu responsable des pertes de données ou erreurs de calcul.
+3. DONNÉES : Les données sont stockées localement et synchronisées sur Supabase.
+4. MODIFICATION : Il est interdit de décompiler ou modifier le binaire.
+
+Merci d'utiliser nos services.
+Abd Tech.

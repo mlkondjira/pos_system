@@ -4,6 +4,20 @@
 <dict>
 <!-- Ajouter dans ios/Runner/Info.plist -->
 
+    <!-- Permission pour le scanneur de codes-barres -->
+    <key>NSCameraUsageDescription</key>
+    <string>L'accès à la caméra est indispensable pour scanner les codes-barres des produits et les ajouter instantanément au panier.</string>
+
+    <!-- Permissions pour l'imprimante thermique Bluetooth -->
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Le Bluetooth est requis pour détecter et se connecter à votre imprimante thermique afin d'imprimer les reçus de vente.</string>
+    <key>NSBluetoothPeripheralUsageDescription</key>
+    <string>Le Bluetooth est requis pour détecter et se connecter à votre imprimante thermique afin d'imprimer les reçus de vente.</string>
+
+    <!-- Permission pour la sélection de photos produits -->
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>L'accès à la galerie est nécessaire pour vous permettre de choisir et d'attribuer des photos à vos articles du catalogue.</string>
+
     <key>NSCameraUsageDescription</key>
     <string>Scanner les codes-barres des produits</string>
 

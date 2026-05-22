@@ -56,10 +56,14 @@ class _CustomersScreenState extends State<CustomersScreen> {
               final filtered = _query.isEmpty
                   ? customers
                   : customers
-                      .where((c) =>
-                          c.name.toLowerCase().contains(_query.toLowerCase()) ||
-                          (c.phone?.contains(_query) ?? false))
-                      .toList();
+                        .where(
+                          (c) =>
+                              c.name.toLowerCase().contains(
+                                _query.toLowerCase(),
+                              ) ||
+                              (c.phone?.contains(_query) ?? false),
+                        )
+                        .toList();
 
               if (filtered.isEmpty) {
                 return EmptyState(
@@ -76,7 +80,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
               return ListView.separated(
                 padding: const EdgeInsets.all(12),
                 itemCount: filtered.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 6),
+                separatorBuilder: (_, _) => const SizedBox(height: 6),
                 itemBuilder: (ctx, i) => _CustomerTile(
                   customer: filtered[i],
                   onEdit: () => _openForm(context, filtered[i]),
@@ -91,19 +95,17 @@ class _CustomersScreenState extends State<CustomersScreen> {
   }
 
   Stream<List<Customer>> _watchCustomers(PosDatabase db) {
-    return (db.select(db.customers)
-          ..orderBy([(c) => OrderingTerm.asc(c.name)]))
-        .watch();
+    return (db.select(
+      db.customers,
+    )..orderBy([(c) => OrderingTerm.asc(c.name)])).watch();
   }
 
   void _openForm(BuildContext ctx, Customer? customer) {
     showModalBottomSheet(
       context: ctx,
       isScrollControlled: true,
-      builder: (_) => _CustomerForm(
-        customer: customer,
-        db: getIt<PosDatabase>(),
-      ),
+      builder: (_) =>
+          _CustomerForm(customer: customer, db: getIt<PosDatabase>()),
     );
   }
 
@@ -121,9 +123,8 @@ class _CustomersScreenState extends State<CustomersScreen> {
           ElevatedButton(
             onPressed: () async {
               await (getIt<PosDatabase>().delete(
-                    getIt<PosDatabase>().customers,
-                  )..where((c) => c.id.equals(customer.id)))
-                  .go();
+                getIt<PosDatabase>().customers,
+              )..where((c) => c.id.equals(customer.id))).go();
               if (ctx.mounted) Navigator.pop(ctx);
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
@@ -167,7 +168,7 @@ class _CustomerTile extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: AppColors.primaryLight.withValues(alpha: 0.15),
+              color: AppColors.primaryLight.withValues(alpha: 0.15), // Ligne 172
               borderRadius: BorderRadius.circular(10),
             ),
             alignment: Alignment.center,
@@ -197,7 +198,9 @@ class _CustomerTile extends StatelessWidget {
                   Text(
                     customer.phone!,
                     style: const TextStyle(
-                        color: AppColors.textMuted, fontSize: 12),
+                      color: AppColors.textMuted,
+                      fontSize: 12,
+                    ),
                   ),
               ],
             ),
@@ -206,8 +209,7 @@ class _CustomerTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               StatusBadge(
-                label:
-                    '${customer.loyaltyPoints.toStringAsFixed(0)} pts',
+                label: '${customer.loyaltyPoints.toStringAsFixed(0)} pts',
                 color: AppColors.accent,
               ),
               const SizedBox(height: 6),
@@ -215,8 +217,7 @@ class _CustomerTile extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _iconBtn(Icons.edit_outlined, onEdit, AppColors.info),
-                  _iconBtn(
-                      Icons.delete_outline, onDelete, AppColors.danger),
+                  _iconBtn(Icons.delete_outline, onDelete, AppColors.danger),
                 ],
               ),
             ],
@@ -226,15 +227,14 @@ class _CustomerTile extends StatelessWidget {
     );
   }
 
-  Widget _iconBtn(IconData icon, VoidCallback onTap, Color color) =>
-      InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Padding(
-          padding: const EdgeInsets.all(6),
-          child: Icon(icon, size: 16, color: color.withValues(alpha: 0.8)),
-        ),
-      );
+  Widget _iconBtn(IconData icon, VoidCallback onTap, Color color) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(6),
+    child: Padding(
+      padding: const EdgeInsets.all(6),
+      child: Icon(icon, size: 16, color: color.withValues(alpha: 0.8)),
+    ),
+  );
 }
 
 class _CustomerForm extends StatefulWidget {
@@ -278,7 +278,8 @@ class _CustomerFormState extends State<_CustomerForm> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom),
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
         child: Form(
@@ -307,15 +308,15 @@ class _CustomerFormState extends State<_CustomerForm> {
                 ),
               ),
               const SizedBox(height: 16),
-              _field(_nameCtrl, 'Nom complet *',
-                  validator: (v) =>
-                      v!.isEmpty ? 'Champ requis' : null),
+              _field(
+                _nameCtrl,
+                'Nom complet *',
+                validator: (v) => v!.isEmpty ? 'Champ requis' : null,
+              ),
               const SizedBox(height: 10),
-              _field(_phoneCtrl, 'Téléphone',
-                  keyboard: TextInputType.phone),
+              _field(_phoneCtrl, 'Téléphone', keyboard: TextInputType.phone),
               const SizedBox(height: 10),
-              _field(_emailCtrl, 'Email',
-                  keyboard: TextInputType.emailAddress),
+              _field(_emailCtrl, 'Email', keyboard: TextInputType.emailAddress),
               const SizedBox(height: 10),
               _field(_notesCtrl, 'Notes', maxLines: 2),
               const SizedBox(height: 20),
@@ -351,19 +352,17 @@ class _CustomerFormState extends State<_CustomerForm> {
     TextInputType? keyboard,
     String? Function(String?)? validator,
     int maxLines = 1,
-  }) =>
-      TextFormField(
-        controller: ctrl,
-        keyboardType: keyboard,
-        maxLines: maxLines,
-        validator: validator,
-        style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle:
-              const TextStyle(color: AppColors.textMuted, fontSize: 13),
-        ),
-      );
+  }) => TextFormField(
+    controller: ctrl,
+    keyboardType: keyboard,
+    maxLines: maxLines,
+    validator: validator,
+    style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+    decoration: InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+    ),
+  );
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
@@ -372,10 +371,8 @@ class _CustomerFormState extends State<_CustomerForm> {
           ? Value(widget.customer!.id)
           : const Value.absent(),
       name: Value(_nameCtrl.text.trim()),
-      phone: Value(
-          _phoneCtrl.text.isEmpty ? null : _phoneCtrl.text.trim()),
-      email: Value(
-          _emailCtrl.text.isEmpty ? null : _emailCtrl.text.trim()),
+      phone: Value(_phoneCtrl.text.isEmpty ? null : _phoneCtrl.text.trim()),
+      email: Value(_emailCtrl.text.isEmpty ? null : _emailCtrl.text.trim()),
       notes: Value(_notesCtrl.text.trim()),
     );
     await widget.db.into(widget.db.customers).insertOnConflictUpdate(companion);

@@ -4,14 +4,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../blocs/auth_bloc.dart';
+import '../../widgets/app_background.dart';
 import '../../blocs/cash_session_bloc.dart';
 
 class OpenCashDrawerScreen extends StatefulWidget {
   const OpenCashDrawerScreen({super.key});
 
   @override
-  State<OpenCashDrawerScreen> createState() =>
-      _OpenCashDrawerScreenState();
+  State<OpenCashDrawerScreen> createState() => _OpenCashDrawerScreenState();
 }
 
 class _OpenCashDrawerScreenState extends State<OpenCashDrawerScreen> {
@@ -40,23 +40,8 @@ class _OpenCashDrawerScreenState extends State<OpenCashDrawerScreen> {
     final user = context.read<AuthBloc>().state.user;
 
     return Scaffold(
-      // CORRECTION : backgroundColor sur le Scaffold pour que le
-      // Container gradient couvre tout l'écran sans overflow
-      backgroundColor: AppColors.bgGradientStart,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF667EEA),
-              Color(0xFF764BA2),
-              Color(0xFFF093FB),
-            ],
-            stops: [0.0, 0.55, 1.0],
-          ),
-        ),
-        // CORRECTION : SafeArea + SingleChildScrollView pour éviter
+      backgroundColor: AppColors.bg,
+      body: AppBackground(
         // le RenderFlex overflow sur petits écrans / claviers ouverts
         child: SafeArea(
           child: SingleChildScrollView(
@@ -86,8 +71,7 @@ class _OpenCashDrawerScreenState extends State<OpenCashDrawerScreen> {
                         'Bonjour, ${user?.name ?? ''}',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          fontFamily: 'SpaceGrotesk',
-                          fontSize: 24,
+                          fontSize: 24, // Ligne 51
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                         ),
@@ -97,6 +81,7 @@ class _OpenCashDrawerScreenState extends State<OpenCashDrawerScreen> {
                         'Veuillez saisir le fond de caisse\npour démarrer la journée.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
+                          // Ligne 60
                           color: AppColors.textSecondary,
                           fontSize: 14,
                           height: 1.5,
@@ -109,7 +94,6 @@ class _OpenCashDrawerScreenState extends State<OpenCashDrawerScreen> {
                         textAlign: TextAlign.center,
                         keyboardType: TextInputType.number,
                         style: const TextStyle(
-                          fontFamily: 'SpaceGrotesk',
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary,

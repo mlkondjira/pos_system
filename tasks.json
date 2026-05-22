@@ -1,0 +1,24 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Convert Audio",
+            "type": "shell",
+            "command": "dart lib/core/utils/convert_audio.dart",
+            "problemMatcher": []
+        },
+        {
+            "label": "Build Windows (Auto-Audio)",
+            "type": "shell",
+            "command": "flutter build windows",
+            "dependsOn": [
+                "Convert Audio"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$flutter-elf"]
+        }
+    ]
+}

@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/database/pos_database.dart';
+import '../../data/services/sync_service.dart';
 
 // --- Events ---
 abstract class CashSessionEvent extends Equatable {
@@ -27,6 +28,13 @@ class CloseSession extends CashSessionEvent {
   List<Object?> get props => [countedCash, notes];
 }
 
+class RetrySyncSession extends CashSessionEvent {
+  final int sessionId;
+  const RetrySyncSession(this.sessionId);
+  @override
+  List<Object?> get props => [sessionId];
+}
+
 // --- States ---
 abstract class CashSessionState extends Equatable {
   const CashSessionState();
@@ -47,16 +55,19 @@ class CashSessionOpen extends CashSessionState {
 // --- Bloc ---
 class CashSessionBloc extends Bloc<CashSessionEvent, CashSessionState> {
   final PosDatabase _db;
+  final SyncService _syncService;
 
-  CashSessionBloc(this._db) : super(CashSessionInitial()) {
+  CashSessionBloc(this._db, this._syncService) : super(CashSessionInitial()) {
     on<AppStarted>(_onAppStarted);
     on<OpenSession>(_onOpenSession);
     on<CloseSession>(_onCloseSession);
+    on<RetrySyncSession>(_onRetrySyncSession);
   }
 
   Future<void> _onAppStarted(AppStarted event, Emitter<CashSessionState> emit) async {
     emit(CashSessionLoading());
-    final session = await _db.getCurrentOpenSession();
+    final terminalId = await _db.getSetting('terminal_id') ?? '';
+    final session = await _db.getCurrentOpenSession(terminalId);
     if (session != null) {
       emit(CashSessionOpen(session));
     } else {
@@ -66,7 +77,14 @@ class CashSessionBloc extends Bloc<CashSessionEvent, CashSessionState> {
 
   Future<void> _onOpenSession(OpenSession event, Emitter<CashSessionState> emit) async {
     emit(CashSessionLoading());
-    final sessionId = await _db.openCashSession(userId: event.userId, startingCash: event.startingCash);
+    final terminalId = await _db.getSetting('terminal_id') ?? '';
+    final shopId = await _db.getSetting('shop_id') ?? '';
+    final sessionId = await _db.openCashSession(
+      userId: event.userId, 
+      startingCash: event.startingCash,
+      terminalId: terminalId,
+      shopId: shopId,
+    );
     final session = await (_db.select(_db.cashSessions)..where((c) => c.id.equals(sessionId))).getSingle();
     emit(CashSessionOpen(session));
   }
@@ -77,7 +95,10 @@ class CashSessionBloc extends Bloc<CashSessionEvent, CashSessionState> {
 
     emit(CashSessionLoading());
 
-    final payments = await _db.salesDao.getPaymentsForSession(currentState.session.id);
+    final payments = await _db.salesDao.getPaymentsForSession(
+      currentState.session.id,
+      terminalId: currentState.session.terminalId,
+    );
     final cashSales = payments
         .where((p) => p.method == 'cash')
         .fold<double>(0.0, (sum, p) => sum + p.amount - p.changeGiven);
@@ -89,6 +110,12 @@ class CashSessionBloc extends Bloc<CashSessionEvent, CashSessionState> {
       expectedCash: expectedCash,
       notes: event.notes,
     );
+    _syncService.syncPending();
     emit(NoCashSession());
+  }
+
+  Future<void> _onRetrySyncSession(RetrySyncSession event, Emitter<CashSessionState> emit) async {
+    await _db.retrySync('cash_session', event.sessionId);
+    _syncService.syncPending();
   }
 }

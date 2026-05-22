@@ -16,10 +16,7 @@ class AuditLogState extends Equatable {
   final List<AuditLogWithActor> logs;
   final bool isLoading;
 
-  const AuditLogState({
-    this.logs = const [],
-    this.isLoading = false,
-  });
+  const AuditLogState({this.logs = const [], this.isLoading = false});
 
   AuditLogState copyWith({List<AuditLogWithActor>? logs, bool? isLoading}) {
     return AuditLogState(
@@ -40,12 +37,15 @@ class AuditLogBloc extends Bloc<AuditLogEvent, AuditLogState> {
     on<LoadAuditLogs>(_onLoadAuditLogs);
   }
 
-  Future<void> _onLoadAuditLogs(LoadAuditLogs event, Emitter<AuditLogState> emit) async {
+  Future<void> _onLoadAuditLogs(
+    LoadAuditLogs event,
+    Emitter<AuditLogState> emit,
+  ) async {
     emit(state.copyWith(isLoading: true));
     await emit.forEach(
       _db.watchAuditLogs(),
       onData: (logs) => state.copyWith(logs: logs, isLoading: false),
-      onError: (_, __) => state.copyWith(isLoading: false),
+      onError: (_, _) => state.copyWith(isLoading: false),
     );
   }
 }

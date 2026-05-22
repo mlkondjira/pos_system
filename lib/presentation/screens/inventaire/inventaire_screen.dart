@@ -5,6 +5,7 @@ import '../../blocs/auth_bloc.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/di/injection.dart';
+import '../../widgets/app_background.dart';
 import '../../../data/database/pos_database.dart';
 import 'inventory_session_screen.dart';
 import 'inventory_list_bloc.dart';
@@ -40,11 +41,12 @@ class _InventaireScreenState extends State<InventaireScreen> {
           builder: (context, state) {
             return Scaffold(
               appBar: AppBar(
-                title: const Text('Inventaire'),
                 actions: [
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.add_rounded, size: 18),
                       label: const Text('Nouveau inventaire'),
@@ -53,7 +55,7 @@ class _InventaireScreenState extends State<InventaireScreen> {
                   ),
                 ],
               ),
-              body: _buildBody(context, state),
+              body: AppBackground(child: _buildBody(context, state)),
             );
           },
         ),
@@ -76,9 +78,8 @@ class _InventaireScreenState extends State<InventaireScreen> {
           padding: const EdgeInsets.all(16.0),
           child: TextField(
             controller: _searchCtrl,
-            onChanged: (v) => context
-                .read<InventoryListBloc>()
-                .add(SearchQueryChanged(v)),
+            onChanged: (v) =>
+                context.read<InventoryListBloc>().add(SearchQueryChanged(v)),
             decoration: const InputDecoration(
               hintText: 'Rechercher par référence (ex: INV-2024...)',
               prefixIcon: Icon(Icons.search_rounded),
@@ -90,29 +91,39 @@ class _InventaireScreenState extends State<InventaireScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Row(
             children: [
-              _statusChip(context, 'all', 'Tous',
-                  state.statusFilter == 'all'),
+              _statusChip(context, 'all', 'Tous', state.statusFilter == 'all'),
               const SizedBox(width: 8),
-              _statusChip(context, 'in_progress', 'En cours',
-                  state.statusFilter == 'in_progress'),
+              _statusChip(
+                context,
+                'in_progress',
+                'En cours',
+                state.statusFilter == 'in_progress',
+              ),
               const SizedBox(width: 8),
-              _statusChip(context, 'completed', 'Terminé',
-                  state.statusFilter == 'completed'),
+              _statusChip(
+                context,
+                'completed',
+                'Terminé',
+                state.statusFilter == 'completed',
+              ),
               if (state.searchQuery.isNotEmpty ||
                   state.statusFilter != 'all') ...[
                 const Spacer(),
                 TextButton.icon(
                   onPressed: () {
                     _searchCtrl.clear();
-                    context
-                        .read<InventoryListBloc>()
-                        .add(ResetFilters());
+                    context.read<InventoryListBloc>().add(ResetFilters());
                   },
                   icon: const Icon(Icons.refresh_rounded, size: 16),
-                  label: const Text('Réinitialiser',
-                      style: TextStyle(fontSize: 12)),
+                  label: const Text(
+                    'Réinitialiser',
+                    style: TextStyle(fontSize: 12),
+                  ),
                   style: TextButton.styleFrom(
-                      foregroundColor: AppColors.textMuted),
+                    foregroundColor: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ],
@@ -123,17 +134,18 @@ class _InventaireScreenState extends State<InventaireScreen> {
           child: state.filteredSessions.isEmpty
               ? const Center(
                   child: Text(
-                  'Aucun résultat trouvé',
-                  style: TextStyle(color: AppColors.textMuted),
-                ))
+                    'Aucun résultat trouvé',
+                    style: TextStyle(color: AppColors.textMuted),
+                  ),
+                )
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   itemCount: state.filteredSessions.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (_, i) => _SessionCard(
                     session: state.filteredSessions[i],
-                    onTap: () => _openSession(
-                        context, state.filteredSessions[i]),
+                    onTap: () =>
+                        _openSession(context, state.filteredSessions[i]),
                   ),
                 ),
         ),
@@ -141,53 +153,74 @@ class _InventaireScreenState extends State<InventaireScreen> {
     );
   }
 
-  Widget _statusChip(BuildContext context, String value, String label,
-      bool isSelected) {
+  Widget _statusChip(
+    BuildContext context,
+    String value,
+    String label,
+    bool isSelected,
+  ) {
+    final theme = Theme.of(context);
     return ChoiceChip(
-      label: Text(label, style: const TextStyle(fontSize: 12)),
+      label: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected ? Colors.white : theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
       selected: isSelected,
       onSelected: (selected) {
         if (selected) {
-          context
-              .read<InventoryListBloc>()
-              .add(FilterStatusChanged(value));
+          context.read<InventoryListBloc>().add(FilterStatusChanged(value));
         }
       },
       showCheckmark: false,
+      selectedColor: AppColors.primary,
+      backgroundColor: theme.colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: isSelected ? AppColors.primary : theme.dividerColor,
+        ),
+      ),
     );
   }
 
   Widget _empty(BuildContext context) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.fact_check_outlined,
-                size: 64, color: AppColors.textMuted),
-            const SizedBox(height: 16),
-            const Text(
-              'Aucun inventaire',
-              style: TextStyle(
-                fontFamily: 'SpaceGrotesk',
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Démarrez un inventaire pour compter\net ajuster vos stocks',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textMuted, fontSize: 14),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Démarrer un inventaire'),
-              onPressed: () => _newInventory(context),
-            ),
-          ],
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(
+          Icons.fact_check_outlined,
+          size: 64,
+          color: AppColors.textSecondary,
         ),
-      );
+        const SizedBox(height: 16),
+        Text(
+          'Aucun inventaire',
+          style: TextStyle(
+            fontFamily: 'SpaceGrotesk',
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Démarrez un inventaire pour compter\net ajuster vos stocks',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+        ),
+        const SizedBox(height: 24),
+        ElevatedButton.icon(
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('Démarrer un inventaire'),
+          onPressed: () => _newInventory(context),
+        ),
+      ],
+    ),
+  );
 
   Future<void> _newInventory(BuildContext context) async {
     final notesCtrl = TextEditingController();
@@ -197,42 +230,50 @@ class _InventaireScreenState extends State<InventaireScreen> {
         title: const Text(
           'Nouvel inventaire',
           style: TextStyle(
-              fontFamily: 'SpaceGrotesk',
-              fontWeight: FontWeight.w700),
+            fontFamily: 'SpaceGrotesk',
+            fontWeight: FontWeight.w700,
+          ),
         ),
         content: SingleChildScrollView(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text(
-              'Un nouvel inventaire va charger tous vos produits actifs.\n'
-              'Vous pourrez saisir les quantités comptées.',
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: notesCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Notes (optionnel)',
-                hintText: 'Ex: Inventaire mensuel novembre...',
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Un nouvel inventaire va charger tous vos produits actifs.\n'
+                'Vous pourrez saisir les quantités comptées.',
               ),
-              maxLines: 2,
-            ),
-          ]),
+              const SizedBox(height: 16),
+              TextField(
+                controller: notesCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Notes (optionnel)',
+                  hintText: 'Ex: Inventaire mensuel novembre...',
+                ),
+                maxLines: 2,
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Annuler')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
           ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Démarrer')),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Démarrer'),
+          ),
         ],
       ),
     );
 
     if (ok == true && context.mounted) {
-      context.read<InventoryListBloc>().add(CreateInventory(
-            notes: notesCtrl.text,
-            userId: context.read<AuthBloc>().state.user!.id,
-          ));
+      context.read<InventoryListBloc>().add(
+        CreateInventory(
+          notes: notesCtrl.text,
+          userId: context.read<AuthBloc>().state.user!.id,
+        ),
+      );
     }
   }
 
@@ -265,112 +306,122 @@ class _SessionCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surfaceCard,
+          color: AppColors.surfaceCard(context),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isInProgress ? AppColors.accent : AppColors.border,
             width: isInProgress ? 2 : 1,
           ),
         ),
-        child: Row(children: [
-          // Icône statut
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: isCompleted
-                  ? AppColors.successSoft
-                  : isInProgress
-                      ? AppColors.accentSoft
-                      : AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
+        child: Row(
+          children: [
+            // Icône statut
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: isCompleted
+                    ? AppColors.successSoft
+                    : isInProgress
+                    ? AppColors.accentSoft
+                    : Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                isCompleted
+                    ? Icons.check_circle_rounded
+                    : isInProgress
+                    ? Icons.pending_rounded
+                    : Icons.cancel_rounded,
+                color: isCompleted
+                    ? AppColors.success
+                    : isInProgress
+                    ? AppColors.accentDark
+                    : AppColors.textMuted,
+                size: 24,
+              ),
             ),
-            child: Icon(
-              isCompleted
-                  ? Icons.check_circle_rounded
-                  : isInProgress
-                      ? Icons.pending_rounded
-                      : Icons.cancel_rounded,
-              color: isCompleted
-                  ? AppColors.success
-                  : isInProgress
-                      ? AppColors.accentDark
-                      : AppColors.textMuted,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 14),
+            const SizedBox(width: 14),
 
-          // Référence + date + notes
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
+            // Référence + date + notes
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        session.ref,
+                        style: const TextStyle(
+                          fontFamily: 'SpaceGrotesk',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _StatusBadge(session.status),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
                   Text(
-                    session.ref,
-                    style: const TextStyle(
-                      fontFamily: 'SpaceGrotesk',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
+                    Fmt.dateTime(session.startedAt),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  _StatusBadge(session.status),
-                ]),
-                const SizedBox(height: 4),
+                  if (session.notes.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      session.notes,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            // Total produits + écarts (discrepancies est dans la table)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
                 Text(
-                  Fmt.dateTime(session.startedAt),
+                  '${session.totalProducts}',
                   style: const TextStyle(
-                      fontSize: 12, color: AppColors.textMuted),
+                    fontFamily: 'SpaceGrotesk',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                  ),
                 ),
-                if (session.notes.isNotEmpty) ...[
-                  const SizedBox(height: 2),
+                const Text(
+                  'produits',
+                  style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                ),
+                if (isCompleted) ...[
+                  const SizedBox(height: 4),
                   Text(
-                    session.notes,
-                    style: const TextStyle(
-                        fontSize: 12, color: AppColors.textSecondary),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    '${session.discrepancies} écarts',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: session.discrepancies > 0
+                          ? AppColors.warning
+                          : AppColors.success,
+                    ),
                   ),
                 ],
               ],
             ),
-          ),
 
-          // Total produits + écarts (discrepancies est dans la table)
-          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Text(
-              '${session.totalProducts}',
-              style: const TextStyle(
-                fontFamily: 'SpaceGrotesk',
-                fontWeight: FontWeight.w700,
-                fontSize: 18,
-              ),
-            ),
-            const Text(
-              'produits',
-              style: TextStyle(fontSize: 11, color: AppColors.textMuted),
-            ),
-            if (isCompleted) ...[
-              const SizedBox(height: 4),
-              Text(
-                '${session.discrepancies} écarts',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: session.discrepancies > 0
-                      ? AppColors.warning
-                      : AppColors.success,
-                ),
-              ),
-            ],
-          ]),
-
-          const SizedBox(width: 8),
-          const Icon(Icons.chevron_right_rounded,
-              color: AppColors.textMuted),
-        ]),
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+          ],
+        ),
       ),
     );
   }
@@ -410,11 +461,12 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-          color: bg, borderRadius: BorderRadius.circular(6)),
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
       child: Text(
         label,
-        style: TextStyle(
-            fontSize: 11, fontWeight: FontWeight.w600, color: fg),
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: fg),
       ),
     );
   }

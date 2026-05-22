@@ -50,17 +50,16 @@ class _PinConfirmationDialogState extends State<PinConfirmationDialog> {
       return;
     }
 
-    // CORRECTION : Utilise la nouvelle méthode sécurisée `verifyUserPin`
-    // qui vérifie le PIN pour un utilisateur spécifique.
-    final authorizedUser = await _db.verifyUserPin(actor.id, _pin);
-
-    if (!mounted) return;
-
-    if (authorizedUser != null) {
+    try {
+      // La méthode lève une exception si le PIN est faux ou le compte verrouillé
+      await _db.verifyUserPin(actor.id, _pin);
+      if (!mounted) return;
       Navigator.pop(context, true); // Succès
-    } else {
+    } catch (e) {
+      if (!mounted) return;
       setState(() {
-        _error = 'Code PIN incorrect.';
+        // On récupère le message d'erreur précis (ex: "Code PIN incorrect (1/5)")
+        _error = e.toString().replaceAll('Exception: ', '');
         _pin = '';
       });
     }
@@ -69,7 +68,10 @@ class _PinConfirmationDialogState extends State<PinConfirmationDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.title),
+      backgroundColor: Colors.white.withValues(alpha: 0.15),
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28), side: const BorderSide(color: Colors.white24)),
+      title: Text(widget.title, style: const TextStyle(color: Colors.white)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -98,7 +100,7 @@ class _PinConfirmationDialogState extends State<PinConfirmationDialog> {
             if (_error != null)
               Padding(
                 padding: const EdgeInsets.only(top: 8.0),
-                child: Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 12)),
+                child: Text(_error!, style: const TextStyle(color: AppColors.dangerLight, fontSize: 12, fontWeight: FontWeight.bold)),
               ),
             const SizedBox(height: 24),
             // Pavé numérique
@@ -119,7 +121,7 @@ class _PinConfirmationDialogState extends State<PinConfirmationDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text('Annuler'),
+          child: const Text('Annuler', style: TextStyle(color: Colors.white70)),
         ),
       ],
     );
@@ -134,11 +136,11 @@ class _PinConfirmationDialogState extends State<PinConfirmationDialog> {
         style: OutlinedButton.styleFrom(
           shape: const CircleBorder(),
           side: const BorderSide(color: AppColors.border),
-          backgroundColor: AppColors.surface,
+          backgroundColor: Colors.white.withValues(alpha: 0.1),
         ),
         child: Text(
           text,
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
         ),
       ),
     );

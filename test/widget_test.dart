@@ -6,11 +6,12 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pos_system/main.dart'; // Importez votre application principale
 
 void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
-    // Since MyApp is not defined or the entry point is different, 
-    // we provide a placeholder test or you should import the correct App widget.
-    expect(true, isTrue);
+    // Build our app and trigger a frame.
+    await tester.pumpWidget(const PosApp());
+    expect(find.byType(PosApp), findsOneWidget);
   });
 }

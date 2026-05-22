@@ -1,0 +1,146 @@
+# .github/workflows/release_windows.yml
+# ============================================================
+#  Release Windows — MSIX signé pour distribution / Microsoft Store
+#  Se déclenche sur : tag v* ou manuellement
+# ============================================================
+#
+#  SECRETS REQUIS (GitHub → Settings → Secrets → Actions) :
+#  ┌─────────────────────────────┬────────────────────────────────────────────┐
+#  │ Secret                      │ Comment l'obtenir                          │
+#  ├─────────────────────────────┼────────────────────────────────────────────┤
+#  │ APP_CERTIFICATE_BASE64      │ base64 -w 0 gpos_release.pfx               │
+#  │                             │ (PowerShell: [Convert]::ToBase64String(    │
+#  │                             │  [IO.File]::ReadAllBytes("gpos.pfx")))     │
+#  │ MSIX_CERT_PASSWORD          │ Mot de passe du certificat .pfx            │
+#  │ SUPABASE_URL                │ https://xxxx.supabase.co                   │
+#  │ SUPABASE_ANON_KEY           │ eyJhbGci... (clé anon Supabase)            │
+#  └─────────────────────────────┴────────────────────────────────────────────┘
+
+name: Release Windows
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build_windows:
+    name: Build Windows MSIX
+    runs-on: windows-latest
+
+    steps:
+      # ── 1. Checkout ────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Flutter stable ──────────────────────────────────
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # ── 3. Dépendances ─────────────────────────────────────
+      - name: Installer les dépendances
+        run: flutter pub get
+
+      # ── 4. Génération Drift ────────────────────────────────
+      - name: Générer les fichiers Drift
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      # ── 5. Injecter les secrets Supabase ───────────────────
+      - name: Injecter les clés Supabase
+        shell: pwsh
+        run: |
+          $content = @"
+          class SupabaseConfig {
+            static const supabaseUrl = '${{ secrets.SUPABASE_URL }}';
+            static const supabaseAnonKey = '${{ secrets.SUPABASE_ANON_KEY }}';
+          }
+          "@
+          Set-Content -Path lib/core/constants/supabase_config.dart -Value $content -Encoding UTF8
+
+      # ── 6. Certificat MSIX ────────────────────────────────
+      - name: Décoder le certificat
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path certs
+          $bytes = [System.Convert]::FromBase64String("${{ secrets.APP_CERTIFICATE_BASE64 }}")
+          [System.IO.File]::WriteAllBytes("certs/gpos_release.pfx", $bytes)
+
+      # ── 7. Extraire la version ────────────────────────────
+      - name: Extraire la version
+        id: version
+        shell: pwsh
+        run: |
+          $pubspec = Get-Content pubspec.yaml | Where-Object { $_ -match '^version:' }
+          $fullVersion = $pubspec -replace 'version:\s*', ''
+          $versionName = $fullVersion.Split('+')[0]
+          $buildNumber = $fullVersion.Split('+')[1]
+          # MSIX attend 4 chiffres : 1.0.1.2
+          $msixVersion = "$versionName.0"
+          echo "version=$versionName" >> $env:GITHUB_OUTPUT
+          echo "msix_version=$msixVersion" >> $env:GITHUB_OUTPUT
+          echo "build_number=$buildNumber" >> $env:GITHUB_OUTPUT
+          Write-Host "Version: $versionName | MSIX: $msixVersion"
+
+      # ── 8. Build Windows Release ──────────────────────────
+      - name: Build Windows
+        run: |
+          flutter build windows --release `
+            --build-name=${{ steps.version.outputs.version }} `
+            --build-number=${{ steps.version.outputs.build_number }}
+
+      # ── 9. Créer le package MSIX ──────────────────────────
+      - name: Créer le MSIX
+        shell: pwsh
+        env:
+          MSIX_CERT_PASSWORD: ${{ secrets.MSIX_CERT_PASSWORD }}
+        run: dart run msix:create
+
+      # ── 10. Lister les fichiers produits (debug) ──────────
+      - name: Lister les artefacts
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path "build\windows\x64\runner\Release\" -Recurse |
+            Where-Object { $_.Extension -in '.msix', '.exe', '.zip' }
+
+      # ── 11. Upload MSIX ───────────────────────────────────
+      - name: Upload MSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpos-windows-${{ steps.version.outputs.version }}-msix
+          path: build\windows\x64\runner\Release\*.msix
+          if-no-files-found: error
+
+      # ── 12. Créer une GitHub Release ─────────────────────
+      - name: Créer GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "GPOS ${{ github.ref_name }}"
+          body: |
+            ## GPOS ${{ github.ref_name }} — Windows
+
+            ### Installation Windows
+            1. Télécharger le fichier `.msix`
+            2. Double-cliquer pour installer
+            3. Si SmartScreen bloque : "Informations complémentaires" → "Exécuter quand même"
+
+            > **Note** : Pour une distribution sans avertissement SmartScreen,
+            > le certificat doit être signé par une autorité reconnue (Sectigo, DigiCert, etc.)
+          files: |
+            build\windows\x64\runner\Release\*.msix
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── 13. Nettoyage ────────────────────────────────────
+      - name: Supprimer les fichiers sensibles
+        if: always()
+        shell: pwsh
+        run: |
+          Remove-Item -Path "certs/gpos_release.pfx" -Force -ErrorAction SilentlyContinue
+          Remove-Item -Path "lib/core/constants/supabase_config.dart" -Force -ErrorAction SilentlyContinue

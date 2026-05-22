@@ -54,6 +54,8 @@ class Fmt {
         'cash' => 'Espèces',
         'card' => 'Carte bancaire',
         'mobile_money' => 'Mobile Money',
+        'wave' => 'Wave',
+        'orange_money' => 'Orange Money',
         'credit' => 'Crédit',
         _ => method,
       };
