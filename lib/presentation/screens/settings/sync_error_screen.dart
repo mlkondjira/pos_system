@@ -41,16 +41,24 @@ class SyncErrorScreen extends StatelessWidget {
             itemCount: errors.length,
             itemBuilder: (context, index) {
               final error = errors[index];
-              final isStockError = error.entityType == 'stock_delta' || error.entityType == 'product';
+              final isStockError =
+                  error.entityType == 'stock_delta' ||
+                  error.entityType == 'product';
 
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: isStockError ? AppColors.warningSoft : AppColors.dangerSoft,
+                    backgroundColor: isStockError
+                        ? AppColors.warningSoft
+                        : AppColors.dangerSoft,
                     child: Icon(
-                      isStockError ? Icons.inventory_2_rounded : Icons.error_outline_rounded,
-                      color: isStockError ? AppColors.warning : AppColors.danger,
+                      isStockError
+                          ? Icons.inventory_2_rounded
+                          : Icons.error_outline_rounded,
+                      color: isStockError
+                          ? AppColors.warning
+                          : AppColors.danger,
                     ),
                   ),
                   title: Text(
@@ -60,15 +68,24 @@ class SyncErrorScreen extends StatelessWidget {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(error.errorMessage ?? 'Erreur inconnue', 
-                          style: const TextStyle(color: AppColors.danger)),
+                      Text(
+                        error.errorMessage ?? 'Erreur inconnue',
+                        style: const TextStyle(color: AppColors.danger),
+                      ),
                       const SizedBox(height: 4),
-                      Text('Tentatives : ${error.retryCount}/5', style: const TextStyle(fontSize: 12)),
+                      Text(
+                        'Tentatives : ${error.retryCount}/5',
+                        style: const TextStyle(fontSize: 12),
+                      ),
                     ],
                   ),
                   trailing: IconButton(
-                    icon: const Icon(Icons.play_arrow_rounded, color: AppColors.success),
-                    onPressed: () => db.retrySync(error.entityType, error.entityId),
+                    icon: const Icon(
+                      Icons.play_arrow_rounded,
+                      color: AppColors.success,
+                    ),
+                    onPressed: () =>
+                        db.retrySync(error.entityType, error.entityId),
                   ),
                 ),
               );

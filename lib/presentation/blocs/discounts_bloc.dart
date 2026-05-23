@@ -69,17 +69,19 @@ class DiscountsState extends Equatable {
   final bool isLoading;
   final String? error;
 
-  const DiscountsState(
-      {this.discounts = const [],
-      this.notifiedDates = const {},
-      this.isLoading = false,
-      this.error});
+  const DiscountsState({
+    this.discounts = const [],
+    this.notifiedDates = const {},
+    this.isLoading = false,
+    this.error,
+  });
 
-  DiscountsState copyWith(
-      {List<Discount>? discounts,
-      Map<int, String>? notifiedDates,
-      bool? isLoading,
-      String? error}) {
+  DiscountsState copyWith({
+    List<Discount>? discounts,
+    Map<int, String>? notifiedDates,
+    bool? isLoading,
+    String? error,
+  }) {
     return DiscountsState(
       discounts: discounts ?? this.discounts,
       notifiedDates: notifiedDates ?? this.notifiedDates,
@@ -98,11 +100,15 @@ class DiscountsBloc extends Bloc<DiscountsEvent, DiscountsState> {
 
   DiscountsBloc(this._db) : super(const DiscountsState()) {
     on<LoadDiscounts>(_onLoadDiscounts);
-    on<_UpdateDiscounts>((event, emit) => emit(state.copyWith(
+    on<_UpdateDiscounts>(
+      (event, emit) => emit(
+        state.copyWith(
           discounts: event.discounts,
           notifiedDates: event.notifiedDates,
           isLoading: false,
-        )));
+        ),
+      ),
+    );
     on<UpsertDiscount>(_onUpsertDiscount);
     on<DeleteDiscount>(_onDeleteDiscount);
     on<ArchiveDiscount>(_onArchiveDiscount);
@@ -113,7 +119,9 @@ class DiscountsBloc extends Bloc<DiscountsEvent, DiscountsState> {
   }
 
   Future<void> _onLoadDiscounts(
-      LoadDiscounts event, Emitter<DiscountsState> emit) async {
+    LoadDiscounts event,
+    Emitter<DiscountsState> emit,
+  ) async {
     emit(state.copyWith(isLoading: true));
     final shopId = await _db.getSetting('shop_id') ?? '';
 
@@ -128,58 +136,79 @@ class DiscountsBloc extends Bloc<DiscountsEvent, DiscountsState> {
     });
 
     _subscription?.cancel();
-    _subscription = (_db.select(_db.discounts)
-          ..where((d) => d.shopId.equals(shopId)))
-        .watch()
-        .listen((data) {
-      add(_UpdateDiscounts(data, notifiedDates));
-    });
+    _subscription =
+        (_db.select(
+          _db.discounts,
+        )..where((d) => d.shopId.equals(shopId))).watch().listen((data) {
+          add(_UpdateDiscounts(data, notifiedDates));
+        });
 
     // Lancer la vérification automatique des expirations et l'archivage
     add(CheckExpiringDiscounts());
   }
 
   Future<void> _onUpsertDiscount(
-      UpsertDiscount event, Emitter<DiscountsState> emit) async {
-    final id =
-        await _db.into(_db.discounts).insertOnConflictUpdate(event.companion);
-    final data = await (_db.select(_db.discounts)
-          ..where((d) => d.id.equals(id)))
-        .getSingle();
+    UpsertDiscount event,
+    Emitter<DiscountsState> emit,
+  ) async {
+    final id = await _db
+        .into(_db.discounts)
+        .insertOnConflictUpdate(event.companion);
+    final data = await (_db.select(
+      _db.discounts,
+    )..where((d) => d.id.equals(id))).getSingle();
     await _db.enqueue(
-        entityType: 'discount', entityId: id, payload: data.toJson());
+      entityType: 'discount',
+      entityId: id,
+      payload: data.toJson(),
+    );
   }
 
   Future<void> _onArchiveDiscount(
-      ArchiveDiscount event, Emitter<DiscountsState> emit) async {
+    ArchiveDiscount event,
+    Emitter<DiscountsState> emit,
+  ) async {
     await (_db.update(_db.discounts)..where((d) => d.id.equals(event.id)))
         .write(const DiscountsCompanion(isArchived: Value(true)));
-    final data = await (_db.select(_db.discounts)
-          ..where((d) => d.id.equals(event.id)))
-        .getSingle();
+    final data = await (_db.select(
+      _db.discounts,
+    )..where((d) => d.id.equals(event.id))).getSingle();
     await _db.enqueue(
-        entityType: 'discount', entityId: event.id, payload: data.toJson());
+      entityType: 'discount',
+      entityId: event.id,
+      payload: data.toJson(),
+    );
   }
 
   Future<void> _onRestoreDiscount(
-      RestoreDiscount event, Emitter<DiscountsState> emit) async {
-    await (_db.update(_db.discounts)..where((d) => d.id.equals(event.id)))
-        .write(const DiscountsCompanion(
-            isArchived: Value(false), isActive: Value(true)));
-    final data = await (_db.select(_db.discounts)
-          ..where((d) => d.id.equals(event.id)))
-        .getSingle();
+    RestoreDiscount event,
+    Emitter<DiscountsState> emit,
+  ) async {
+    await (_db.update(
+      _db.discounts,
+    )..where((d) => d.id.equals(event.id))).write(
+      const DiscountsCompanion(isArchived: Value(false), isActive: Value(true)),
+    );
+    final data = await (_db.select(
+      _db.discounts,
+    )..where((d) => d.id.equals(event.id))).getSingle();
     await _db.enqueue(
-        entityType: 'discount', entityId: event.id, payload: data.toJson());
+      entityType: 'discount',
+      entityId: event.id,
+      payload: data.toJson(),
+    );
   }
 
   Future<void> _onArchiveAllExpiredDiscounts(
-      ArchiveAllExpiredDiscounts event, Emitter<DiscountsState> emit) async {
+    ArchiveAllExpiredDiscounts event,
+    Emitter<DiscountsState> emit,
+  ) async {
     final now = DateTime.now();
     // Identifier les remises expirées qui ne sont pas encore archivées
     final toArchive = state.discounts
-        .where((d) =>
-            !d.isArchived && d.endDate != null && now.isAfter(d.endDate!))
+        .where(
+          (d) => !d.isArchived && d.endDate != null && now.isAfter(d.endDate!),
+        )
         .toList();
 
     if (toArchive.isEmpty) return;
@@ -188,38 +217,51 @@ class DiscountsBloc extends Bloc<DiscountsEvent, DiscountsState> {
       for (final d in toArchive) {
         await (_db.update(_db.discounts)..where((tbl) => tbl.id.equals(d.id)))
             .write(const DiscountsCompanion(isArchived: Value(true)));
-        final updated = await (_db.select(_db.discounts)
-              ..where((tbl) => tbl.id.equals(d.id)))
-            .getSingle();
+        final updated = await (_db.select(
+          _db.discounts,
+        )..where((tbl) => tbl.id.equals(d.id))).getSingle();
         await _db.enqueue(
-            entityType: 'discount', entityId: d.id, payload: updated.toJson());
+          entityType: 'discount',
+          entityId: d.id,
+          payload: updated.toJson(),
+        );
       }
     });
   }
 
   Future<void> _onResetDiscountUsage(
-      ResetDiscountUsage event, Emitter<DiscountsState> emit) async {
+    ResetDiscountUsage event,
+    Emitter<DiscountsState> emit,
+  ) async {
     await (_db.update(_db.discounts)..where((d) => d.id.equals(event.id)))
         .write(const DiscountsCompanion(currentUsage: Value(0)));
-    final data = await (_db.select(_db.discounts)
-          ..where((d) => d.id.equals(event.id)))
-        .getSingle();
+    final data = await (_db.select(
+      _db.discounts,
+    )..where((d) => d.id.equals(event.id))).getSingle();
     await _db.enqueue(
-        entityType: 'discount', entityId: event.id, payload: data.toJson());
+      entityType: 'discount',
+      entityId: event.id,
+      payload: data.toJson(),
+    );
   }
 
   Future<void> _onDeleteDiscount(
-      DeleteDiscount event, Emitter<DiscountsState> emit) async {
+    DeleteDiscount event,
+    Emitter<DiscountsState> emit,
+  ) async {
     await (_db.delete(_db.discounts)..where((d) => d.id.equals(event.id))).go();
     await _db.enqueue(
-        entityType: 'discount',
-        entityId: event.id,
-        action: 'delete',
-        payload: {});
+      entityType: 'discount',
+      entityId: event.id,
+      action: 'delete',
+      payload: {},
+    );
   }
 
   Future<void> _onCheckExpiringDiscounts(
-      CheckExpiringDiscounts event, Emitter<DiscountsState> emit) async {
+    CheckExpiringDiscounts event,
+    Emitter<DiscountsState> emit,
+  ) async {
     try {
       // 1. Archivage automatique des remises déjà expirées
       await _db.archiveExpiredDiscounts();
@@ -237,13 +279,17 @@ class DiscountsBloc extends Bloc<DiscountsEvent, DiscountsState> {
 
         if (lastNotif != today && d.endDate != null) {
           await notificationService.showDiscountExpiryNotification(
-              discountId: d.id, name: d.name, endDate: d.endDate!);
+            discountId: d.id,
+            name: d.name,
+            endDate: d.endDate!,
+          );
           await _db.setSetting(key, today);
         }
       }
     } catch (e) {
       debugPrint(
-          'DiscountsBloc: Erreur lors de la vérification des expirations: $e');
+        'DiscountsBloc: Erreur lors de la vérification des expirations: $e',
+      );
     }
   }
 

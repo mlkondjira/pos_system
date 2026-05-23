@@ -4,7 +4,7 @@ import 'package:path/path.dart' as p;
 void main() async {
   // 1. Vérifier si FFmpeg est installé avant de commencer
   String ffmpegCmd = 'ffmpeg';
-  
+
   try {
     await Process.run(ffmpegCmd, ['-version']);
   } catch (_) {
@@ -14,15 +14,19 @@ void main() async {
       ffmpegCmd = p.absolute(localFfmpeg.path);
       stdout.writeln('ℹ️ Utilisation de FFmpeg local trouvé à la racine.');
     } else {
-      stderr.writeln('❌ Erreur : FFmpeg n\'est pas installé ou n\'est pas dans le PATH.');
-      stderr.writeln('Conseil : Copiez ffmpeg.exe à la racine de : ${Directory.current.path}');
+      stderr.writeln(
+        '❌ Erreur : FFmpeg n\'est pas installé ou n\'est pas dans le PATH.',
+      );
+      stderr.writeln(
+        'Conseil : Copiez ffmpeg.exe à la racine de : ${Directory.current.path}',
+      );
       exit(1);
     }
   }
 
   // Localiser le dossier des sons (chemin relatif à la racine du projet)
   final soundsDir = Directory('assets/sounds');
-  
+
   if (!await soundsDir.exists()) {
     stderr.writeln('Erreur : Dossier assets/sounds/ introuvable.');
     return;
@@ -52,26 +56,31 @@ void main() async {
       // -y : Écrase le fichier de sortie s'il existe
       // -i : Fichier d'entrée
       final result = await Process.run(ffmpegCmd, [
-        '-y', 
-        '-i', inputPath, 
-        outputPath
+        '-y',
+        '-i',
+        inputPath,
+        outputPath,
       ]);
 
       if (result.exitCode == 0) {
         stdout.writeln('✅ Succès : ${p.basename(outputPath)} généré.');
       } else {
-        stderr.writeln('❌ Erreur pour ${p.basename(inputPath)} : ${result.stderr}');
+        stderr.writeln(
+          '❌ Erreur pour ${p.basename(inputPath)} : ${result.stderr}',
+        );
       }
     }
   }
 
   stdout.writeln('--- Nettoyage des fichiers orphelins (.wav sans .mp3) ---');
-  
+
   await for (final entity in soundsDir.list()) {
     if (entity is File && p.extension(entity.path).toLowerCase() == '.wav') {
       final mp3Path = p.setExtension(entity.path, '.mp3');
       if (!await File(mp3Path).exists()) {
-        stdout.writeln('Suppression de : ${p.basename(entity.path)} (source MP3 introuvable).');
+        stdout.writeln(
+          'Suppression de : ${p.basename(entity.path)} (source MP3 introuvable).',
+        );
         await entity.delete();
       }
     }

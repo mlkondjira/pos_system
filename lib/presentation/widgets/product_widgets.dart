@@ -26,7 +26,10 @@ class StockBadge extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 3,
+      ), // Ligne 24
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(6),
@@ -35,9 +38,9 @@ class StockBadge extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          color: color, 
-          fontSize: 11, 
-          fontWeight: FontWeight.w700
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -55,7 +58,12 @@ class ProductPriceText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       Fmt.currency(product.priceTtc),
-      style: style ?? const TextStyle(fontWeight: FontWeight.w900, color: AppColors.primary),
+      style:
+          style ??
+          const TextStyle(
+            fontWeight: FontWeight.w900,
+            color: AppColors.primary,
+          ),
     );
   }
 }

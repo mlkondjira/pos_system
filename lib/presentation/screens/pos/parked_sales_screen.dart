@@ -21,7 +21,10 @@ class ParkedSalesScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Annuler', style: TextStyle(color: Colors.white70)),
+            child: const Text(
+              'Annuler',
+              style: TextStyle(color: Colors.white70),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -49,7 +52,10 @@ class ParkedSalesScreen extends StatelessWidget {
             builder: (context, state) {
               if (state.parkedSales.isEmpty) return const SizedBox.shrink();
               return IconButton(
-                icon: const Icon(Icons.delete_sweep_outlined, color: AppColors.danger),
+                icon: const Icon(
+                  Icons.delete_sweep_outlined,
+                  color: AppColors.danger,
+                ),
                 onPressed: () => _confirmClearAll(context),
                 tooltip: 'Tout supprimer',
               );
@@ -77,7 +83,9 @@ class ParkedSalesScreen extends StatelessWidget {
             separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final parked = state.parkedSales[index];
-              final totalTtc = parked.items.fold(0.0, (s, i) => s + i.lineTotalTtc) - parked.globalDiscount;
+              final totalTtc =
+                  parked.items.fold(0.0, (s, i) => s + i.lineTotalTtc) -
+                  parked.globalDiscount;
               final itemCount = parked.items.fold(0, (s, i) => s + i.quantity);
 
               return _ParkedSaleTile(
@@ -123,26 +131,38 @@ class _ParkedSaleTile extends StatelessWidget {
         ],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 12,
+        ),
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: AppColors.primary.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.shopping_basket_outlined, color: AppColors.primary),
+          child: const Icon(
+            Icons.shopping_basket_outlined,
+            color: AppColors.primary,
+          ),
         ),
         title: Row(
           children: [
             Expanded(
               child: Text(
                 parked.label.isNotEmpty ? parked.label : 'Vente sans nom',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
             Text(
               Fmt.currency(totalTtc),
-              style: const TextStyle(fontWeight: FontWeight.w900, color: AppColors.primary),
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                color: AppColors.primary,
+              ),
             ),
           ],
         ),
@@ -150,18 +170,32 @@ class _ParkedSaleTile extends StatelessWidget {
           padding: const EdgeInsets.only(top: 4),
           child: Row(
             children: [
-              const Icon(Icons.access_time, size: 14, color: AppColors.textMuted),
+              const Icon(
+                Icons.access_time,
+                size: 14,
+                color: AppColors.textMuted,
+              ),
               const SizedBox(width: 4),
               Text(
                 'Mise en attente à ${parked.parkedAt.hour}:${parked.parkedAt.minute.toString().padLeft(2, '0')}',
-                style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textMuted,
+                ),
               ),
               const SizedBox(width: 12),
-              const Icon(Icons.layers_outlined, size: 14, color: AppColors.textMuted),
+              const Icon(
+                Icons.layers_outlined,
+                size: 14,
+                color: AppColors.textMuted,
+              ),
               const SizedBox(width: 4),
               Text(
                 '$itemCount article(s)',
-                style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textMuted,
+                ),
               ),
             ],
           ),

@@ -252,7 +252,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(20), // Ligne 485
                 border: Border.all(color: color.withValues(alpha: 0.3)),
               ),
               child: Column(
@@ -496,10 +496,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         color: theme.colorScheme.surface.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
+          // Ligne 176
           color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
         ),
         boxShadow: [
           BoxShadow(
+            // Ligne 180
             color: color.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, 8),

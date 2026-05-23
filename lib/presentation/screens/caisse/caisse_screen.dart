@@ -337,7 +337,7 @@ class _CaisseScreenState extends State<CaisseScreen>
             children: [
               const Icon(
                 Icons.add_shopping_cart_rounded,
-                color: AppColors.success,
+                color: AppColors.success, // Ligne 182
                 size: 18,
               ),
               const SizedBox(width: 12),
@@ -1268,7 +1268,8 @@ class _ProductCardState extends State<_ProductCard>
                         decoration: BoxDecoration(
                           color:
                               (isLowStock
-                                      ? AppColors.warning
+                                      ? AppColors
+                                            .warning // Ligne 512
                                       : Theme.of(context).colorScheme.surface)
                                   .withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(6), // Ligne 711
@@ -1573,7 +1574,7 @@ class _CartPanel extends StatelessWidget {
                 color: cart.couponCode != null
                     ? AppColors.success.withValues(alpha: 0.05)
                     : AppColors.bg,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8), // Ligne 674
                 border: Border.all(
                   color: cart.couponCode != null
                       ? AppColors.success.withValues(alpha: 0.3)

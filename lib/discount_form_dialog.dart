@@ -46,9 +46,11 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
     super.initState();
     _nameCtrl = TextEditingController(text: widget.discount?.name ?? '');
     _valueCtrl = TextEditingController(
-        text: widget.discount?.value.toStringAsFixed(2) ?? '0.00');
+      text: widget.discount?.value.toStringAsFixed(2) ?? '0.00',
+    );
     _minAmountCtrl = TextEditingController(
-        text: widget.discount?.minAmount.toStringAsFixed(2) ?? '0.00');
+      text: widget.discount?.minAmount.toStringAsFixed(2) ?? '0.00',
+    );
     _type = widget.discount?.type ?? 'percentage';
     _isActive = widget.discount?.isActive ?? true;
     _isArchived = widget.discount?.isArchived ?? false;
@@ -107,8 +109,9 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
         startDate: Value(_startDate),
         endDate: Value(_endDate),
         priority: Value(_priority ?? 0),
-        rules: Value(jsonEncode(
-            _rules.isEmpty ? null : _rules)), // Save rules as JSON string
+        rules: Value(
+          jsonEncode(_rules.isEmpty ? null : _rules),
+        ), // Save rules as JSON string
       );
 
       await _db.upsertDiscount(companion);
@@ -121,8 +124,9 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Erreur lors de l\'enregistrement : $e'),
-              backgroundColor: AppColors.danger),
+            content: Text('Erreur lors de l\'enregistrement : $e'),
+            backgroundColor: AppColors.danger,
+          ),
         );
       }
     }
@@ -136,8 +140,9 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
             TextFormField(
               initialValue: (_rules['buy_qty'] ?? '').toString(),
               keyboardType: TextInputType.number,
-              decoration:
-                  const InputDecoration(labelText: 'Achetez X quantités'),
+              decoration: const InputDecoration(
+                labelText: 'Achetez X quantités',
+              ),
               onChanged: (v) => _rules['buy_qty'] = int.tryParse(v),
               validator: (v) => (int.tryParse(v ?? '') ?? 0) <= 0
                   ? 'Quantité invalide'
@@ -148,7 +153,8 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
               initialValue: (_rules['get_qty'] ?? '').toString(),
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                  labelText: 'Obtenez Y quantités gratuites'),
+                labelText: 'Obtenez Y quantités gratuites',
+              ),
               onChanged: (v) => _rules['get_qty'] = int.tryParse(v),
               validator: (v) => (int.tryParse(v ?? '') ?? 0) <= 0
                   ? 'Quantité invalide'
@@ -169,8 +175,9 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
             TextFormField(
               initialValue: (_rules['start_hour'] ?? '').toString(),
               keyboardType: TextInputType.number,
-              decoration:
-                  const InputDecoration(labelText: 'Heure de début (0-23)'),
+              decoration: const InputDecoration(
+                labelText: 'Heure de début (0-23)',
+              ),
               onChanged: (v) => _rules['start_hour'] = int.tryParse(v),
               validator: (v) {
                 final hour = int.tryParse(v ?? '');
@@ -183,8 +190,9 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
             TextFormField(
               initialValue: (_rules['end_hour'] ?? '').toString(),
               keyboardType: TextInputType.number,
-              decoration:
-                  const InputDecoration(labelText: 'Heure de fin (0-23)'),
+              decoration: const InputDecoration(
+                labelText: 'Heure de fin (0-23)',
+              ),
               onChanged: (v) => _rules['end_hour'] = int.tryParse(v),
               validator: (v) {
                 final hour = int.tryParse(v ?? '');
@@ -197,8 +205,9 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
             TextFormField(
               initialValue: (_rules['pct'] ?? '').toString(),
               keyboardType: TextInputType.number,
-              decoration:
-                  const InputDecoration(labelText: 'Pourcentage de remise (%)'),
+              decoration: const InputDecoration(
+                labelText: 'Pourcentage de remise (%)',
+              ),
               onChanged: (v) => _rules['pct'] = double.tryParse(v),
               validator: (v) => (double.tryParse(v ?? '') ?? 0) <= 0
                   ? 'Pourcentage invalide'
@@ -219,7 +228,8 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
               initialValue: (_rules['days'] ?? '7').toString(),
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                  labelText: 'Appliquer si expire dans (jours)'),
+                labelText: 'Appliquer si expire dans (jours)',
+              ),
               onChanged: (v) => _rules['days'] = int.tryParse(v),
               validator: (v) => (int.tryParse(v ?? '') ?? 0) <= 0
                   ? 'Nombre de jours invalide'
@@ -229,8 +239,9 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
             TextFormField(
               initialValue: (_rules['pct'] ?? '').toString(),
               keyboardType: TextInputType.number,
-              decoration:
-                  const InputDecoration(labelText: 'Pourcentage de remise (%)'),
+              decoration: const InputDecoration(
+                labelText: 'Pourcentage de remise (%)',
+              ),
               onChanged: (v) => _rules['pct'] = double.tryParse(v),
               validator: (v) => (double.tryParse(v ?? '') ?? 0) <= 0
                   ? 'Pourcentage invalide'
@@ -243,10 +254,11 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
     }
   }
 
-  Widget _buildCategorySelector(
-      {required String label,
-      int? initialCategoryId,
-      required Function(Category?) onCategorySelected}) {
+  Widget _buildCategorySelector({
+    required String label,
+    int? initialCategoryId,
+    required Function(Category?) onCategorySelected,
+  }) {
     return StreamBuilder<List<Category>>(
       stream: _db.select(_db.categories).watch(),
       builder: (context, snapshot) {
@@ -256,12 +268,11 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
           decoration: InputDecoration(labelText: label),
           items: [
             const DropdownMenuItem<int?>(
-                value: null, child: Text('Toutes les catégories')),
+              value: null,
+              child: Text('Toutes les catégories'),
+            ),
             ...categories.map(
-              (c) => DropdownMenuItem<int?>(
-                value: c.id,
-                child: Text(c.name),
-              ),
+              (c) => DropdownMenuItem<int?>(value: c.id, child: Text(c.name)),
             ),
           ],
           onChanged: (val) {
@@ -272,18 +283,19 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
     );
   }
 
-  Widget _buildProductSelector(
-      {required String label,
-      int? initialProductId,
-      required Function(Product?) onProductSelected}) {
+  Widget _buildProductSelector({
+    required String label,
+    int? initialProductId,
+    required Function(Product?) onProductSelected,
+  }) {
     // Pour un sélecteur de produit, on pourrait utiliser un Autocomplete ou un dialogue de recherche
     // Pour simplifier, on va juste afficher le nom du produit si un ID est déjà sélectionné
     // et fournir un bouton pour ouvrir un dialogue de sélection de produit.
     return FutureBuilder<Product?>(
       future: initialProductId != null
-          ? (_db.select(_db.products)
-                ..where((p) => p.id.equals(initialProductId)))
-              .getSingleOrNull()
+          ? (_db.select(
+              _db.products,
+            )..where((p) => p.id.equals(initialProductId))).getSingleOrNull()
           : Future.value(null),
       builder: (context, snapshot) {
         final selectedProduct = snapshot.data;
@@ -302,7 +314,8 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
                 children: [
                   Expanded(
                     child: Text(
-                        selectedProduct?.name ?? 'Aucun produit sélectionné'),
+                      selectedProduct?.name ?? 'Aucun produit sélectionné',
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.search),
@@ -346,9 +359,11 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
           width: 600,
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface, // Ligne 244
+            color: Theme.of(context).colorScheme.surface, // Ligne 244
             borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Theme.of(context).dividerColor), // Ligne 244
+            border: Border.all(
+              color: Theme.of(context).dividerColor,
+            ), // Ligne 244
           ),
           child: Form(
             key: _formKey,
@@ -361,28 +376,33 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
                     widget.discount == null
                         ? 'Nouvelle Promotion'
                         : 'Modifier Promotion',
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   TextFormField(
                     controller: _nameCtrl,
-                    decoration:
-                        const InputDecoration(labelText: 'Nom de la promotion'),
+                    decoration: const InputDecoration(
+                      labelText: 'Nom de la promotion',
+                    ),
                     validator: (v) => v!.isEmpty ? 'Le nom est requis' : null,
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     initialValue: _type,
-                    decoration:
-                        const InputDecoration(labelText: 'Type de remise'),
+                    decoration: const InputDecoration(
+                      labelText: 'Type de remise',
+                    ),
                     items: const [
                       DropdownMenuItem(
-                          value: 'percentage', child: Text('Pourcentage (%)')),
+                        value: 'percentage',
+                        child: Text('Pourcentage (%)'),
+                      ),
                       DropdownMenuItem(
-                          value: 'fixed', child: Text('Montant fixe')),
+                        value: 'fixed',
+                        child: Text('Montant fixe'),
+                      ),
                     ],
                     onChanged: (v) => setState(() => _type = v!),
                   ),
@@ -391,8 +411,9 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
                     controller: _valueCtrl,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                        labelText: 'Valeur de la remise',
-                        suffixText: _type == 'percentage' ? '%' : 'FCFA'),
+                      labelText: 'Valeur de la remise',
+                      suffixText: _type == 'percentage' ? '%' : 'FCFA',
+                    ),
                     validator: (v) => (double.tryParse(v ?? '') ?? 0) <= 0
                         ? 'Valeur invalide'
                         : null,
@@ -402,8 +423,9 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
                     controller: _minAmountCtrl,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
-                        labelText: 'Montant minimum du panier',
-                        suffixText: 'FCFA'),
+                      labelText: 'Montant minimum du panier',
+                      suffixText: 'FCFA',
+                    ),
                     validator: (v) => (double.tryParse(v ?? '') ?? 0) < 0
                         ? 'Montant invalide'
                         : null,
@@ -459,7 +481,8 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
                     initialValue: _usageLimit?.toString(),
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
-                        labelText: 'Limite d\'utilisation totale (optionnel)'),
+                      labelText: 'Limite d\'utilisation totale (optionnel)',
+                    ),
                     onChanged: (v) => _usageLimit = int.tryParse(v),
                   ),
                   const SizedBox(height: 16),
@@ -467,27 +490,38 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
                     initialValue: _priority?.toString(),
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
-                        labelText: 'Priorité (0 = faible, 100 = élevée)'),
+                      labelText: 'Priorité (0 = faible, 100 = élevée)',
+                    ),
                     onChanged: (v) => _priority = int.tryParse(v),
                   ),
                   const SizedBox(height: 24),
-                  Text('Règles avancées (JSON)',
-                      style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    'Règles avancées (JSON)',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String?>(
                     initialValue: _rules['type'] as String?,
                     decoration: const InputDecoration(
-                        labelText: 'Type de règle avancée'),
+                      labelText: 'Type de règle avancée',
+                    ),
                     items: const [
                       DropdownMenuItem<String?>(
-                          value: null, child: Text('Aucune règle avancée')),
+                        value: null,
+                        child: Text('Aucune règle avancée'),
+                      ),
                       DropdownMenuItem(
-                          value: 'bxgy', child: Text('Achetez X, Obtenez Y')),
+                        value: 'bxgy',
+                        child: Text('Achetez X, Obtenez Y'),
+                      ),
                       DropdownMenuItem(
-                          value: 'happy_hour', child: Text('Happy Hour')),
+                        value: 'happy_hour',
+                        child: Text('Happy Hour'),
+                      ),
                       DropdownMenuItem(
-                          value: 'expiry_near',
-                          child: Text('Proche Expiration')),
+                        value: 'expiry_near',
+                        child: Text('Proche Expiration'),
+                      ),
                       // Ajoutez d'autres types de règles ici
                     ],
                     onChanged: (v) {
@@ -516,7 +550,10 @@ class _DiscountFormDialogState extends State<DiscountFormDialog> {
                                   width: 20,
                                   height: 20,
                                   child: CircularProgressIndicator(
-                                      strokeWidth: 2, color: Colors.white))
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
                               : const Text('Enregistrer'),
                         ),
                       ),
@@ -608,35 +645,42 @@ class _ProductSelectionDialogState extends State<_ProductSelectionDialog> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: StreamBuilder<List<Category>>(
-                  stream: _db.select(_db.categories).watch(),
-                  builder: (context, snapshot) {
-                    final categories = snapshot.data ?? [];
-                    return DropdownButtonFormField<int?>(
-                      initialValue: _selectedCategoryId,
-                      decoration: const InputDecoration(
-                        labelText: 'Filtrer par catégorie',
-                        prefixIcon: Icon(Icons.category_outlined),
+                stream: _db.select(_db.categories).watch(),
+                builder: (context, snapshot) {
+                  final categories = snapshot.data ?? [];
+                  return DropdownButtonFormField<int?>(
+                    initialValue: _selectedCategoryId,
+                    decoration: const InputDecoration(
+                      labelText: 'Filtrer par catégorie',
+                      prefixIcon: Icon(Icons.category_outlined),
+                    ),
+                    items: [
+                      const DropdownMenuItem<int?>(
+                        value: null,
+                        child: Text('Toutes les catégories'),
                       ),
-                      items: [
-                        const DropdownMenuItem<int?>(
-                            value: null, child: Text('Toutes les catégories')),
-                        ...categories.map((c) => DropdownMenuItem<int?>(
-                              value: c.id,
-                              child: Text(c.name),
-                            )),
-                      ],
-                      onChanged: (val) {
-                        setState(() {
-                          _selectedCategoryId = val;
-                        });
-                      },
-                    );
-                  }),
+                      ...categories.map(
+                        (c) => DropdownMenuItem<int?>(
+                          value: c.id,
+                          child: Text(c.name),
+                        ),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      setState(() {
+                        _selectedCategoryId = val;
+                      });
+                    },
+                  );
+                },
+              ),
             ),
             Expanded(
               child: StreamBuilder<List<Product>>(
                 stream: _db.watchProducts(
-                    query: _searchCtrl.text, categoryId: _selectedCategoryId),
+                  query: _searchCtrl.text,
+                  categoryId: _selectedCategoryId,
+                ),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return const Center(child: CircularProgressIndicator());
@@ -645,7 +689,8 @@ class _ProductSelectionDialogState extends State<_ProductSelectionDialog> {
                   if (products.isEmpty) {
                     return const Center(
                       child: Text(
-                          'Aucun produit trouvé pour cette recherche et catégorie.'),
+                        'Aucun produit trouvé pour cette recherche et catégorie.',
+                      ),
                     );
                   }
                   return ListView.builder(
@@ -663,11 +708,16 @@ class _ProductSelectionDialogState extends State<_ProductSelectionDialog> {
                           child: product.imagePath != null
                               ? ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
-                                  child: Image.file(File(product.imagePath!),
-                                      fit: BoxFit.cover),
+                                  child: Image.file(
+                                    File(product.imagePath!),
+                                    fit: BoxFit.cover,
+                                  ),
                                 )
-                              : const Icon(Icons.inventory_2_outlined,
-                                  size: 20, color: AppColors.textMuted),
+                              : const Icon(
+                                  Icons.inventory_2_outlined,
+                                  size: 20,
+                                  color: AppColors.textMuted,
+                                ),
                         ),
                         title: Text(product.name),
                         subtitle: Text(Fmt.currency(product.priceTtc)),

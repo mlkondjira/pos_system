@@ -5,7 +5,11 @@ import 'logger_service.dart';
 class ErrorFormatter {
   static String format(dynamic error) {
     // Logging automatique de l'erreur technique brute
-    getIt<LoggerService>().log('Erreur capturée par le formateur', level: 'ERROR', error: error);
+    getIt<LoggerService>().log(
+      'Erreur capturée par le formateur',
+      level: 'ERROR',
+      error: error,
+    );
 
     final String message = error.toString();
 
@@ -34,7 +38,9 @@ class ErrorFormatter {
     }
 
     // 2. Gestion des erreurs réseau
-    if (message.contains('SocketException') || message.contains('Network') || message.contains('Failed host lookup')) {
+    if (message.contains('SocketException') ||
+        message.contains('Network') ||
+        message.contains('Failed host lookup')) {
       return 'Problème de connexion internet. Vérifiez votre réseau.';
     }
 

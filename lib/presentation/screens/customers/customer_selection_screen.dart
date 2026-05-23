@@ -13,7 +13,8 @@ class CustomerSelectionScreen extends StatefulWidget {
   const CustomerSelectionScreen({super.key});
 
   @override
-  State<CustomerSelectionScreen> createState() => _CustomerSelectionScreenState();
+  State<CustomerSelectionScreen> createState() =>
+      _CustomerSelectionScreenState();
 }
 
 class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
@@ -62,25 +63,36 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Annuler'),
+          ),
           ElevatedButton(
             onPressed: () async {
               if (nameCtrl.text.trim().isEmpty) return;
               final shopId = await _db.getSetting('shop_id');
-              
-              final id = await _db.into(_db.customers).insert(
-                CustomersCompanion.insert(
-                  name: nameCtrl.text.trim(),
-                  phone: Value(phoneCtrl.text.trim()),
-                  shopId: Value(shopId),
-                ),
-              );
-              
-              final created = await (_db.select(_db.customers)..where((c) => c.id.equals(id))).getSingle();
-              
+
+              final id = await _db
+                  .into(_db.customers)
+                  .insert(
+                    CustomersCompanion.insert(
+                      name: nameCtrl.text.trim(),
+                      phone: Value(phoneCtrl.text.trim()),
+                      shopId: Value(shopId),
+                    ),
+                  );
+
+              final created = await (_db.select(
+                _db.customers,
+              )..where((c) => c.id.equals(id))).getSingle();
+
               // Enclenche la synchronisation cloud
-              await _db.enqueue(entityType: 'customer', entityId: id, payload: created.toJson());
-              
+              await _db.enqueue(
+                entityType: 'customer',
+                entityId: id,
+                payload: created.toJson(),
+              );
+
               if (ctx.mounted) Navigator.pop(ctx, created);
             },
             child: const Text('Créer'),
@@ -117,16 +129,20 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
               children: [
                 TextField(
                   controller: _searchCtrl,
-                  onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
+                  onChanged: (v) =>
+                      setState(() => _query = v.trim().toLowerCase()),
                   decoration: InputDecoration(
                     hintText: 'Rechercher par nom ou téléphone...',
                     prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _query.isNotEmpty 
-                      ? IconButton(icon: const Icon(Icons.clear), onPressed: () {
-                          _searchCtrl.clear();
-                          setState(() => _query = '');
-                        })
-                      : null,
+                    suffixIcon: _query.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchCtrl.clear();
+                              setState(() => _query = '');
+                            },
+                          )
+                        : null,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -136,31 +152,44 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                     FilterChip(
                       label: const Text('Dettes uniquement'),
                       selected: _showOnlyDebtors,
-                      onSelected: (v) => setState(() => _showOnlyDebtors = v),
+                      onSelected: (v) =>
+                          setState(() => _showOnlyDebtors = v), // Ligne 131
                       selectedColor: AppColors.danger.withValues(alpha: 0.1),
                       checkmarkColor: AppColors.danger,
                       labelStyle: TextStyle(
-                        color: _showOnlyDebtors ? AppColors.danger : AppColors.textSecondary,
-                        fontWeight: _showOnlyDebtors ? FontWeight.bold : FontWeight.normal,
+                        color: _showOnlyDebtors
+                            ? AppColors.danger
+                            : AppColors.textSecondary,
+                        fontWeight: _showOnlyDebtors
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                         fontSize: 11,
                       ),
                     ),
                     ChoiceChip(
                       label: const Text('Trier par Nom'),
                       selected: _sortMode == CustomerSortMode.name,
-                      onSelected: (v) => v ? setState(() => _sortMode = CustomerSortMode.name) : null,
+                      onSelected: (v) => v
+                          ? setState(() => _sortMode = CustomerSortMode.name)
+                          : null,
                       labelStyle: TextStyle(
                         fontSize: 11,
-                        color: _sortMode == CustomerSortMode.name ? Colors.white : AppColors.textSecondary,
+                        color: _sortMode == CustomerSortMode.name
+                            ? Colors.white
+                            : AppColors.textSecondary,
                       ),
                     ),
                     ChoiceChip(
                       label: const Text('Trier par Dette'),
                       selected: _sortMode == CustomerSortMode.debt,
-                      onSelected: (v) => v ? setState(() => _sortMode = CustomerSortMode.debt) : null,
+                      onSelected: (v) => v
+                          ? setState(() => _sortMode = CustomerSortMode.debt)
+                          : null,
                       labelStyle: TextStyle(
                         fontSize: 11,
-                        color: _sortMode == CustomerSortMode.debt ? Colors.white : AppColors.textSecondary,
+                        color: _sortMode == CustomerSortMode.debt
+                            ? Colors.white
+                            : AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -172,34 +201,47 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
             child: StreamBuilder<List<DebtorSummary>>(
               stream: _db.salesDao.watchAllCustomersWithDebt(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                
-                final debtors = snapshot.data!.where((d) {
-                  final matchesQuery = _query.isEmpty || 
-                      d.customer.name.toLowerCase().contains(_query) || 
-                      (d.customer.phone?.contains(_query) ?? false);
-                  
-                  final matchesDebt = !_showOnlyDebtors || d.totalDebt > 0;
-                  
-                  return matchesQuery && matchesDebt;
-                }).toList()
-                  ..sort((a, b) {
-                    if (_sortMode == CustomerSortMode.debt) {
-                      final int debtComparison = b.totalDebt.compareTo(a.totalDebt);
-                      if (debtComparison != 0) return debtComparison;
-                    }
-                    return a.customer.name.toLowerCase().compareTo(b.customer.name.toLowerCase());
-                  });
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final debtors =
+                    snapshot.data!.where((d) {
+                      final matchesQuery =
+                          _query.isEmpty ||
+                          d.customer.name.toLowerCase().contains(_query) ||
+                          (d.customer.phone?.contains(_query) ?? false);
+
+                      final matchesDebt = !_showOnlyDebtors || d.totalDebt > 0;
+
+                      return matchesQuery && matchesDebt;
+                    }).toList()..sort((a, b) {
+                      if (_sortMode == CustomerSortMode.debt) {
+                        final int debtComparison = b.totalDebt.compareTo(
+                          a.totalDebt,
+                        );
+                        if (debtComparison != 0) return debtComparison;
+                      }
+                      return a.customer.name.toLowerCase().compareTo(
+                        b.customer.name.toLowerCase(),
+                      );
+                    });
 
                 if (debtors.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.people_outline, size: 64, color: AppColors.textMuted),
+                        const Icon(
+                          Icons.people_outline,
+                          size: 64,
+                          color: AppColors.textMuted,
+                        ),
                         const SizedBox(height: 16),
                         Text(
-                          _query.isEmpty ? 'Aucun client enregistré' : 'Aucun résultat pour "$_query"',
+                          _query.isEmpty
+                              ? 'Aucun client enregistré'
+                              : 'Aucun résultat pour "$_query"',
                           style: const TextStyle(color: AppColors.textMuted),
                         ),
                         const SizedBox(height: 24),
@@ -216,26 +258,50 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                 return ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: debtors.length,
-                  separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.border),
+                  separatorBuilder: (context, index) =>
+                      const Divider(height: 1, color: AppColors.border),
                   itemBuilder: (context, index) {
                     final debtor = debtors[index];
                     final customer = debtor.customer;
                     return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 12,
+                      ),
                       leading: CircleAvatar(
-                        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                        backgroundColor: AppColors.primary.withValues(
+                          alpha: 0.1,
+                        ),
                         child: Text(
                           customer.name[0].toUpperCase(),
-                          style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       title: Text(
                         customer.name,
-                        style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
-                      subtitle: customer.phone != null && customer.phone!.isNotEmpty
-                        ? Text(customer.phone!, style: const TextStyle(color: AppColors.textSecondary))
-                        : const Text('Pas de téléphone', style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12)),
+                      subtitle:
+                          customer.phone != null && customer.phone!.isNotEmpty
+                          ? Text(
+                              customer.phone!,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
+                            )
+                          : const Text(
+                              'Pas de téléphone',
+                              style: TextStyle(
+                                fontStyle: FontStyle.italic,
+                                fontSize: 12,
+                              ),
+                            ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -251,7 +317,10 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                                 ),
                               ),
                             ),
-                          const Icon(Icons.chevron_right, color: AppColors.textMuted),
+                          const Icon(
+                            Icons.chevron_right,
+                            color: AppColors.textMuted,
+                          ),
                         ],
                       ),
                       onTap: () => Navigator.pop(context, customer),

@@ -17,7 +17,10 @@ class OverrideReportScreen extends StatelessWidget {
       create: (_) => getIt<OverrideReportBloc>(),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Autorisations de Remises', style: TextStyle(fontWeight: FontWeight.bold)),
+          title: const Text(
+            'Autorisations de Remises',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           actions: [
             BlocBuilder<OverrideReportBloc, OverrideReportState>(
               builder: (context, state) => IconButton(
@@ -30,7 +33,9 @@ class OverrideReportScreen extends StatelessWidget {
                     lastDate: DateTime.now(),
                   );
                   if (range != null && context.mounted) {
-                    context.read<OverrideReportBloc>().add(ChangeDateRange(range));
+                    context.read<OverrideReportBloc>().add(
+                      ChangeDateRange(range),
+                    );
                   }
                 },
               ),
@@ -39,19 +44,24 @@ class OverrideReportScreen extends StatelessWidget {
               builder: (context, state) => IconButton(
                 icon: const Icon(Icons.picture_as_pdf_rounded),
                 tooltip: 'Exporter en PDF',
-                onPressed: state.logs.isEmpty ? null : () => _exportPdf(context, state),
+                onPressed: state.logs.isEmpty
+                    ? null
+                    : () => _exportPdf(context, state),
               ),
             ),
           ],
         ),
         body: BlocBuilder<OverrideReportBloc, OverrideReportState>(
           builder: (context, state) {
-            if (state.isLoading) return const Center(child: CircularProgressIndicator());
+            if (state.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
             if (state.logs.isEmpty) {
               return const EmptyState(
                 icon: Icons.verified_user_outlined,
                 title: 'Aucun override détecté',
-                subtitle: 'Aucune remise importante n\'a été validée sur cette période.',
+                subtitle:
+                    'Aucune remise importante n\'a été validée sur cette période.',
               );
             }
 
@@ -70,17 +80,39 @@ class OverrideReportScreen extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.lock_open_rounded, color: AppColors.warning, size: 20),
+                            const Icon(
+                              Icons.lock_open_rounded,
+                              color: AppColors.warning,
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
-                            Text(Fmt.dateTime(entry.log.timestamp), style: const TextStyle(fontWeight: FontWeight.bold)),
+                            Text(
+                              Fmt.dateTime(entry.log.timestamp),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const Spacer(),
-                            StatusBadge(label: details['discount_value'] ?? '0%', color: AppColors.danger),
+                            StatusBadge(
+                              label: details['discount_value'] ?? '0%',
+                              color: AppColors.danger,
+                            ),
                           ],
                         ),
                         const Divider(height: 24),
-                        _infoRow('Autorisé par', entry.actorName, isPrimary: true),
-                        _infoRow('Caissier', details['cashier_name'] ?? 'Inconnu'),
-                        _infoRow('Produit', details['product_name'] ?? 'Inconnu'),
+                        _infoRow(
+                          'Autorisé par',
+                          entry.actorName,
+                          isPrimary: true,
+                        ),
+                        _infoRow(
+                          'Caissier',
+                          details['cashier_name'] ?? 'Inconnu',
+                        ),
+                        _infoRow(
+                          'Produit',
+                          details['product_name'] ?? 'Inconnu',
+                        ),
                       ],
                     ),
                   ),
@@ -99,22 +131,32 @@ class OverrideReportScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
-          Text(value, style: TextStyle(
-            fontWeight: isPrimary ? FontWeight.bold : FontWeight.w500,
-            color: isPrimary ? AppColors.primary : AppColors.textPrimary,
-          )),
+          Text(
+            label,
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: isPrimary ? FontWeight.bold : FontWeight.w500,
+              color: isPrimary ? AppColors.primary : AppColors.textPrimary,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Future<void> _exportPdf(BuildContext context, OverrideReportState state) async {
+  Future<void> _exportPdf(
+    BuildContext context,
+    OverrideReportState state,
+  ) async {
     final printer = getIt<PrinterService>();
     final range = state.dateRange;
-    
+
     // 1. Préparation de l'en-tête du rapport
-    final introText = 'RAPPORT D\'AUTORISATION DE REMISES\n'
+    final introText =
+        'RAPPORT D\'AUTORISATION DE REMISES\n'
         'Période : ${Fmt.date(range.start)} au ${Fmt.date(range.end)}\n'
         'Total des opérations : ${state.logs.length}';
 
@@ -135,7 +177,8 @@ class OverrideReportScreen extends StatelessWidget {
     await printer.sharePdfReport(
       fileName: 'Rapport_Overrides_${range.start.millisecondsSinceEpoch}',
       introText: introText,
-      shareMessage: 'Voici le rapport des autorisations de remises du ${Fmt.date(range.start)} au ${Fmt.date(range.end)}.',
+      shareMessage:
+          'Voici le rapport des autorisations de remises du ${Fmt.date(range.start)} au ${Fmt.date(range.end)}.',
       subject: 'Rapport Overrides POS',
       tableHeaders: headers,
       tableData: tableData,

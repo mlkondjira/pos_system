@@ -43,8 +43,11 @@ abstract class CashSessionState extends Equatable {
 }
 
 class CashSessionInitial extends CashSessionState {}
+
 class CashSessionLoading extends CashSessionState {}
+
 class NoCashSession extends CashSessionState {}
+
 class CashSessionOpen extends CashSessionState {
   final CashSession session;
   const CashSessionOpen(this.session);
@@ -64,7 +67,10 @@ class CashSessionBloc extends Bloc<CashSessionEvent, CashSessionState> {
     on<RetrySyncSession>(_onRetrySyncSession);
   }
 
-  Future<void> _onAppStarted(AppStarted event, Emitter<CashSessionState> emit) async {
+  Future<void> _onAppStarted(
+    AppStarted event,
+    Emitter<CashSessionState> emit,
+  ) async {
     emit(CashSessionLoading());
     final terminalId = await _db.getSetting('terminal_id') ?? '';
     final session = await _db.getCurrentOpenSession(terminalId);
@@ -75,21 +81,29 @@ class CashSessionBloc extends Bloc<CashSessionEvent, CashSessionState> {
     }
   }
 
-  Future<void> _onOpenSession(OpenSession event, Emitter<CashSessionState> emit) async {
+  Future<void> _onOpenSession(
+    OpenSession event,
+    Emitter<CashSessionState> emit,
+  ) async {
     emit(CashSessionLoading());
     final terminalId = await _db.getSetting('terminal_id') ?? '';
     final shopId = await _db.getSetting('shop_id') ?? '';
     final sessionId = await _db.openCashSession(
-      userId: event.userId, 
+      userId: event.userId,
       startingCash: event.startingCash,
       terminalId: terminalId,
       shopId: shopId,
     );
-    final session = await (_db.select(_db.cashSessions)..where((c) => c.id.equals(sessionId))).getSingle();
+    final session = await (_db.select(
+      _db.cashSessions,
+    )..where((c) => c.id.equals(sessionId))).getSingle();
     emit(CashSessionOpen(session));
   }
 
-  Future<void> _onCloseSession(CloseSession event, Emitter<CashSessionState> emit) async {
+  Future<void> _onCloseSession(
+    CloseSession event,
+    Emitter<CashSessionState> emit,
+  ) async {
     final currentState = state;
     if (currentState is! CashSessionOpen) return;
 
@@ -114,7 +128,10 @@ class CashSessionBloc extends Bloc<CashSessionEvent, CashSessionState> {
     emit(NoCashSession());
   }
 
-  Future<void> _onRetrySyncSession(RetrySyncSession event, Emitter<CashSessionState> emit) async {
+  Future<void> _onRetrySyncSession(
+    RetrySyncSession event,
+    Emitter<CashSessionState> emit,
+  ) async {
     await _db.retrySync('cash_session', event.sessionId);
     _syncService.syncPending();
   }

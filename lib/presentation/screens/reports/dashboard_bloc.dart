@@ -50,7 +50,13 @@ class StoreSummary extends Equatable {
   }
 
   @override
-  List<Object?> get props => [shopId, saleCount, revenue, lowStockCount, address];
+  List<Object?> get props => [
+    shopId,
+    saleCount,
+    revenue,
+    lowStockCount,
+    address,
+  ];
 }
 
 class GlobalStats extends Equatable {
@@ -76,15 +82,15 @@ class GlobalStats extends Equatable {
 
   @override
   List<Object?> get props => [
-        totalRevenue,
-        totalSales,
-        totalStores,
-        totalAlerts,
-        bestShopId,
-        bestShopName,
-        bestShopRevenue,
-        globalWeeklyStats,
-      ];
+    totalRevenue,
+    totalSales,
+    totalStores,
+    totalAlerts,
+    bestShopId,
+    bestShopName,
+    bestShopRevenue,
+    globalWeeklyStats,
+  ];
 }
 
 // ─── EVENTS ──────────────────────────────────────────────────
@@ -96,6 +102,7 @@ abstract class DashboardEvent extends Equatable {
 }
 
 class LoadDashboard extends DashboardEvent {}
+
 class RefreshDashboard extends DashboardEvent {}
 
 class SelectPeriod extends DashboardEvent {
@@ -155,23 +162,30 @@ class DashboardState extends Equatable {
     DateTime? lastRefreshed,
     String? selectedShopId,
     bool clearSelectedShop = false,
-  }) =>
-      DashboardState(
-        stores: stores ?? this.stores,
-        globalStats: globalStats ?? this.globalStats,
-        isLoading: isLoading ?? this.isLoading,
-        isRefreshing: isRefreshing ?? this.isRefreshing,
-        error: clearError ? null : (error ?? this.error),
-        selectedPeriod: selectedPeriod ?? this.selectedPeriod,
-        lastRefreshed: lastRefreshed ?? this.lastRefreshed,
-        selectedShopId: clearSelectedShop ? null : (selectedShopId ?? this.selectedShopId),
-      );
+  }) => DashboardState(
+    stores: stores ?? this.stores,
+    globalStats: globalStats ?? this.globalStats,
+    isLoading: isLoading ?? this.isLoading,
+    isRefreshing: isRefreshing ?? this.isRefreshing,
+    error: clearError ? null : (error ?? this.error),
+    selectedPeriod: selectedPeriod ?? this.selectedPeriod,
+    lastRefreshed: lastRefreshed ?? this.lastRefreshed,
+    selectedShopId: clearSelectedShop
+        ? null
+        : (selectedShopId ?? this.selectedShopId),
+  );
 
   @override
   List<Object?> get props => [
-        stores, globalStats, isLoading, isRefreshing,
-        error, selectedPeriod, lastRefreshed, selectedShopId,
-      ];
+    stores,
+    globalStats,
+    isLoading,
+    isRefreshing,
+    error,
+    selectedPeriod,
+    lastRefreshed,
+    selectedShopId,
+  ];
 }
 
 // ─── BLOC PRINCIPAL ──────────────────────────────────────────
@@ -189,7 +203,9 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   }
 
   Future<void> _onLoad(
-      LoadDashboard event, Emitter<DashboardState> emit) async {
+    LoadDashboard event,
+    Emitter<DashboardState> emit,
+  ) async {
     emit(state.copyWith(isLoading: true, clearError: true));
     await _fetchAll(emit);
 
@@ -214,35 +230,45 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   }
 
   Future<void> _onRefresh(
-      RefreshDashboard event, Emitter<DashboardState> emit) async {
+    RefreshDashboard event,
+    Emitter<DashboardState> emit,
+  ) async {
     if (state.isLoading || state.isRefreshing) return;
     emit(state.copyWith(isRefreshing: true));
     await _fetchAll(emit, silent: true);
   }
 
   Future<void> _onSelectShopFilter(
-      SelectShopFilter event, Emitter<DashboardState> emit) async {
+    SelectShopFilter event,
+    Emitter<DashboardState> emit,
+  ) async {
     if (state.selectedShopId == event.shopId) return;
 
     final filteredSummaries = event.shopId == null
         ? state.stores
         : state.stores.where((s) => s.shopId == event.shopId).toList();
 
-    emit(state.copyWith(
-      selectedShopId: event.shopId,
-      clearSelectedShop: event.shopId == null,
-      globalStats: _computeGlobalStats(filteredSummaries),
-    ));
+    emit(
+      state.copyWith(
+        selectedShopId: event.shopId,
+        clearSelectedShop: event.shopId == null,
+        globalStats: _computeGlobalStats(filteredSummaries),
+      ),
+    );
   }
 
   Future<void> _onSelectPeriod(
-      SelectPeriod event, Emitter<DashboardState> emit) async {
+    SelectPeriod event,
+    Emitter<DashboardState> emit,
+  ) async {
     if (event.period == state.selectedPeriod) return;
-    emit(state.copyWith(
-      selectedPeriod: event.period,
-      isLoading: true,
-      clearError: true,
-    ));
+    emit(
+      state.copyWith(
+        selectedPeriod: event.period,
+        isLoading: true,
+        clearError: true,
+      ),
+    );
     await _fetchAll(emit);
   }
 
@@ -255,29 +281,34 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       // Note: 'city' n'est pas standard dans la table shops, on utilise address
       final shopsRes = await _supabase
           .from('shops')
-          .select('id, name, address') 
+          .select('id, name, address')
           .order('name');
 
       final shops = List<Map<String, dynamic>>.from(shopsRes);
 
       if (shops.isEmpty) {
-        emit(state.copyWith(
-          stores: [],
-          globalStats: const GlobalStats(
-            totalRevenue: 0, totalSales: 0, totalStores: 0,
-            totalAlerts: 0, bestShopId: '', bestShopName: '',
-            bestShopRevenue: 0,
-            globalWeeklyStats: [],
+        emit(
+          state.copyWith(
+            stores: [],
+            globalStats: const GlobalStats(
+              totalRevenue: 0,
+              totalSales: 0,
+              totalStores: 0,
+              totalAlerts: 0,
+              bestShopId: '',
+              bestShopName: '',
+              bestShopRevenue: 0,
+              globalWeeklyStats: [],
+            ),
+            isLoading: false,
+            isRefreshing: false,
+            lastRefreshed: DateTime.now(),
           ),
-          isLoading: false,
-          isRefreshing: false,
-          lastRefreshed: DateTime.now(),
-        ));
+        );
         return;
       }
 
-      final shopIds =
-          shops.map((s) => s['id'] as String).toList();
+      final shopIds = shops.map((s) => s['id'] as String).toList();
 
       // 2. Résumé journalier (Vue Postgres recommandée: store_summary)
       final summaryRes = await _supabase
@@ -300,11 +331,13 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       for (final row in List<Map<String, dynamic>>.from(weeklyRes)) {
         final sid = row['shop_id'] as String;
         weeklyMap.putIfAbsent(sid, () => []);
-        weeklyMap[sid]!.add(DailyStat(
-          date: DateTime.parse(row['sale_date'] as String),
-          saleCount: (row['sale_count'] as num).toInt(),
-          revenue: (row['revenue'] as num).toDouble(),
-        ));
+        weeklyMap[sid]!.add(
+          DailyStat(
+            date: DateTime.parse(row['sale_date'] as String),
+            saleCount: (row['sale_count'] as num).toInt(),
+            revenue: (row['revenue'] as num).toDouble(),
+          ),
+        );
       }
 
       // 4. Alertes stock (Vue Postgres: store_low_stock)
@@ -315,8 +348,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
 
       final alertsMap = <String, int>{};
       for (final row in List<Map<String, dynamic>>.from(alertsRes)) {
-        alertsMap[row['shop_id'] as String] =
-            (row['low_stock_count'] as num).toInt();
+        alertsMap[row['shop_id'] as String] = (row['low_stock_count'] as num)
+            .toInt();
       }
 
       // 5. Assembler StoreSummary
@@ -342,20 +375,24 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           ? summaries
           : summaries.where((s) => s.shopId == state.selectedShopId).toList();
 
-      emit(state.copyWith(
-        stores: summaries,
-        globalStats: _computeGlobalStats(visibleForStats),
-        isLoading: false,
-        isRefreshing: false,
-        lastRefreshed: DateTime.now(),
-        clearError: true,
-      ));
+      emit(
+        state.copyWith(
+          stores: summaries,
+          globalStats: _computeGlobalStats(visibleForStats),
+          isLoading: false,
+          isRefreshing: false,
+          lastRefreshed: DateTime.now(),
+          clearError: true,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(
-        isLoading: false,
-        isRefreshing: false,
-        error: _friendlyError(e),
-      ));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          isRefreshing: false,
+          error: _friendlyError(e),
+        ),
+      );
     }
   }
 
@@ -393,7 +430,10 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           );
         } else {
           dailyAggregates[day] = DailyStat(
-              date: day, saleCount: stat.saleCount, revenue: stat.revenue);
+            date: day,
+            saleCount: stat.saleCount,
+            revenue: stat.revenue,
+          );
         }
       }
     }
@@ -455,8 +495,7 @@ class StoreDetailState extends Equatable {
   double get totalRevenue30d =>
       dailyStats.fold(0.0, (sum, s) => sum + s.revenue);
 
-  int get totalSales30d =>
-      dailyStats.fold(0, (sum, s) => sum + s.saleCount);
+  int get totalSales30d => dailyStats.fold(0, (sum, s) => sum + s.saleCount);
 
   StoreDetailState copyWith({
     String? shopId,
@@ -465,23 +504,27 @@ class StoreDetailState extends Equatable {
     List<Map<String, dynamic>>? recentSales,
     bool? isLoading,
     String? error,
-  }) =>
-      StoreDetailState(
-        shopId: shopId ?? this.shopId,
-        dailyStats: dailyStats ?? this.dailyStats,
-        topProducts: topProducts ?? this.topProducts,
-        recentSales: recentSales ?? this.recentSales,
-        isLoading: isLoading ?? this.isLoading,
-        error: error ?? this.error,
-      );
+  }) => StoreDetailState(
+    shopId: shopId ?? this.shopId,
+    dailyStats: dailyStats ?? this.dailyStats,
+    topProducts: topProducts ?? this.topProducts,
+    recentSales: recentSales ?? this.recentSales,
+    isLoading: isLoading ?? this.isLoading,
+    error: error ?? this.error,
+  );
 
   @override
-  List<Object?> get props =>
-      [shopId, dailyStats, topProducts, recentSales, isLoading, error];
+  List<Object?> get props => [
+    shopId,
+    dailyStats,
+    topProducts,
+    recentSales,
+    isLoading,
+    error,
+  ];
 }
 
-class StoreDetailBloc
-    extends Bloc<StoreDetailEvent, StoreDetailState> {
+class StoreDetailBloc extends Bloc<StoreDetailEvent, StoreDetailState> {
   final SupabaseClient _supabase;
 
   StoreDetailBloc(this._supabase) : super(const StoreDetailState()) {
@@ -489,7 +532,9 @@ class StoreDetailBloc
   }
 
   Future<void> _onLoad(
-      LoadStoreDetail event, Emitter<StoreDetailState> emit) async {
+    LoadStoreDetail event,
+    Emitter<StoreDetailState> emit,
+  ) async {
     emit(state.copyWith(shopId: event.shopId, isLoading: true));
 
     try {
@@ -499,10 +544,10 @@ class StoreDetailBloc
           .select('created_at, total_ttc')
           .eq('shop_id', event.shopId)
           .eq('status', 'completed')
-          .gte('created_at',
-              DateTime.now()
-                  .subtract(const Duration(days: 30))
-                  .toIso8601String())
+          .gte(
+            'created_at',
+            DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
+          )
           .order('created_at');
 
       // Grouper par jour côté client
@@ -518,14 +563,17 @@ class StoreDetailBloc
         dayMap[key] = acc;
       }
 
-      final dailyStats = dayMap.entries
-          .map((e) => DailyStat(
-                date: DateTime.parse(e.key),
-                saleCount: e.value.count,
-                revenue: e.value.revenue,
-              ))
-          .toList()
-        ..sort((a, b) => a.date.compareTo(b.date));
+      final dailyStats =
+          dayMap.entries
+              .map(
+                (e) => DailyStat(
+                  date: DateTime.parse(e.key),
+                  saleCount: e.value.count,
+                  revenue: e.value.revenue,
+                ),
+              )
+              .toList()
+            ..sort((a, b) => a.date.compareTo(b.date));
 
       // Top 5 produits
       final topRes = await _supabase
@@ -542,12 +590,14 @@ class StoreDetailBloc
           .order('created_at', ascending: false)
           .limit(10);
 
-      emit(state.copyWith(
-        dailyStats: dailyStats,
-        topProducts: List<Map<String, dynamic>>.from(topRes),
-        recentSales: List<Map<String, dynamic>>.from(recentRes),
-        isLoading: false,
-      ));
+      emit(
+        state.copyWith(
+          dailyStats: dailyStats,
+          topProducts: List<Map<String, dynamic>>.from(topRes),
+          recentSales: List<Map<String, dynamic>>.from(recentRes),
+          isLoading: false,
+        ),
+      );
     } catch (e) {
       emit(state.copyWith(isLoading: false, error: e.toString()));
     }

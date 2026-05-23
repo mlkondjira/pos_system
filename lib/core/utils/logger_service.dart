@@ -13,25 +13,31 @@ class LoggerService {
 
   /// Wrappers pratiques pour les différents niveaux de log
   Future<void> info(String message) => log(message, level: 'INFO');
-  
+
   Future<void> warning(String message) => log(message, level: 'WARN');
-  
+
   Future<void> error(String message, {dynamic error, StackTrace? stackTrace}) {
     return log(message, level: 'ERROR', error: error, stackTrace: stackTrace);
   }
 
   /// Enregistre un message dans le fichier de log local
-  Future<void> log(String message, {String level = 'INFO', dynamic error, StackTrace? stackTrace}) async {
+  Future<void> log(
+    String message, {
+    String level = 'INFO',
+    dynamic error,
+    StackTrace? stackTrace,
+  }) async {
     await _init();
     final timestamp = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
-    
+
     String logLine = '[$timestamp] [$level] $message';
     if (error != null) logLine += ' | Error: $error';
     if (stackTrace != null) logLine += '\nStackTrace: $stackTrace';
     logLine += '\n';
 
     // Optionnel: Rotation du fichier si > 2Mo
-    if (await _logFile!.exists() && await _logFile!.length() > 2 * 1024 * 1024) {
+    if (await _logFile!.exists() &&
+        await _logFile!.length() > 2 * 1024 * 1024) {
       await _logFile!.rename('${_logFile!.path}.old');
     }
 

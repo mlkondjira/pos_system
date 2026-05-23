@@ -56,7 +56,7 @@ dev_dependencies:
 
 # ── ÉTAPE 5 : Intégrer dans GitHub Actions ────────────────────
 # Déplacer .github/workflows/release_android.yml (actuellement
-# dans lib/) vers .github/workflows/ et ajouter ce step :
+# à la racine du projet) vers .github/workflows/ et ajouter ce step :
 #
 # - name: Run unit tests
 #   run: flutter test test/unit/ --reporter=github

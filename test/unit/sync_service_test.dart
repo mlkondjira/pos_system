@@ -25,20 +25,22 @@ class TestableSyncService extends SyncService {
 }
 
 void main() {
-
   // ══════════════════════════════════════════════════════════
   //  SyncStatus enum
   // ══════════════════════════════════════════════════════════
 
   group('SyncStatus', () {
     test('a toutes les valeurs attendues', () {
-      expect(SyncStatus.values, containsAll([
-        SyncStatus.idle,
-        SyncStatus.syncing,
-        SyncStatus.upToDate,
-        SyncStatus.partialError,
-        SyncStatus.error,
-      ]));
+      expect(
+        SyncStatus.values,
+        containsAll([
+          SyncStatus.idle,
+          SyncStatus.syncing,
+          SyncStatus.upToDate,
+          SyncStatus.partialError,
+          SyncStatus.error,
+        ]),
+      );
     });
   });
 
@@ -56,11 +58,7 @@ void main() {
     });
 
     test('crée un SyncProgress avec progression', () {
-      const p = SyncProgress(
-        status: SyncStatus.syncing,
-        total: 10,
-        done: 4,
-      );
+      const p = SyncProgress(status: SyncStatus.syncing, total: 10, done: 4);
       expect(p.total, 10);
       expect(p.done, 4);
     });
@@ -92,24 +90,27 @@ void main() {
     // sans instancier le service (qui nécessite BDD + Supabase)
 
     final mappings = {
-      'sale':             'sales',
-      'product':          'products',
-      'sale_item':        'sale_items',
-      'sale_items':       'sale_items',
-      'stock_movement':   'stock_movements',
-      'inventory':        'inventory_sessions',
-      'expense':          'expenses',
-      'customer':         'customers',
-      'purchase_order':   'purchase_orders',
-      'stock_transfer':   'stock_transfers',
+      'sale': 'sales',
+      'product': 'products',
+      'sale_item': 'sale_items',
+      'sale_items': 'sale_items',
+      'stock_movement': 'stock_movements',
+      'inventory': 'inventory_sessions',
+      'expense': 'expenses',
+      'customer': 'customers',
+      'purchase_order': 'purchase_orders',
+      'stock_transfer': 'stock_transfers',
     };
 
     mappings.forEach((entityType, expectedTable) {
       test('$entityType → $expectedTable', () {
         // Test de la logique de switch directement
         final result = _tableForLogic(entityType);
-        expect(result, expectedTable,
-            reason: 'entityType "$entityType" doit mapper sur "$expectedTable"');
+        expect(
+          result,
+          expectedTable,
+          reason: 'entityType "$entityType" doit mapper sur "$expectedTable"',
+        );
       });
     });
 
@@ -141,9 +142,10 @@ void main() {
       expect(payload.containsKey('total_ttc'), isTrue);
       expect(payload.containsKey('shop_id'), isTrue);
       expect(payload.containsKey('local_id'), isTrue);
-      expect(payload['payment_method'], isIn([
-        'cash', 'wave', 'orange_money', 'card', 'credit'
-      ]));
+      expect(
+        payload['payment_method'],
+        isIn(['cash', 'wave', 'orange_money', 'card', 'credit']),
+      );
     });
 
     test('HT + Tax = TTC dans le payload (cohérence avant sync)', () {
@@ -178,7 +180,7 @@ void main() {
     test('un item avec retryCount >= 5 ne doit pas être retenté', () {
       // Règle : retryCount < 5 pour être inclus dans le batch
       const maxRetry = 5;
-      expect(4 < maxRetry, isTrue);  // sera retenté
+      expect(4 < maxRetry, isTrue); // sera retenté
       expect(5 < maxRetry, isFalse); // ne sera PAS retenté
       expect(6 < maxRetry, isFalse);
     });
@@ -229,16 +231,16 @@ void main() {
 
 /// Réplique la logique de _tableFor pour tester sans instancier le service
 String _tableForLogic(String entityType) => switch (entityType) {
-  'sale'                                => 'sales',
-  'product'                             => 'products',
-  'sale_item' || 'sale_items'           => 'sale_items',
+  'sale' => 'sales',
+  'product' => 'products',
+  'sale_item' || 'sale_items' => 'sale_items',
   'stock_movement' || 'stock_movements' => 'stock_movements',
-  'inventory'                           => 'inventory_sessions',
-  'expense' || 'expenses'               => 'expenses',
-  'customer' || 'customers'             => 'customers',
-  'purchase_order'                      => 'purchase_orders',
-  'stock_transfer'                      => 'stock_transfers',
-  _                                     => entityType,
+  'inventory' => 'inventory_sessions',
+  'expense' || 'expenses' => 'expenses',
+  'customer' || 'customers' => 'customers',
+  'purchase_order' => 'purchase_orders',
+  'stock_transfer' => 'stock_transfers',
+  _ => entityType,
 };
 
 bool nearEqual(double a, double b, {double epsilon = 0.01}) =>

@@ -40,7 +40,11 @@ class AudioService {
         final pathPtr = filePath.toNativeUtf16();
 
         // 3. PlaySound : Nom du fichier, instance (0), Drapeaux (FILENAME + ASYNC)
-        win32.PlaySound(pathPtr, 0, win32.SND_FILENAME | win32.SND_ASYNC | win32.SND_NODEFAULT);
+        win32.PlaySound(
+          pathPtr,
+          0,
+          win32.SND_FILENAME | win32.SND_ASYNC | win32.SND_NODEFAULT,
+        );
 
         malloc.free(pathPtr);
         return;
@@ -52,15 +56,14 @@ class AudioService {
         _initialized = true;
       }
 
-      final source = success 
-          ? AssetSource('sounds/BEEP.mp3') 
+      final source = success
+          ? AssetSource('sounds/BEEP.mp3')
           : AssetSource('sounds/ERROR.mp3');
 
       // Sur Windows, on évite d'écouter les streams de position/durée
       // qui sont la cause principale des erreurs de thread.
       await _player.stop(); // Arrêter avant de rejouer
       await _player.play(source, volume: 0.5);
-      
     } catch (e) {
       debugPrint('AudioService: Erreur lors de la lecture du son : $e');
     }

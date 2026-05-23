@@ -26,14 +26,18 @@ class _UsersScreenState extends State<UsersScreen> {
       child: Scaffold(
         backgroundColor: AppColors.bg,
         appBar: AppBar(
-          title: const Text('Gestion des Utilisateurs',
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          title: const Text(
+            'Gestion des Utilisateurs',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           elevation: 0,
           actions: [
             IconButton(
-              icon: Icon(_showInactive
-                  ? Icons.visibility_off_outlined
-                  : Icons.visibility_outlined),
+              icon: Icon(
+                _showInactive
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+              ),
               tooltip: _showInactive
                   ? 'Masquer les inactifs'
                   : 'Afficher les inactifs',
@@ -48,14 +52,18 @@ class _UsersScreenState extends State<UsersScreen> {
             }
             if (state.error != null) {
               return Center(
-                  child: Text('Erreur: ${state.error}',
-                      style: const TextStyle(color: AppColors.danger)));
+                child: Text(
+                  'Erreur: ${state.error}',
+                  style: const TextStyle(color: AppColors.danger),
+                ),
+              );
             }
 
             final filteredUsers = state.users.where((user) {
               // `final` pour `prefer_final_locals`
-              final matchesSearch =
-                  user.name.toLowerCase().contains(_searchQuery.toLowerCase());
+              final matchesSearch = user.name.toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              );
               final matchesStatus = _showInactive || user.isActive;
               return matchesSearch && matchesStatus;
             }).toList();
@@ -80,7 +88,8 @@ class _UsersScreenState extends State<UsersScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                   child: PosSearchBar(
                     controller: TextEditingController(
-                        text: _searchQuery), // Ajout du contrôleur
+                      text: _searchQuery,
+                    ), // Ajout du contrôleur
                     hint: 'Rechercher un utilisateur...',
                     onChanged: (v) => setState(() => _searchQuery = v),
                   ),
@@ -98,7 +107,8 @@ class _UsersScreenState extends State<UsersScreen> {
                             backgroundColor: user.isActive
                                 ? AppColors.primaryLight
                                 : AppColors.textMuted.withValues(
-                                    alpha: 0.3), // `withOpacity` est déprécié
+                                    alpha: 0.3,
+                                  ), // `withOpacity` est déprécié
                             child: Icon(
                               user.role == 'admin' || user.role == 'owner'
                                   ? Icons.verified_user_outlined
@@ -129,15 +139,19 @@ class _UsersScreenState extends State<UsersScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.edit_outlined,
-                                    color: AppColors.primary),
+                                icon: const Icon(
+                                  Icons.edit_outlined,
+                                  color: AppColors.primary,
+                                ),
                                 onPressed: () =>
                                     _showUserForm(context, user: user),
                               ),
                               if (user.isActive)
                                 IconButton(
-                                  icon: const Icon(Icons.person_off_outlined,
-                                      color: AppColors.danger),
+                                  icon: const Icon(
+                                    Icons.person_off_outlined,
+                                    color: AppColors.danger,
+                                  ),
                                   tooltip: 'Désactiver l\'utilisateur',
                                   onPressed: () =>
                                       _confirmSoftDelete(context, user),
@@ -177,17 +191,20 @@ class _UsersScreenState extends State<UsersScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('Désactiver l\'utilisateur ?'),
         content: Text(
-            'Voulez-vous vraiment désactiver "${user.name}" ? Il ne pourra plus se connecter.'),
+          'Voulez-vous vraiment désactiver "${user.name}" ? Il ne pourra plus se connecter.',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Annuler')),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Annuler'),
+          ),
           ElevatedButton(
             onPressed: () {
               final currentActor = context.read<AuthBloc>().state.user;
               if (currentActor != null) {
                 context.read<UsersBloc>().add(
-                    SoftDeleteUser(userId: user.id, adminId: currentActor.id));
+                  SoftDeleteUser(userId: user.id, adminId: currentActor.id),
+                );
               }
               Navigator.pop(ctx);
             },

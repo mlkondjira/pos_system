@@ -20,7 +20,8 @@ class NotificationService {
 
   /// Initialise le service. [onBackgroundHandler] est requis pour traiter les boutons d'actions.
   Future<void> initialize(
-      void Function(NotificationResponse)? onBackgroundHandler) async {
+    void Function(NotificationResponse)? onBackgroundHandler,
+  ) async {
     if (Platform.isWindows) {
       // Initialisation spécifique pour Windows
       await localNotifier.setup(
@@ -38,12 +39,12 @@ class NotificationService {
 
     const InitializationSettings initializationSettings =
         InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-    );
+          android: initializationSettingsAndroid,
+          iOS: initializationSettingsIOS,
+        );
 
     await _notificationsPlugin.initialize(
-      settings: initializationSettings,
+      initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         _selectNotificationStream.add(response);
       },
@@ -51,8 +52,8 @@ class NotificationService {
     );
 
     // Vérifier si l'app a été lancée par une notification
-    final notificationAppLaunchDetails =
-        await _notificationsPlugin.getNotificationAppLaunchDetails();
+    final notificationAppLaunchDetails = await _notificationsPlugin
+        .getNotificationAppLaunchDetails();
     if (notificationAppLaunchDetails?.didNotificationLaunchApp ?? false) {
       _initialResponse = notificationAppLaunchDetails?.notificationResponse;
     }
@@ -65,13 +66,17 @@ class NotificationService {
     if (Platform.isAndroid) {
       // Spécifique à Android 13+ (SDK 33)
       final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-          _notificationsPlugin.resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
+          _notificationsPlugin
+              .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin
+              >();
       await androidImplementation?.requestNotificationsPermission();
     } else if (Platform.isIOS) {
       final IOSFlutterLocalNotificationsPlugin? iosImplementation =
-          _notificationsPlugin.resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>();
+          _notificationsPlugin
+              .resolvePlatformSpecificImplementation<
+                IOSFlutterLocalNotificationsPlugin
+              >();
       await iosImplementation?.requestPermissions(
         alert: true,
         badge: true,
@@ -80,8 +85,10 @@ class NotificationService {
     }
   }
 
-  Future<void> showCriticalErrorNotification(
-      {required String title, required String body}) async {
+  Future<void> showCriticalErrorNotification({
+    required String title,
+    required String body,
+  }) async {
     if (Platform.isWindows) {
       final LocalNotification notification = LocalNotification(
         identifier: 'critical_error',
@@ -99,22 +106,23 @@ class NotificationService {
 
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'critical_sync_errors',
-      'Alertes Logistiques',
-      channelDescription:
-          'Notifications pour les erreurs de synchronisation de stock',
-      importance: Importance.max,
-      priority: Priority.high,
+          'critical_sync_errors',
+          'Alertes Logistiques',
+          channelDescription:
+              'Notifications pour les erreurs de synchronisation de stock',
+          importance: Importance.max,
+          priority: Priority.high,
+        );
+
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
     );
 
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
-
     await _notificationsPlugin.show(
-      id: 0,
-      title: title,
-      body: body,
-      notificationDetails: platformChannelSpecifics,
+      0,
+      title,
+      body,
+      platformChannelSpecifics,
       payload: 'open_transfers', // Identifiant de l'action
     );
   }
@@ -130,30 +138,33 @@ class NotificationService {
         identifier: 'transfer_$transferId',
         title: 'Nouveau transfert : $ref',
         body: 'Marchandise en provenance de $sourceShop',
-        actions: [
-          LocalNotificationAction(text: 'Marquer comme reçu'),
-        ],
+        actions: [LocalNotificationAction(text: 'Marquer comme reçu')],
       );
 
       notification.onClick = () {
         // Sécurisation du thread pour Windows
         Future.microtask(() {
-          _selectNotificationStream.add(NotificationResponse(
+          _selectNotificationStream.add(
+            NotificationResponse(
               notificationResponseType:
                   NotificationResponseType.selectedNotification,
-              payload: 'transfer:$transferId'));
+              payload: 'transfer:$transferId',
+            ),
+          );
         });
       };
 
       (notification as dynamic).onActionPressed = (actionIndex) {
         if (actionIndex == 0) {
           Future.microtask(() {
-            _selectNotificationStream.add(NotificationResponse(
-              notificationResponseType:
-                  NotificationResponseType.selectedNotificationAction,
-              actionId: 'action_mark_received',
-              payload: 'transfer:$transferId',
-            ));
+            _selectNotificationStream.add(
+              NotificationResponse(
+                notificationResponseType:
+                    NotificationResponseType.selectedNotificationAction,
+                actionId: 'action_mark_received',
+                payload: 'transfer:$transferId',
+              ),
+            );
           });
         }
       };
@@ -164,26 +175,26 @@ class NotificationService {
 
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
-      'transfer_alerts',
-      'Transferts de stock',
-      importance: Importance.max,
-      priority: Priority.high,
-      // Ajout du bouton d'action
-      actions: [
-        AndroidNotificationAction(
-          'action_mark_received',
-          'Marquer comme reçu',
-          showsUserInterface: true, // OBLIGATOIRE pour afficher un dialogue
-          cancelNotification: true,
-        ),
-      ],
-    );
+          'transfer_alerts',
+          'Transferts de stock',
+          importance: Importance.max,
+          priority: Priority.high,
+          // Ajout du bouton d'action
+          actions: [
+            AndroidNotificationAction(
+              'action_mark_received',
+              'Marquer comme reçu',
+              showsUserInterface: true, // OBLIGATOIRE pour afficher un dialogue
+              cancelNotification: true,
+            ),
+          ],
+        );
 
     await _notificationsPlugin.show(
-      id: transferId,
-      title: 'Nouveau transfert : $ref',
-      body: 'Marchandise en provenance de $sourceShop',
-      notificationDetails: const NotificationDetails(android: androidDetails),
+      transferId,
+      'Nouveau transfert : $ref',
+      'Marchandise en provenance de $sourceShop',
+      const NotificationDetails(android: androidDetails),
       payload: 'transfer:$transferId',
     );
   }
@@ -191,7 +202,7 @@ class NotificationService {
   /// Supprime une notification spécifique par son ID (utile pour effacer l'alerte de backlog).
   Future<void> cancelNotification(int id) async {
     if (Platform.isWindows) return;
-    await _notificationsPlugin.cancel(id: id);
+    await _notificationsPlugin.cancel(id); // 1 positional argument expected
   }
 
   /// Affiche une notification persistante si la file d'attente est trop importante.
@@ -204,9 +215,7 @@ class NotificationService {
         identifier: 'sync_backlog',
         title: '⚠️ Retard de synchronisation',
         body: message,
-        actions: [
-          LocalNotificationAction(text: 'Synchroniser maintenant'),
-        ],
+        actions: [LocalNotificationAction(text: 'Synchroniser maintenant')],
       );
 
       (notification as dynamic).onActionPressed = (actionIndex) {
@@ -229,31 +238,36 @@ class NotificationService {
 
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
-      'sync_backlog_alerts',
-      'Alertes Synchronisation',
-      channelDescription:
-          'Avertissements lorsque la file d\'attente est trop importante',
-      importance: Importance.high,
-      priority: Priority.high,
-      ongoing: true, // Empêche la suppression par simple swipe sur Android
-      actions: [
-        AndroidNotificationAction('action_sync_now', 'Synchroniser maintenant',
-            showsUserInterface: false),
-      ],
-    );
+          'sync_backlog_alerts',
+          'Alertes Synchronisation',
+          channelDescription:
+              'Avertissements lorsque la file d\'attente est trop importante',
+          importance: Importance.high,
+          priority: Priority.high,
+          ongoing: true, // Empêche la suppression par simple swipe sur Android
+          actions: [
+            AndroidNotificationAction(
+              'action_sync_now',
+              'Synchroniser maintenant',
+              showsUserInterface: false,
+            ),
+          ],
+        );
 
     await _notificationsPlugin.show(
-      id: 999,
-      title: '⚠️ Retard de synchronisation',
-      body: message,
-      notificationDetails: const NotificationDetails(android: androidDetails),
+      999,
+      '⚠️ Retard de synchronisation',
+      message,
+      const NotificationDetails(android: androidDetails),
       payload: 'open_sync_errors',
     );
   }
 
   /// Affiche une alerte lorsque le quota cloud approche de la limite.
-  Future<void> showQuotaWarningNotification(
-      {required String title, required String body}) async {
+  Future<void> showQuotaWarningNotification({
+    required String title,
+    required String body,
+  }) async {
     if (Platform.isWindows) {
       final LocalNotification notification = LocalNotification(
         identifier: 'quota_warning',
@@ -266,20 +280,20 @@ class NotificationService {
 
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
-      'quota_alerts',
-      'Alertes Quotas Cloud',
-      channelDescription:
-          'Avertissements sur l\'utilisation de l\'espace Supabase',
-      importance: Importance.high,
-      priority: Priority.high,
-      color: Color(0xFFFF9800), // Orange pour l'alerte
-    );
+          'quota_alerts',
+          'Alertes Quotas Cloud',
+          channelDescription:
+              'Avertissements sur l\'utilisation de l\'espace Supabase',
+          importance: Importance.high,
+          priority: Priority.high,
+          color: Color(0xFFFF9800), // Orange pour l'alerte
+        );
 
     await _notificationsPlugin.show(
-      id: 888,
-      title: title,
-      body: body,
-      notificationDetails: const NotificationDetails(android: androidDetails),
+      888,
+      title,
+      body,
+      const NotificationDetails(android: androidDetails),
       payload: 'open_settings',
     );
   }
@@ -305,17 +319,17 @@ class NotificationService {
 
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
-      'marketing_alerts',
-      'Alertes Marketing',
-      importance: Importance.high,
-      priority: Priority.high,
-    );
+          'marketing_alerts',
+          'Alertes Marketing',
+          importance: Importance.high,
+          priority: Priority.high,
+        );
 
     await _notificationsPlugin.show(
-      id: 2000 + discountId,
-      title: '⏰ Fin de promo proche',
-      body: message,
-      notificationDetails: const NotificationDetails(android: androidDetails),
+      2000 + discountId,
+      '⏰ Fin de promo proche',
+      message,
+      const NotificationDetails(android: androidDetails),
     );
   }
 
@@ -339,18 +353,18 @@ class NotificationService {
 
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
-      'high_loss_alerts',
-      'Alertes Coupons à Forte Perte',
-      importance: Importance.high,
-      priority: Priority.high,
-      color: Color(0xFFD32F2F), // Rouge pour l'alerte
-    );
+          'high_loss_alerts',
+          'Alertes Coupons à Forte Perte',
+          importance: Importance.high,
+          priority: Priority.high,
+          color: Color(0xFFD32F2F), // Rouge pour l'alerte
+        );
 
     await _notificationsPlugin.show(
-      id: 3000 + couponCode.hashCode,
-      title: '🚨 Coupon à forte perte détecté',
-      body: message,
-      notificationDetails: const NotificationDetails(android: androidDetails),
+      3000 + couponCode.hashCode,
+      '🚨 Coupon à forte perte détecté',
+      message,
+      const NotificationDetails(android: androidDetails),
       payload: 'open_discounts_screen', // Pour ouvrir l'écran des remises
     );
   }

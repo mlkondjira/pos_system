@@ -309,6 +309,17 @@ CREATE TABLE IF NOT EXISTS public.discounts (
     UNIQUE(shop_id, local_id)
 );
 
+-- Table Étiquettes produits
+CREATE TABLE IF NOT EXISTS public.product_tags (
+    id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+    shop_id uuid NOT NULL REFERENCES public.shops(id) ON DELETE CASCADE,
+    local_id int NOT NULL,
+    name text NOT NULL,
+    color text DEFAULT '#9E9E9E',
+    created_at timestamptz DEFAULT now(),
+    UNIQUE(shop_id, local_id)
+);
+
 -- Table Fournisseurs
 CREATE TABLE IF NOT EXISTS public.suppliers (
     id uuid NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -2023,6 +2034,133 @@ SELECT cron.schedule(
 -- Correction: Révoquer l'exécution de PUBLIC et authenticated pour la fonction de trigger
 REVOKE EXECUTE ON FUNCTION public.fn_capture_terminal_ip() FROM PUBLIC, anon;
 REVOKE EXECUTE ON FUNCTION public.fn_capture_terminal_ip() FROM authenticated;
+
+-- ============================================================
+--  SYSTÈME DE LICENCES SaaS GPOS
+-- ============================================================
+
+-- 1. Table des Abonnements
+CREATE TABLE IF NOT EXISTS public.subscriptions (
+    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    shop_id uuid NOT NULL UNIQUE REFERENCES public.shops(id) ON DELETE CASCADE,
+    owner_id uuid REFERENCES auth.users(id), -- auth.uid() du propriétaire
+    plan text NOT NULL DEFAULT 'free', -- 'free' | 'pro' | 'premium'
+    status text NOT NULL DEFAULT 'active', -- 'active' | 'expired' | 'suspended' | 'trial'
+    trial_ends_at timestamptz,
+    current_period_start timestamptz DEFAULT now(),
+    current_period_end timestamptz, -- null pour 'free'
+    price_fcfa integer DEFAULT 0,
+    payment_method text DEFAULT 'manual', -- 'wave' | 'orange_money' | 'manual'
+    last_payment_at timestamptz,
+    next_payment_at timestamptz,
+    notes text DEFAULT '',
+    created_at timestamptz DEFAULT now(),
+    updated_at timestamptz DEFAULT now()
+);
+
+-- 2. Table historique des paiements
+CREATE TABLE IF NOT EXISTS public.subscription_payments (
+    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    subscription_id uuid REFERENCES public.subscriptions(id) ON DELETE SET NULL,
+    shop_id uuid NOT NULL REFERENCES public.shops(id) ON DELETE CASCADE,
+    amount_fcfa integer NOT NULL,
+    method text NOT NULL, -- 'wave' | 'orange_money' | 'cash'
+    reference text, -- Référence transaction mobile
+    status text DEFAULT 'completed', -- 'completed' | 'pending' | 'failed'
+    period_start timestamptz,
+    period_end timestamptz,
+    notes text DEFAULT '',
+    paid_at timestamptz DEFAULT now()
+);
+
+-- Indexation
+CREATE INDEX IF NOT EXISTS idx_subscriptions_shop_id ON public.subscriptions (shop_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_owner_id ON public.subscriptions (owner_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON public.subscriptions (status);
+
+-- Sécurité RLS
+ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.subscription_payments ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view their shop subscription" ON public.subscriptions;
+CREATE POLICY "Users can view their shop subscription" 
+ON public.subscriptions FOR SELECT 
+TO authenticated
+USING (
+    EXISTS (SELECT 1 FROM public.shops WHERE id = subscriptions.shop_id AND owner_id = auth.uid())
+    OR public.check_is_shop_member(subscriptions.shop_id)
+);
+
+DROP POLICY IF EXISTS "Owners can manage their subscriptions" ON public.subscriptions;
+CREATE POLICY "Owners can manage their subscriptions"
+ON public.subscriptions FOR ALL
+TO authenticated
+USING (EXISTS (SELECT 1 FROM public.shops WHERE id = subscriptions.shop_id AND owner_id = auth.uid()));
+
+-- Triggers pour updated_at (Réutilisation de la fonction globale)
+DROP TRIGGER IF EXISTS tr_subscriptions_updated_at ON public.subscriptions;
+CREATE TRIGGER tr_subscriptions_updated_at
+    BEFORE UPDATE ON public.subscriptions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 3. Vue des limites par plan
+CREATE OR REPLACE VIEW public.plan_limits WITH (security_invoker = true) AS
+SELECT * FROM (VALUES
+  ('free',    50,    1,   false, false, false, false),
+  ('pro',     -1,    3,   true,  true,  false, false),
+  ('premium', -1,    -1,  true,  true,  true,  true)
+) AS t(
+  plan,
+  max_products,    -- -1 = illimité
+  max_stores,      -- -1 = illimité
+  sync_enabled,
+  reports_enabled,
+  multi_store,
+  ai_reports
+);
+
+-- 4. Fonction de vérification d'accès aux fonctionnalités
+CREATE OR REPLACE FUNCTION public.can_access_feature(
+  p_shop_id uuid,
+  p_feature text
+) RETURNS boolean AS $$
+DECLARE
+  v_plan text;
+  v_status text;
+BEGIN
+  SELECT plan, status INTO v_plan, v_status
+  FROM public.subscriptions
+  WHERE shop_id = p_shop_id;
+
+  -- Si pas de subscription ou suspendu
+  IF v_plan IS NULL THEN v_plan := 'free'; END IF;
+  IF v_status = 'suspended' THEN RETURN false; END IF;
+
+  RETURN CASE p_feature
+    WHEN 'sync'        THEN v_plan IN ('pro', 'premium')
+    WHEN 'reports'     THEN v_plan IN ('pro', 'premium')
+    WHEN 'multi_store' THEN v_plan = 'premium'
+    WHEN 'ai_reports'  THEN v_plan = 'premium'
+    WHEN 'api_access'  THEN v_plan IN ('pro', 'premium')
+    ELSE true
+  END;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
+
+-- Permissions
+GRANT SELECT ON TABLE public.plan_limits TO authenticated;
+GRANT SELECT ON TABLE public.subscriptions TO authenticated;
+GRANT SELECT ON TABLE public.subscription_payments TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_access_feature(uuid, text) TO authenticated;
+
+-- Activer le Realtime pour les abonnements
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'subscriptions') 
+    AND NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'subscriptions') THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.subscriptions;
+    END IF;
+END $$;
 
 -- Forcer la mise à jour du cache de l'API pour voir les nouvelles fonctions (get_project_usage)
 NOTIFY pgrst, 'reload schema';

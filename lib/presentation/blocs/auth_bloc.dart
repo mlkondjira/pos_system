@@ -55,7 +55,8 @@ class AuthState extends Equatable {
   final String? error;
   final bool isBeingForceLoggedOut;
   final String? info; // Message d'information (ex: succès envoi email)
-  final DateTime? setupTimestamp; // Pour forcer le rafraîchissement UI après setup
+  final DateTime?
+  setupTimestamp; // Pour forcer le rafraîchissement UI après setup
 
   const AuthState({
     this.user,
@@ -80,14 +81,22 @@ class AuthState extends Equatable {
       user: user ?? this.user,
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       error: clearError ? null : error ?? this.error,
-      isBeingForceLoggedOut: isBeingForceLoggedOut ?? this.isBeingForceLoggedOut,
+      isBeingForceLoggedOut:
+          isBeingForceLoggedOut ?? this.isBeingForceLoggedOut,
       info: clearInfo ? null : info ?? this.info,
       setupTimestamp: setupTimestamp ?? this.setupTimestamp,
     );
   }
 
   @override
-  List<Object?> get props => [user, isAuthenticated, error, isBeingForceLoggedOut, info, setupTimestamp];
+  List<Object?> get props => [
+    user,
+    isAuthenticated,
+    error,
+    isBeingForceLoggedOut,
+    info,
+    setupTimestamp,
+  ];
 }
 
 // ── BLOC ───────────────────────────────────────────
@@ -100,7 +109,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginWithEmailRequested>(_onLoginWithEmailRequested);
     on<PasswordResetRequested>(_onPasswordResetRequested);
     on<LogoutRequested>(_onLogoutRequested);
-    on<ShopSetupCompleted>((event, emit) => emit(state.copyWith(setupTimestamp: DateTime.now())));
+    on<ShopSetupCompleted>(
+      (event, emit) => emit(state.copyWith(setupTimestamp: DateTime.now())),
+    );
     on<_UserStatusChanged>(_onUserStatusChanged);
   }
 
@@ -110,7 +121,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     return super.close();
   }
 
-  Future<void> _onLoginRequested(LoginRequested event, Emitter<AuthState> emit) async {
+  Future<void> _onLoginRequested(
+    LoginRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     try {
       final user = await _db.verifyUserPin(event.userId, event.pin);
       emit(AuthState(user: user, isAuthenticated: true));
@@ -121,39 +135,47 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  Future<void> _onLoginWithEmailRequested(LoginWithEmailRequested event, Emitter<AuthState> emit) async {
+  Future<void> _onLoginWithEmailRequested(
+    LoginWithEmailRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     try {
       // 1. Authentification Cloud via Supabase
-      final response = await sb.Supabase.instance.client.auth.signInWithPassword(
-        email: event.email,
-        password: event.password,
-      );
-      
+      final response = await sb.Supabase.instance.client.auth
+          .signInWithPassword(email: event.email, password: event.password);
+
       if (response.user != null) {
         final sbUser = response.user!;
-        
+
         // 2. Synchronisation avec la base locale (pour avoir un objet User compatible avec le reste de l'app)
         final user = await _db.ensureLocalOwner(
           supabaseId: sbUser.id,
           email: sbUser.email,
           name: sbUser.userMetadata?['name'] as String?,
         );
-        
+
         emit(AuthState(user: user, isAuthenticated: true));
         _watchUserStatus(user.id);
       } else {
-         emit(state.copyWith(error: 'Échec de la connexion cloud.'));
+        emit(state.copyWith(error: 'Échec de la connexion cloud.'));
       }
     } catch (e) {
       emit(state.copyWith(error: ErrorFormatter.format(e)));
     }
   }
 
-  Future<void> _onPasswordResetRequested(PasswordResetRequested event, Emitter<AuthState> emit) async {
+  Future<void> _onPasswordResetRequested(
+    PasswordResetRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     try {
       emit(state.copyWith(clearError: true, clearInfo: true));
       await sb.Supabase.instance.client.auth.resetPasswordForEmail(event.email);
-      emit(state.copyWith(info: 'Email de réinitialisation envoyé à ${event.email}'));
+      emit(
+        state.copyWith(
+          info: 'Email de réinitialisation envoyé à ${event.email}',
+        ),
+      );
     } on sb.AuthException catch (e) {
       emit(state.copyWith(error: e.message));
     } catch (e) {
@@ -161,7 +183,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  Future<void> _onLogoutRequested(LogoutRequested event, Emitter<AuthState> emit) async {
+  Future<void> _onLogoutRequested(
+    LogoutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     // Déconnexion Cloud + Local
     await sb.Supabase.instance.client.auth.signOut();
 
@@ -182,7 +207,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   // Handler pour l'événement de changement de statut
-  void _onUserStatusChanged(_UserStatusChanged event, Emitter<AuthState> emit) async {
+  void _onUserStatusChanged(
+    _UserStatusChanged event,
+    Emitter<AuthState> emit,
+  ) async {
     final user = event.user;
     // Si l'utilisateur est supprimé (null) ou désactivé, et qu'il est actuellement connecté
     if (state.isAuthenticated && (user == null || !user.isActive)) {

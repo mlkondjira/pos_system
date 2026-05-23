@@ -6,6 +6,9 @@ import '../../data/services/printer_service.dart';
 import '../../data/services/sync_service.dart'; // N'oubliez pas l'import !
 import '../../core/utils/logger_service.dart';
 import '../../core/utils/notification_service.dart';
+import '../../core/services/stock_predictor.dart';
+import '../../core/services/ai_report_service.dart';
+import '../../core/services/license_service.dart';
 import 'package:pos_system/core/services/navigation_service.dart';
 import '../../presentation/screens/settings/audit_log_bloc.dart'; // Correction du chemin d'importation
 import '../../presentation/blocs/override_report_bloc.dart'; // Ajout de l'importation pour OverrideReportBloc
@@ -31,20 +34,32 @@ Future<void> setupDependencies() async {
 
   // Service de synchronisation (singleton) - Nécessite la Database et Supabase
   getIt.registerLazySingleton<SyncService>(
-      () => SyncService(getIt<PosDatabase>(), Supabase.instance.client));
+    () => SyncService(getIt<PosDatabase>(), Supabase.instance.client),
+  );
 
   // Service imprimante Bluetooth (singleton)
   getIt.registerLazySingleton<PrinterService>(
-      () => PrinterService(getIt<PosDatabase>()));
+    () => PrinterService(getIt<PosDatabase>()),
+  );
+
+  // Service de licence SaaS (indispensable au démarrage)
+  getIt.registerLazySingleton<LicenseService>(
+    () => LicenseService(getIt<PosDatabase>(), Supabase.instance.client),
+  );
+
+  getIt.registerLazySingleton(() => StockPredictor(getIt<PosDatabase>()));
+  getIt.registerLazySingleton(() => AiReportService(getIt<PosDatabase>()));
 
   // ─── BLOCS ──────────────────────────────────────────────────────────────
   // Enregistrez les Blocs en tant que "factory" pour obtenir une nouvelle instance à chaque fois.
   getIt.registerFactory<UsersBloc>(() => UsersBloc(getIt<PosDatabase>()));
   getIt.registerFactory<AuditLogBloc>(() => AuditLogBloc(getIt<PosDatabase>()));
   getIt.registerFactory<OverrideReportBloc>(
-      () => OverrideReportBloc(getIt<PosDatabase>()));
+    () => OverrideReportBloc(getIt<PosDatabase>()),
+  );
   getIt.registerFactory<ProductsBloc>(() => ProductsBloc(getIt<PosDatabase>()));
   getIt.registerFactory<DiscountsBloc>(
-      () => DiscountsBloc(getIt<PosDatabase>()));
+    () => DiscountsBloc(getIt<PosDatabase>()),
+  );
   getIt.registerFactory<ThemeBloc>(() => ThemeBloc(getIt<PosDatabase>()));
 }

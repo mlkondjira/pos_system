@@ -35,8 +35,11 @@ class _DeclareLossDialogState extends State<DeclareLossDialog> {
         final directory = await getApplicationDocumentsDirectory();
         final String path = p.join(directory.path, 'justifications');
         await Directory(path).create(recursive: true);
-        final String fileName = 'loss_${DateTime.now().millisecondsSinceEpoch}${p.extension(photo.path)}';
-        final File savedImage = await File(photo.path).copy(p.join(path, fileName));
+        final String fileName =
+            'loss_${DateTime.now().millisecondsSinceEpoch}${p.extension(photo.path)}';
+        final File savedImage = await File(
+          photo.path,
+        ).copy(p.join(path, fileName));
         setState(() => _justificationPath = savedImage.path);
       }
     } catch (e) {
@@ -78,7 +81,10 @@ class _DeclareLossDialogState extends State<DeclareLossDialog> {
             initialValue: Fmt.currency(widget.product.priceHt),
             readOnly: true,
             enabled: false,
-            style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
             decoration: const InputDecoration(
               labelText: 'Prix de vente actuel',
               prefixIcon: Icon(Icons.sell_outlined),
@@ -91,16 +97,24 @@ class _DeclareLossDialogState extends State<DeclareLossDialog> {
             style: const TextStyle(color: AppColors.textPrimary),
             decoration: const InputDecoration(labelText: 'Motif de la perte'),
             items: const [
-              DropdownMenuItem(value: 'defective', child: Text('Endommagé / Défectueux')),
+              DropdownMenuItem(
+                value: 'defective',
+                child: Text('Endommagé / Défectueux'),
+              ),
               DropdownMenuItem(value: 'expired', child: Text('Périmé')),
-              DropdownMenuItem(value: 'obsolete', child: Text('Obsolète / Invendable')),
+              DropdownMenuItem(
+                value: 'obsolete',
+                child: Text('Obsolète / Invendable'),
+              ),
             ],
             onChanged: (v) => setState(() => _type = v!),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _qtyCtrl,
-            onChanged: (_) => setState(() {}), // Force le rafraîchissement pour recalculer le total
+            onChanged: (_) => setState(
+              () {},
+            ), // Force le rafraîchissement pour recalculer le total
             keyboardType: TextInputType.number,
             style: const TextStyle(color: AppColors.textPrimary),
             decoration: InputDecoration(
@@ -125,10 +139,16 @@ class _DeclareLossDialogState extends State<DeclareLossDialog> {
                 child: OutlinedButton.icon(
                   onPressed: _takePhoto,
                   icon: const Icon(Icons.camera_alt_outlined, size: 18),
-                  label: Text(_justificationPath == null ? 'Prendre une photo' : 'Changer la photo'),
+                  label: Text(
+                    _justificationPath == null
+                        ? 'Prendre une photo'
+                        : 'Changer la photo',
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.textSecondary,
-                    side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.2),
+                    ),
                   ),
                 ),
               ),
@@ -139,16 +159,29 @@ class _DeclareLossDialogState extends State<DeclareLossDialog> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.file(File(_justificationPath!), width: 42, height: 42, fit: BoxFit.cover),
+                      child: Image.file(
+                        File(_justificationPath!),
+                        width: 42,
+                        height: 42,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                     Positioned(
-                      top: -8, right: -8,
+                      top: -8,
+                      right: -8,
                       child: GestureDetector(
                         onTap: () => setState(() => _justificationPath = null),
                         child: Container(
                           padding: const EdgeInsets.all(2),
-                          decoration: const BoxDecoration(color: AppColors.danger, shape: BoxShape.circle),
-                          child: const Icon(Icons.close, size: 12, color: Colors.white),
+                          decoration: const BoxDecoration(
+                            color: AppColors.danger,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            size: 12,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -164,15 +197,31 @@ class _DeclareLossDialogState extends State<DeclareLossDialog> {
             decoration: BoxDecoration(
               color: AppColors.dangerSoft,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.danger.withValues(alpha: 0.2)),
+              border: Border.all(
+                color: AppColors.danger.withValues(alpha: 0.2),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('VALEUR TOTALE :', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.w800, fontSize: 11, letterSpacing: 0.5)),
+                const Text(
+                  'VALEUR TOTALE :',
+                  style: TextStyle(
+                    color: AppColors.danger,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11,
+                    letterSpacing: 0.5,
+                  ),
+                ),
                 Text(
-                  Fmt.currency((int.tryParse(_qtyCtrl.text) ?? 0) * widget.product.priceHt),
-                  style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.w900, fontSize: 18),
+                  Fmt.currency(
+                    (int.tryParse(_qtyCtrl.text) ?? 0) * widget.product.priceHt,
+                  ),
+                  style: const TextStyle(
+                    color: AppColors.danger,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                  ),
                 ),
               ],
             ),
@@ -182,7 +231,10 @@ class _DeclareLossDialogState extends State<DeclareLossDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Annuler', style: TextStyle(color: AppColors.textSecondary)),
+          child: const Text(
+            'Annuler',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
         ),
         ElevatedButton(
           onPressed: () {
@@ -194,10 +246,10 @@ class _DeclareLossDialogState extends State<DeclareLossDialog> {
               return;
             }
             Navigator.pop(context, (
-              qty: q, 
-              type: _type, 
+              qty: q,
+              type: _type,
               notes: _notesCtrl.text.trim(),
-              imagePath: _justificationPath
+              imagePath: _justificationPath,
             ));
           },
           style: ElevatedButton.styleFrom(

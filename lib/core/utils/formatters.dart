@@ -11,8 +11,7 @@ class Fmt {
     }
     final n = amount
         .toStringAsFixed(0)
-        .replaceAllMapped(
-            RegExp(r'(\d{1,3})(?=(\d{3})+$)'), (m) => '${m[1]} ');
+        .replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+$)'), (m) => '${m[1]} ');
     return '$n $sym';
   }
 
@@ -25,8 +24,7 @@ class Fmt {
       DateFormat('dd/MM/yyyy HH:mm', 'fr_FR').format(dt);
 
   /// Format heure seule
-  static String time(DateTime dt) =>
-      DateFormat('HH:mm', 'fr_FR').format(dt);
+  static String time(DateTime dt) => DateFormat('HH:mm', 'fr_FR').format(dt);
 
   /// Génère une référence de vente unique
   static String saleRef() {
@@ -51,14 +49,14 @@ class Fmt {
 
   /// Libellé mode de paiement
   static String paymentMethod(String method) => switch (method) {
-        'cash' => 'Espèces',
-        'card' => 'Carte bancaire',
-        'mobile_money' => 'Mobile Money',
-        'wave' => 'Wave',
-        'orange_money' => 'Orange Money',
-        'credit' => 'Crédit',
-        _ => method,
-      };
+    'cash' => 'Espèces',
+    'card' => 'Carte bancaire',
+    'mobile_money' => 'Mobile Money',
+    'wave' => 'Wave',
+    'orange_money' => 'Orange Money',
+    'credit' => 'Crédit',
+    _ => method,
+  };
 
   static String _p(int n) => n.toString().padLeft(2, '0');
 }

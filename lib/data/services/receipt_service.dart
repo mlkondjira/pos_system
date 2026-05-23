@@ -9,26 +9,26 @@ import 'package:flutter/services.dart';
 // Commandes ESC/POS de base
 class EscPos {
   static const esc = 0x1B;
-  static const gs  = 0x1D;
-  static const lf  = 0x0A;
+  static const gs = 0x1D;
+  static const lf = 0x0A;
 
   // Init imprimante
   static Uint8List init() => Uint8List.fromList([esc, 0x40]);
 
   // Alignement
-  static Uint8List alignLeft()   => Uint8List.fromList([esc, 0x61, 0x00]);
+  static Uint8List alignLeft() => Uint8List.fromList([esc, 0x61, 0x00]);
   static Uint8List alignCenter() => Uint8List.fromList([esc, 0x61, 0x01]);
-  static Uint8List alignRight()  => Uint8List.fromList([esc, 0x61, 0x02]);
+  static Uint8List alignRight() => Uint8List.fromList([esc, 0x61, 0x02]);
 
   // Police
-  static Uint8List boldOn()  => Uint8List.fromList([esc, 0x45, 0x01]);
+  static Uint8List boldOn() => Uint8List.fromList([esc, 0x45, 0x01]);
   static Uint8List boldOff() => Uint8List.fromList([esc, 0x45, 0x00]);
 
   // Taille du texte
-  static Uint8List normalSize()  => Uint8List.fromList([gs, 0x21, 0x00]);
+  static Uint8List normalSize() => Uint8List.fromList([gs, 0x21, 0x00]);
   static Uint8List doubleWidth() => Uint8List.fromList([gs, 0x21, 0x20]);
-  static Uint8List doubleHeight()=> Uint8List.fromList([gs, 0x21, 0x10]);
-  static Uint8List doubleSize()  => Uint8List.fromList([gs, 0x21, 0x11]);
+  static Uint8List doubleHeight() => Uint8List.fromList([gs, 0x21, 0x10]);
+  static Uint8List doubleSize() => Uint8List.fromList([gs, 0x21, 0x11]);
 
   // Saut de ligne
   static Uint8List feed({int lines = 1}) =>
@@ -60,11 +60,9 @@ class EscPos {
       text(char * width);
 
   // Ligne avec deux colonnes (gauche + droite)
-  static Uint8List twoColumn(String left, String right,
-      {int width = 32}) {
+  static Uint8List twoColumn(String left, String right, {int width = 32}) {
     final spaces = width - left.length - right.length;
-    final line =
-        left + ' ' * (spaces > 0 ? spaces : 1) + right;
+    final line = left + ' ' * (spaces > 0 ? spaces : 1) + right;
     return text(line);
   }
 }
@@ -138,12 +136,11 @@ class ReceiptGenerator {
       final name = item.name.length > _width - 12
           ? '${item.name.substring(0, _width - 12)}...'
           : item.name;
-      b.add(EscPos.text(_col3(
-        name,
-        'x${item.qty}',
-        _formatAmount(item.lineTotal),
-        _width,
-      )));
+      b.add(
+        EscPos.text(
+          _col3(name, 'x${item.qty}', _formatAmount(item.lineTotal), _width),
+        ),
+      );
       if (item.discountPct > 0) {
         b.add(EscPos.text('  Remise ${item.discountPct.toStringAsFixed(0)}%'));
       }
@@ -152,7 +149,13 @@ class ReceiptGenerator {
     b.add(EscPos.separator(width: _width));
 
     // Totaux
-    b.add(EscPos.twoColumn('Sous-total HT', _formatAmount(subtotalHt), width: _width));
+    b.add(
+      EscPos.twoColumn(
+        'Sous-total HT',
+        _formatAmount(subtotalHt),
+        width: _width,
+      ),
+    );
     if (taxes > 0) {
       b.add(EscPos.twoColumn('Taxes', _formatAmount(taxes), width: _width));
     }
@@ -165,8 +168,13 @@ class ReceiptGenerator {
     b.add(EscPos.boldOff());
 
     b.add(EscPos.feed());
-    b.add(EscPos.twoColumn(_paymentLabel(paymentMethod),
-        _formatAmount(amountPaid), width: _width));
+    b.add(
+      EscPos.twoColumn(
+        _paymentLabel(paymentMethod),
+        _formatAmount(amountPaid),
+        width: _width,
+      ),
+    );
     if (change > 0) {
       b.add(EscPos.twoColumn('Monnaie', _formatAmount(change), width: _width));
     }
@@ -206,12 +214,12 @@ class ReceiptGenerator {
       '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 
   static String _paymentLabel(String method) => switch (method) {
-        'cash' => 'Espèces reçues',
-        'card' => 'Carte bancaire',
-        'mobile_money' => 'Mobile Money',
-        'credit' => 'Crédit accordé',
-        _ => 'Paiement',
-      };
+    'cash' => 'Espèces reçues',
+    'card' => 'Carte bancaire',
+    'mobile_money' => 'Mobile Money',
+    'credit' => 'Crédit accordé',
+    _ => 'Paiement',
+  };
 }
 
 class ReceiptLine {

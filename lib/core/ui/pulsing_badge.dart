@@ -4,11 +4,7 @@ class PulsingBadge extends StatefulWidget {
   final String label;
   final Color color;
 
-  const PulsingBadge({
-    super.key,
-    required this.label,
-    required this.color,
-  });
+  const PulsingBadge({super.key, required this.label, required this.color});
 
   @override
   State<PulsingBadge> createState() => _PulsingBadgeState();
@@ -26,10 +22,11 @@ class _PulsingBadgeState extends State<PulsingBadge>
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     )..repeat(reverse: true); // Animation en boucle (aller-retour)
-    
-    _animation = Tween<double>(begin: 1.0, end: 1.15).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+
+    _animation = Tween<double>(
+      begin: 1.0,
+      end: 1.15,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override

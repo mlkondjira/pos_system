@@ -37,9 +37,18 @@ class ProductsState extends Equatable {
   final String? error;
   final bool success;
 
-  const ProductsState({this.isLoading = false, this.error, this.success = false});
+  const ProductsState({
+    this.isLoading = false,
+    this.error,
+    this.success = false,
+  });
 
-  ProductsState copyWith({bool? isLoading, String? error, bool? success, bool? clearError}) {
+  ProductsState copyWith({
+    bool? isLoading,
+    String? error,
+    bool? success,
+    bool? clearError,
+  }) {
     return ProductsState(
       isLoading: isLoading ?? this.isLoading,
       error: clearError == true ? null : error ?? this.error,
@@ -60,18 +69,25 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
     on<DeleteProduct>(_onDeleteProduct);
   }
 
-  Future<void> _onUpdateProductPrice(UpdateProductPrice event, Emitter<ProductsState> emit) async {
+  Future<void> _onUpdateProductPrice(
+    UpdateProductPrice event,
+    Emitter<ProductsState> emit,
+  ) async {
     emit(state.copyWith(isLoading: true, success: false, clearError: true));
     try {
       // 1. Récupérer le produit actuel pour comparer le prix
-      final currentProduct = await (_db.select(_db.products)..where((p) => p.id.equals(event.productId))).getSingle();
+      final currentProduct = await (_db.select(
+        _db.products,
+      )..where((p) => p.id.equals(event.productId))).getSingle();
 
       // 2. Mettre à jour le produit dans la base de données
       final companion = ProductsCompanion(
         priceHt: Value(event.newPriceHt),
         updatedAt: Value(DateTime.now()),
       );
-      await (_db.update(_db.products)..where((p) => p.id.equals(event.productId))).write(companion);
+      await (_db.update(
+        _db.products,
+      )..where((p) => p.id.equals(event.productId))).write(companion);
 
       // 3. Enregistrer l'audit si le prix a changé
       if (currentProduct.priceHt != event.newPriceHt) {
@@ -89,17 +105,30 @@ class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
       }
       emit(state.copyWith(isLoading: false, success: true));
     } catch (e) {
-      emit(state.copyWith(isLoading: false, error: 'Erreur de mise à jour du prix: $e'));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          error: 'Erreur de mise à jour du prix: $e',
+        ),
+      );
     }
   }
 
-  Future<void> _onDeleteProduct(DeleteProduct event, Emitter<ProductsState> emit) async {
+  Future<void> _onDeleteProduct(
+    DeleteProduct event,
+    Emitter<ProductsState> emit,
+  ) async {
     emit(state.copyWith(isLoading: true, success: false, clearError: true));
     try {
       await _db.deleteProduct(event.productId, event.actorId);
       emit(state.copyWith(isLoading: false, success: true));
     } catch (e) {
-      emit(state.copyWith(isLoading: false, error: 'Erreur lors de la suppression du produit : $e'));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          error: 'Erreur lors de la suppression du produit : $e',
+        ),
+      );
     }
   }
 }

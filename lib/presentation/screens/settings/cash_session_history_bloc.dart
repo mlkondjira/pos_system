@@ -62,17 +62,29 @@ class CashHistoryBloc extends Bloc<CashHistoryEvent, CashHistoryState> {
     on<DateRangeChanged>(_onDateRangeChanged);
   }
 
-  Future<void> _onLoadHistory(LoadCashHistory event, Emitter<CashHistoryState> emit) async {
+  Future<void> _onLoadHistory(
+    LoadCashHistory event,
+    Emitter<CashHistoryState> emit,
+  ) async {
     emit(state.copyWith(isLoading: true));
     await emit.forEach(
       _db.watchAllCashSessions(range: state.dateRange),
-      onData: (sessions) => state.copyWith(sessions: sessions, isLoading: false),
+      onData: (sessions) =>
+          state.copyWith(sessions: sessions, isLoading: false),
       onError: (e, _) => state.copyWith(isLoading: false, error: e.toString()),
     );
   }
 
-  void _onDateRangeChanged(DateRangeChanged event, Emitter<CashHistoryState> emit) {
-    emit(state.copyWith(dateRange: event.range, clearDateRange: event.range == null));
+  void _onDateRangeChanged(
+    DateRangeChanged event,
+    Emitter<CashHistoryState> emit,
+  ) {
+    emit(
+      state.copyWith(
+        dateRange: event.range,
+        clearDateRange: event.range == null,
+      ),
+    );
     add(LoadCashHistory());
   }
 }

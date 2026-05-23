@@ -13,7 +13,8 @@ class EmailVerificationScreen extends StatefulWidget {
   const EmailVerificationScreen({super.key, required this.email});
 
   @override
-  State<EmailVerificationScreen> createState() => _EmailVerificationScreenState();
+  State<EmailVerificationScreen> createState() =>
+      _EmailVerificationScreenState();
 }
 
 class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
@@ -42,7 +43,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   void _startResendTimer() {
     _resendTimer?.cancel();
     setState(() => _resendCountdown = 60);
-    
+
     _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_resendCountdown == 0) {
         timer.cancel();
@@ -71,7 +72,10 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
         _errorMessage = e.toString().replaceAll('Exception: ', '');
         _isLoading = false;
       });
-      _showSnackBar('Erreur lors de l\'envoi du code: $_errorMessage', AppColors.danger);
+      _showSnackBar(
+        'Erreur lors de l\'envoi du code: $_errorMessage',
+        AppColors.danger,
+      );
     }
   }
 
@@ -83,35 +87,45 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       _errorMessage = null;
     });
     try {
-      await getIt<SyncService>().verifyEmailOtp(widget.email, _otpController.text.trim());
-      
+      await getIt<SyncService>().verifyEmailOtp(
+        widget.email,
+        _otpController.text.trim(),
+      );
+
       // Vérifier si l'email est maintenant confirmé
-      await Supabase.instance.client.auth.refreshSession(); // Rafraîchir la session pour obtenir le statut à jour
+      await Supabase.instance.client.auth
+          .refreshSession(); // Rafraîchir la session pour obtenir le statut à jour
       final user = Supabase.instance.client.auth.currentUser;
 
       if (user?.emailConfirmedAt != null) {
         if (mounted) {
           _showSnackBar('Email vérifié avec succès !', AppColors.success);
-          Navigator.of(context).pop(true); // Indiquer le succès à l'écran précédent
+          Navigator.of(
+            context,
+          ).pop(true); // Indiquer le succès à l'écran précédent
         }
       } else {
-        throw Exception('La vérification a réussi mais le statut de l\'email n\'est pas mis à jour. Veuillez réessayer.');
+        throw Exception(
+          'La vérification a réussi mais le statut de l\'email n\'est pas mis à jour. Veuillez réessayer.',
+        );
       }
     } catch (e) {
       setState(() {
         _errorMessage = e.toString().replaceAll('Exception: ', '');
         _isLoading = false;
       });
-      _showSnackBar('Erreur lors de la vérification: $_errorMessage', AppColors.danger);
+      _showSnackBar(
+        'Erreur lors de la vérification: $_errorMessage',
+        AppColors.danger,
+      );
     }
   }
 
   void _showSnackBar(String message, Color color) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(message),
-      backgroundColor: color,
-    ));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message), backgroundColor: color));
   }
 
   Future<void> _handleLogout() async {
@@ -129,7 +143,9 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
         title: const Text('Vérification Email'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        actions: [IconButton(onPressed: _handleLogout, icon: const Icon(Icons.logout))],
+        actions: [
+          IconButton(onPressed: _handleLogout, icon: const Icon(Icons.logout)),
+        ],
       ),
       body: Center(
         child: Padding(
@@ -139,9 +155,14 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Un code OTP a été envoyé à ${widget.email}. Veuillez le saisir ci-dessous.',
+                Text(
+                  'Un code OTP a été envoyé à ${widget.email}. Veuillez le saisir ci-dessous.',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16, color: AppColors.textPrimary)),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
                 const SizedBox(height: 32),
                 TextFormField(
                   controller: _otpController,
@@ -150,28 +171,41 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                     labelText: 'Code OTP',
                     prefixIcon: Icon(Icons.vpn_key_outlined),
                   ),
-                  validator: (v) => v == null || v.isEmpty ? 'Veuillez saisir le code OTP' : null,
+                  validator: (v) => v == null || v.isEmpty
+                      ? 'Veuillez saisir le code OTP'
+                      : null,
                 ),
                 if (_errorMessage != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 16),
-                    child: Text(_errorMessage!, style: const TextStyle(color: AppColors.danger)),
+                    child: Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: AppColors.danger),
+                    ),
                   ),
                 const SizedBox(height: 32),
                 ElevatedButton(
                   onPressed: _isLoading ? null : _verifyOtp,
-                  child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('Vérifier le code'),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Vérifier le code'),
                 ),
                 TextButton(
-                  onPressed: (_isLoading || _resendCountdown > 0) ? null : _sendOtp,
-                  child: Text(_resendCountdown > 0 
-                    ? 'Renvoyer le code ($_resendCountdown s)' 
-                    : 'Renvoyer le code'),
+                  onPressed: (_isLoading || _resendCountdown > 0)
+                      ? null
+                      : _sendOtp,
+                  child: Text(
+                    _resendCountdown > 0
+                        ? 'Renvoyer le code ($_resendCountdown s)'
+                        : 'Renvoyer le code',
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: _isLoading ? null : _handleLogout,
-                  style: TextButton.styleFrom(foregroundColor: AppColors.textMuted),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.textMuted,
+                  ),
                   child: const Text('Utiliser un autre compte'),
                 ),
               ],

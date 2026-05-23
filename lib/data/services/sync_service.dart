@@ -1851,6 +1851,7 @@ class SyncService {
     'supplier' => 'suppliers',
     'purchase_order' => 'purchase_orders',
     'expense' => 'expenses',
+    'product_tag' => 'product_tags',
     'stock_delta' => 'products', // L'appel RPC agit sur la table 'products'
     _ => entityType,
   };

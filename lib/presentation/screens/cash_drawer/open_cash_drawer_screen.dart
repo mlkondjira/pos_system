@@ -29,9 +29,9 @@ class _OpenCashDrawerScreenState extends State<OpenCashDrawerScreen> {
       final amount =
           double.tryParse(_amountCtrl.text.replaceAll(' ', '')) ?? 0.0;
       final userId = context.read<AuthBloc>().state.user!.id;
-      context
-          .read<CashSessionBloc>()
-          .add(OpenSession(startingCash: amount, userId: userId));
+      context.read<CashSessionBloc>().add(
+        OpenSession(startingCash: amount, userId: userId),
+      );
     }
   }
 
@@ -49,7 +49,8 @@ class _OpenCashDrawerScreenState extends State<OpenCashDrawerScreen> {
             child: ConstrainedBox(
               // Hauteur minimale = écran complet pour centrer le contenu
               constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height -
+                minHeight:
+                    MediaQuery.of(context).size.height -
                     MediaQuery.of(context).padding.top -
                     MediaQuery.of(context).padding.bottom -
                     48,
@@ -100,8 +101,10 @@ class _OpenCashDrawerScreenState extends State<OpenCashDrawerScreen> {
                         ),
                         decoration: InputDecoration(
                           labelText: 'Fond de caisse initial',
-                          suffixText: Fmt.currency(0, symbol: 'FCFA')
-                              .replaceAll('0 ', ''),
+                          suffixText: Fmt.currency(
+                            0,
+                            symbol: 'FCFA',
+                          ).replaceAll('0 ', ''),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {

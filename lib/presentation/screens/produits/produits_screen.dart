@@ -12,6 +12,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/di/injection.dart';
 import '../../../data/database/pos_database.dart';
+import '../../../core/services/license_service.dart';
+import '../subscription/subscription_screen.dart';
 import '../../blocs/auth_bloc.dart';
 import '../../widgets/shared_widgets.dart';
 import 'product_form.dart';
@@ -225,6 +227,7 @@ class _ProduitsScreenState extends State<ProduitsScreen>
             icon: const Icon(Icons.upload_file_rounded, color: AppColors.info),
             tooltip: 'Importer des produits (CSV)',
             style: IconButton.styleFrom(
+              // Ligne 203
               // Ligne 200
               backgroundColor: AppColors.info.withValues(
                 alpha: 0.1,
@@ -249,13 +252,31 @@ class _ProduitsScreenState extends State<ProduitsScreen>
             ),
           ),
           const SizedBox(width: 10),
-          ElevatedButton.icon(
-            onPressed: () => _openForm(null),
-            icon: const Icon(Icons.add_rounded, size: 18),
-            label: const Text('Nouveau'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-            ),
+          StreamBuilder<List<Product>>(
+            // On écoute le compte des produits actifs
+            stream: (_db.select(
+              _db.products,
+            )..where((p) => p.isActive.equals(true))).watch(),
+            builder: (context, snapshot) {
+              final count = snapshot.data?.length ?? 0;
+              final license = getIt<LicenseService>();
+              final bool canAdd = license.currentState.canAddProduct(count);
+
+              return ElevatedButton.icon(
+                // Si canAdd est faux, onPressed est null -> bouton grisé
+                onPressed: canAdd ? () => _openForm(null) : null,
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('Nouveau'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 11,
+                  ),
+                  disabledBackgroundColor: AppColors.border,
+                  disabledForegroundColor: AppColors.textMuted,
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -272,7 +293,7 @@ class _ProduitsScreenState extends State<ProduitsScreen>
       return;
     }
 
-    final result = await FilePicker.pickFiles(
+    final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['csv'],
     );
@@ -300,10 +321,9 @@ class _ProduitsScreenState extends State<ProduitsScreen>
       final firstLine = csvString.split('\n').first;
       final separator = firstLine.contains(';') ? ';' : ',';
 
-      final fields = CsvDecoder(
-        fieldDelimiter: separator,
-        dynamicTyping: false,
-      ).convert(csvString);
+      final List<List<dynamic>> fields = const CsvToListConverter(
+        shouldParseNumbers: false,
+      ).convert(csvString, fieldDelimiter: separator);
 
       if (fields.isEmpty || fields.first.isEmpty) {
         _showSnack('Le fichier CSV est vide ou mal formaté.', AppColors.danger);
@@ -317,11 +337,22 @@ class _ProduitsScreenState extends State<ProduitsScreen>
       final dataRows = fields.sublist(1);
 
       final List<ProductsCompanion> productsToUpsert = [];
+      final licenseService = getIt<LicenseService>();
+      final int initialCount = await _db.getActiveProductsCount();
+      final int maxAllowed = licenseService.currentState.limits.maxProducts;
+      final bool isUnlimited =
+          licenseService.currentState.limits.isUnlimitedProducts;
+
       int importedCount = 0;
       int errorCount = 0;
       final List<String> errors = [];
 
       for (final row in dataRows) {
+        if (!isUnlimited && (initialCount + importedCount) >= maxAllowed) {
+          errors.add('Limite de plan atteinte ($maxAllowed produits).');
+          errorCount++;
+          break; // On arrête l'importation car la limite est atteinte
+        }
         try {
           final Map<String, dynamic> rowMap = {};
           for (int i = 0; i < headers.length; i++) {
@@ -403,11 +434,51 @@ class _ProduitsScreenState extends State<ProduitsScreen>
     }
   }
 
-  void _openForm(Product? product) {
+  Future<void> _openForm(Product? product) async {
+    // Si on ajoute un NOUVEAU produit (product == null), on vérifie la licence
+    if (product == null) {
+      final canAdd = await getIt<LicenseService>().canAddProduct();
+      if (!canAdd && mounted) {
+        _showLimitReachedDialog();
+        return;
+      }
+    }
+
+    if (!mounted) return;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (_) => ProductForm(product: product, db: _db),
+    );
+  }
+
+  void _showLimitReachedDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Limite atteinte'),
+        content: const Text(
+          'Le plan Gratuit est limité à 50 produits actifs. '
+          'Passez au plan Pro pour débloquer l\'ajout illimité et les rapports avancés.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('ANNULER'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            child: const Text('VOIR LES PLANS'),
+          ),
+        ],
+      ),
     );
   }
 

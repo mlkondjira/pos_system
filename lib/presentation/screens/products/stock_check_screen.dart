@@ -26,7 +26,9 @@ class _StockCheckScreenState extends State<StockCheckScreen> {
 
   void _handleKeyEvent(KeyEvent event) {
     // On ignore le scan si un champ texte est déjà utilisé (EditableText)
-    if (FocusManager.instance.primaryFocus?.context?.widget is EditableText) return;
+    if (FocusManager.instance.primaryFocus?.context?.widget is EditableText) {
+      return;
+    }
 
     if (event is KeyDownEvent) {
       if (event.logicalKey == LogicalKeyboardKey.enter) {
@@ -45,7 +47,9 @@ class _StockCheckScreenState extends State<StockCheckScreen> {
     setState(() => _isProcessing = true);
 
     final product = await _db.getProductByBarcode(barcode);
-    final inventoryLine = product != null ? await _db.getActiveInventoryLine(product.id) : null;
+    final inventoryLine = product != null
+        ? await _db.getActiveInventoryLine(product.id)
+        : null;
 
     if (!mounted) return;
 
@@ -63,8 +67,12 @@ class _StockCheckScreenState extends State<StockCheckScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
               const SizedBox(height: 20),
               Row(
@@ -75,8 +83,20 @@ class _StockCheckScreenState extends State<StockCheckScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(product.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text('Code: ${product.barcode ?? "N/A"}', style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
+                        Text(
+                          product.name,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Code: ${product.barcode ?? "N/A"}',
+                          style: const TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 13,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -101,13 +121,18 @@ class _StockCheckScreenState extends State<StockCheckScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Quantité en stock', style: TextStyle(fontSize: 16)),
+                  const Text(
+                    'Quantité en stock',
+                    style: TextStyle(fontSize: 16),
+                  ),
                   Text(
                     '${product.stockQty} ${product.unit}',
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w900,
-                      color: product.stockQty <= product.stockAlert ? AppColors.danger : AppColors.success,
+                      color: product.stockQty <= product.stockAlert
+                          ? AppColors.danger
+                          : AppColors.success,
                     ),
                   ),
                 ],
@@ -120,19 +145,35 @@ class _StockCheckScreenState extends State<StockCheckScreen> {
                       onPressed: () async {
                         final user = context.read<AuthBloc>().state.user;
                         if (user != null) {
-                          await _db.recordLoss(productId: product.id, quantity: 1, type: 'defective', userId: user.id);
+                          await _db.recordLoss(
+                            productId: product.id,
+                            quantity: 1,
+                            type: 'defective',
+                            userId: user.id,
+                          );
                           if (context.mounted) {
                             Navigator.pop(context);
-                            _showSnack('1 unité défectueuse retirée du stock', AppColors.success);
+                            _showSnack(
+                              '1 unité défectueuse retirée du stock',
+                              AppColors.success,
+                            );
                           }
                         }
                       },
-                      icon: const Icon(Icons.broken_image_outlined, color: Colors.white),
-                      label: const Text('Défectueux (-1)', style: TextStyle(color: Colors.white)),
+                      icon: const Icon(
+                        Icons.broken_image_outlined,
+                        color: Colors.white,
+                      ),
+                      label: const Text(
+                        'Défectueux (-1)',
+                        style: TextStyle(color: Colors.white),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.danger,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ),
@@ -143,12 +184,20 @@ class _StockCheckScreenState extends State<StockCheckScreen> {
                         Navigator.pop(context);
                         _showLossDialog(product);
                       },
-                      icon: const Icon(Icons.report_problem_outlined, color: AppColors.warning),
-                      label: const Text('Autre problème', style: TextStyle(color: AppColors.textSecondary)),
+                      icon: const Icon(
+                        Icons.report_problem_outlined,
+                        color: AppColors.warning,
+                      ),
+                      label: const Text(
+                        'Autre problème',
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: Colors.grey[300]!),
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ),
@@ -165,7 +214,9 @@ class _StockCheckScreenState extends State<StockCheckScreen> {
                     },
                     icon: const Icon(Icons.edit_note_rounded),
                     label: const Text('Saisir comptage Inventaire'),
-                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.accent,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -174,7 +225,9 @@ class _StockCheckScreenState extends State<StockCheckScreen> {
                 onPressed: () => Navigator.pop(context),
                 icon: const Icon(Icons.qr_code_scanner),
                 label: const Text('Scanner le suivant'),
-                style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                ),
               ),
             ],
           ),
@@ -182,7 +235,10 @@ class _StockCheckScreenState extends State<StockCheckScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Produit inconnu : $barcode'), backgroundColor: AppColors.warning),
+        SnackBar(
+          content: Text('Produit inconnu : $barcode'),
+          backgroundColor: AppColors.warning,
+        ),
       );
       await Future.delayed(const Duration(seconds: 1));
     }
@@ -195,10 +251,9 @@ class _StockCheckScreenState extends State<StockCheckScreen> {
   }
 
   void _showSnack(String msg, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      backgroundColor: color,
-    ));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: color));
   }
 
   Future<void> _showLossDialog(Product product) async {
@@ -214,20 +269,34 @@ class _StockCheckScreenState extends State<StockCheckScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Produit : ${product.name}', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+              Text(
+                'Produit : ${product.name}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textMuted,
+                ),
+              ),
               const SizedBox(height: 16),
               TextField(
                 controller: qtyCtrl,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Quantité à retirer'),
+                decoration: const InputDecoration(
+                  labelText: 'Quantité à retirer',
+                ),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: lossType,
                 decoration: const InputDecoration(labelText: 'Raison'),
                 items: const [
-                  DropdownMenuItem(value: 'defective', child: Text('Défectueux / Cassé')),
-                  DropdownMenuItem(value: 'obsolete', child: Text('Obsolète / Invendable')),
+                  DropdownMenuItem(
+                    value: 'defective',
+                    child: Text('Défectueux / Cassé'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'obsolete',
+                    child: Text('Obsolète / Invendable'),
+                  ),
                   DropdownMenuItem(value: 'expired', child: Text('Périmé')),
                 ],
                 onChanged: (v) => setDialogState(() => lossType = v!),
@@ -235,7 +304,10 @@ class _StockCheckScreenState extends State<StockCheckScreen> {
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Annuler'),
+            ),
             ElevatedButton(
               onPressed: () async {
                 final qty = int.tryParse(qtyCtrl.text) ?? 0;
@@ -249,12 +321,17 @@ class _StockCheckScreenState extends State<StockCheckScreen> {
                   if (context.mounted) {
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Stock ajusté'), backgroundColor: AppColors.success),
+                      const SnackBar(
+                        content: Text('Stock ajusté'),
+                        backgroundColor: AppColors.success,
+                      ),
                     );
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.danger,
+              ),
               child: const Text('Confirmer'),
             ),
           ],
@@ -282,39 +359,58 @@ class _StockCheckScreenState extends State<StockCheckScreen> {
                 controller: totalCtrl,
                 keyboardType: TextInputType.number,
                 autofocus: true,
-                decoration: const InputDecoration(labelText: 'Total physique compté', hintText: 'Ex: 10'),
+                decoration: const InputDecoration(
+                  labelText: 'Total physique compté',
+                  hintText: 'Ex: 10',
+                ),
               ),
               const SizedBox(height: 16),
-              const SectionLabel('Détails des invendables (inclus dans le total)'),
+              const SectionLabel(
+                'Détails des invendables (inclus dans le total)',
+              ),
               const SizedBox(height: 8),
               TextField(
                 controller: defectiveCtrl,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Défectueux / Cassé', prefixIcon: Icon(Icons.broken_image_outlined)),
+                decoration: const InputDecoration(
+                  labelText: 'Défectueux / Cassé',
+                  prefixIcon: Icon(Icons.broken_image_outlined),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: obsoleteCtrl,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Obsolète / Invendable', prefixIcon: Icon(Icons.history_toggle_off)),
+                decoration: const InputDecoration(
+                  labelText: 'Obsolète / Invendable',
+                  prefixIcon: Icon(Icons.history_toggle_off),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: expiredCtrl,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Périmé', prefixIcon: Icon(Icons.event_busy_outlined)),
+                decoration: const InputDecoration(
+                  labelText: 'Périmé',
+                  prefixIcon: Icon(Icons.event_busy_outlined),
+                ),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: notesCtrl,
                 maxLines: 2,
-                decoration: const InputDecoration(labelText: 'Notes particulières'),
+                decoration: const InputDecoration(
+                  labelText: 'Notes particulières',
+                ),
               ),
             ],
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Annuler'),
+          ),
           ElevatedButton(
             onPressed: () async {
               final total = int.tryParse(totalCtrl.text) ?? 0;
@@ -334,7 +430,10 @@ class _StockCheckScreenState extends State<StockCheckScreen> {
               if (ctx.mounted) {
                 Navigator.of(ctx).pop();
                 ScaffoldMessenger.of(ctx).showSnackBar(
-                  const SnackBar(content: Text('Ligne d\'inventaire mise à jour'), backgroundColor: AppColors.success),
+                  const SnackBar(
+                    content: Text('Ligne d\'inventaire mise à jour'),
+                    backgroundColor: AppColors.success,
+                  ),
                 );
               }
             },
@@ -353,7 +452,8 @@ class _StockCheckScreenState extends State<StockCheckScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDesktop = !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
+    final bool isDesktop =
+        !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
 
     return KeyboardListener(
       focusNode: _focusNode,
@@ -373,7 +473,7 @@ class _StockCheckScreenState extends State<StockCheckScreen> {
                   }
                 },
               ),
-            
+
             // Interface Desktop : Prise en charge des lecteurs HID (USB/Bluetooth)
             if (isDesktop)
               Center(
@@ -381,19 +481,31 @@ class _StockCheckScreenState extends State<StockCheckScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(32),
+                      padding: const EdgeInsets.all(32), // Ligne 298
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.qr_code_scanner_rounded, size: 64, color: AppColors.primary),
+                      child: const Icon(
+                        Icons.qr_code_scanner_rounded,
+                        size: 64,
+                        color: AppColors.primary,
+                      ),
                     ),
                     const SizedBox(height: 24),
-                    const Text('Lecteur physique prêt', 
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                    const Text(
+                      'Lecteur physique prêt',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    const Text('Scannez un produit avec votre douchette USB ou Bluetooth.', 
-                      style: TextStyle(color: AppColors.textSecondary)),
+                    const Text(
+                      'Scannez un produit avec votre douchette USB ou Bluetooth.',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
                   ],
                 ),
               ),

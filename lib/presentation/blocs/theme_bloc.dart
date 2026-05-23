@@ -10,6 +10,7 @@ abstract class ThemeEvent extends Equatable {
 }
 
 class ToggleTheme extends ThemeEvent {}
+
 class LoadTheme extends ThemeEvent {}
 
 class ThemeState extends Equatable {
@@ -29,8 +30,13 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
     });
 
     on<ToggleTheme>((event, emit) async {
-      final newMode = state.themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-      await _db.setSetting('theme_mode', newMode == ThemeMode.dark ? 'dark' : 'light');
+      final newMode = state.themeMode == ThemeMode.light
+          ? ThemeMode.dark
+          : ThemeMode.light;
+      await _db.setSetting(
+        'theme_mode',
+        newMode == ThemeMode.dark ? 'dark' : 'light',
+      );
       emit(ThemeState(newMode));
     });
   }

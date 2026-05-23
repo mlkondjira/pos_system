@@ -21,6 +21,8 @@ import 'core/utils/notification_service.dart';
 import 'core/utils/formatters.dart';
 import 'core/constants/supabase_config.dart';
 import 'data/services/sync_service.dart';
+import 'core/services/license_service.dart';
+import 'presentation/widgets/license_gate.dart';
 import 'presentation/blocs/auth_bloc.dart' hide AppStarted;
 import 'presentation/widgets/app_background.dart';
 import 'presentation/blocs/cash_session_bloc.dart';
@@ -115,6 +117,9 @@ void main() async {
   );
 
   await setupDependencies();
+
+  // Initialisation du service de licence SaaS
+  await getIt<LicenseService>().initialize();
 
   // Initialisation et demande de permissions pour les notifications
   final notificationService = getIt<NotificationService>();
@@ -434,7 +439,16 @@ class _AppShellState extends State<AppShell> with TrayListener {
   }
 
   void _showMobileMenu(
-    List<({_NavDest dest, Widget screen, String title, bool adminOnly})> pages,
+    List<
+      ({
+        bool adminOnly,
+        _NavDest dest,
+        String? feature,
+        Widget screen,
+        String title,
+      })
+    >
+    pages,
   ) {
     final hiddenPages = pages.skip(3).toList();
     showModalBottomSheet(
@@ -653,6 +667,7 @@ class _AppShellState extends State<AppShell> with TrayListener {
   Widget build(BuildContext context) {
     final user = context.watch<AuthBloc>().state.user;
     final isAdmin = user?.role == 'admin' || user?.role == 'owner';
+    final license = getIt<LicenseService>();
 
     final allPages = [
       (
@@ -664,6 +679,7 @@ class _AppShellState extends State<AppShell> with TrayListener {
         screen: const CaisseScreen(),
         title: 'Caisse',
         adminOnly: false,
+        feature: null,
       ),
       (
         dest: const _NavDest(
@@ -674,6 +690,7 @@ class _AppShellState extends State<AppShell> with TrayListener {
         screen: const ProduitsScreen(),
         title: 'Catalogue produits',
         adminOnly: false,
+        feature: null,
       ),
       (
         dest: const _NavDest(
@@ -684,6 +701,7 @@ class _AppShellState extends State<AppShell> with TrayListener {
         screen: const InventaireScreen(),
         title: 'Inventaire',
         adminOnly: false,
+        feature: null,
       ),
       (
         dest: const _NavDest(
@@ -694,6 +712,7 @@ class _AppShellState extends State<AppShell> with TrayListener {
         screen: const PurchaseOrderListScreen(),
         title: 'Réception fournisseur',
         adminOnly: false,
+        feature: null,
       ),
       (
         dest: const _NavDest(
@@ -704,6 +723,7 @@ class _AppShellState extends State<AppShell> with TrayListener {
         screen: const StockTransferScreen(),
         title: 'Transferts de stock',
         adminOnly: false,
+        feature: null,
       ),
       (
         dest: const _NavDest(
@@ -714,12 +734,14 @@ class _AppShellState extends State<AppShell> with TrayListener {
         screen: const SaleHistoryScreen(),
         title: 'Historique des ventes',
         adminOnly: false,
+        feature: null,
       ),
       (
         dest: const _NavDest(Icons.people_outline, Icons.people, 'Clients'),
         screen: const CustomersScreen(),
         title: 'Clients',
         adminOnly: false,
+        feature: null,
       ),
       (
         dest: const _NavDest(
@@ -730,6 +752,7 @@ class _AppShellState extends State<AppShell> with TrayListener {
         screen: const DebtorsScreen(),
         title: 'Portefeuille Dettes',
         adminOnly: false,
+        feature: null,
       ),
       (
         dest: const _NavDest(
@@ -740,6 +763,7 @@ class _AppShellState extends State<AppShell> with TrayListener {
         screen: const SuppliersScreen(),
         title: 'Fournisseurs',
         adminOnly: false,
+        feature: null,
       ),
       (
         dest: const _NavDest(
@@ -750,6 +774,7 @@ class _AppShellState extends State<AppShell> with TrayListener {
         screen: const ExpensesScreen(),
         title: 'Dépenses',
         adminOnly: true,
+        feature: null,
       ),
       (
         dest: const _NavDest(
@@ -760,6 +785,7 @@ class _AppShellState extends State<AppShell> with TrayListener {
         screen: const ReportsScreen(),
         title: 'Rapports',
         adminOnly: true,
+        feature: 'reports',
       ),
       (
         dest: const _NavDest(
@@ -770,6 +796,7 @@ class _AppShellState extends State<AppShell> with TrayListener {
         screen: const OwnerDashboardScreen(),
         title: 'Dashboard Cloud',
         adminOnly: true,
+        feature: 'multi_store',
       ),
       (
         dest: const _NavDest(
@@ -780,6 +807,7 @@ class _AppShellState extends State<AppShell> with TrayListener {
         screen: const SettingsScreen(),
         title: 'Paramètres',
         adminOnly: true,
+        feature: null,
       ),
     ];
 
@@ -789,9 +817,15 @@ class _AppShellState extends State<AppShell> with TrayListener {
     if (_idx >= accessiblePages.length) _idx = 0;
 
     final destinations = accessiblePages.map((p) => p.dest).toList();
-    final screens = accessiblePages.map((p) => p.screen).toList();
     final titles = accessiblePages.map((p) => p.title).toList();
     final isWide = MediaQuery.of(context).size.width >= 720;
+
+    final screens = accessiblePages.map((p) {
+      if (p.feature != null && !license.canAccess(p.feature!)) {
+        return LicenseGate(feature: p.feature!, child: p.screen);
+      }
+      return p.screen;
+    }).toList();
 
     return Scaffold(
       key: _scaffoldKey,
@@ -805,7 +839,16 @@ class _AppShellState extends State<AppShell> with TrayListener {
   }
 
   Widget _buildDrawer(
-    List<({_NavDest dest, Widget screen, String title, bool adminOnly})> pages,
+    List<
+      ({
+        bool adminOnly,
+        _NavDest dest,
+        String? feature,
+        Widget screen,
+        String title,
+      })
+    >
+    pages,
   ) {
     final user = context.read<AuthBloc>().state.user;
 
@@ -910,7 +953,15 @@ class _AppShellState extends State<AppShell> with TrayListener {
     List<_NavDest> destinations,
     List<Widget> screens,
     List<String> titles,
-    List<({_NavDest dest, Widget screen, String title, bool adminOnly})>
+    List<
+      ({
+        bool adminOnly,
+        _NavDest dest,
+        String? feature,
+        Widget screen,
+        String title,
+      })
+    >
     accessiblePages,
   ) {
     return Column(
@@ -1170,7 +1221,7 @@ class _GlobalSyncProgressBar extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: AppColors.warning, // Use withValues
+                      color: AppColors.warning,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
@@ -1347,6 +1398,7 @@ class _AnimatedCartBadgeState extends State<_AnimatedCartBadge>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
         decoration: BoxDecoration(
+          // Ligne 710
           gradient: const LinearGradient(
             colors: [AppColors.accent, AppColors.accentDark],
           ),
@@ -1354,7 +1406,7 @@ class _AnimatedCartBadgeState extends State<_AnimatedCartBadge>
           boxShadow: [
             BoxShadow(
               color: AppColors.accent.withValues(alpha: 0.3),
-              blurRadius: 6,
+              blurRadius: 6, // Ligne 714
               offset: const Offset(0, 3),
             ),
           ],
@@ -1411,7 +1463,7 @@ class _SessionTotalDisplay extends StatelessWidget {
             margin: const EdgeInsets.only(right: 4),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.successSoft,
+              color: AppColors.successSoft, // Ligne 765
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: AppColors.success.withValues(alpha: 0.3),
@@ -1492,6 +1544,7 @@ class _BottomNav extends StatelessWidget {
                 border: Border.all(color: AppColors.border, width: 1),
                 boxShadow: [
                   BoxShadow(
+                    // Ligne 800
                     // Ligne 800
                     color: Colors.black.withValues(alpha: 0.15),
                     blurRadius: 20,
@@ -1587,7 +1640,15 @@ class _BottomNavItem extends StatelessWidget {
 }
 
 class _MobileMoreMenu extends StatelessWidget {
-  final List<({_NavDest dest, Widget screen, String title, bool adminOnly})>
+  final List<
+    ({
+      bool adminOnly,
+      _NavDest dest,
+      String? feature,
+      Widget screen,
+      String title,
+    })
+  >
   pages;
   final int currentIndex;
   final ValueChanged<int> onSelect;
@@ -1869,7 +1930,7 @@ class _NavIconWithBadgeState extends State<_NavIconWithBadge>
                       right: widget.isRail ? -2 : -4,
                       top: widget.isRail ? -2 : -4,
                       child: Container(
-                        padding: const EdgeInsets.all(4),
+                        padding: const EdgeInsets.all(4), // Ligne 1103
                         decoration: const BoxDecoration(
                           color: AppColors.danger,
                           shape: BoxShape.circle,

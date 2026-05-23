@@ -10,7 +10,7 @@ class NavigationService {
     bool barrierDismissible = true,
   }) {
     if (context == null) return Future.value(null);
-    
+
     return showDialog<T>(
       context: context!,
       barrierDismissible: barrierDismissible,
@@ -29,9 +29,14 @@ class NavigationService {
         title: Text(title),
         content: Text(content),
         actions: [
-          TextButton(onPressed: () => navigatorKey.currentState?.pop(false), child: const Text('Annuler')),
+          TextButton(
+            onPressed: () => navigatorKey.currentState?.pop(false),
+            child: const Text('Annuler'),
+          ),
           ElevatedButton(
-            style: isDestructive ? ElevatedButton.styleFrom(backgroundColor: Colors.red) : null,
+            style: isDestructive
+                ? ElevatedButton.styleFrom(backgroundColor: Colors.red)
+                : null,
             onPressed: () => navigatorKey.currentState?.pop(true),
             child: Text(confirmLabel),
           ),

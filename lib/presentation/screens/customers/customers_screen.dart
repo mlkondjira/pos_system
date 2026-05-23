@@ -168,7 +168,9 @@ class _CustomerTile extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: AppColors.primaryLight.withValues(alpha: 0.15), // Ligne 172
+              color: AppColors.primaryLight.withValues(
+                alpha: 0.15,
+              ), // Ligne 172
               borderRadius: BorderRadius.circular(10),
             ),
             alignment: Alignment.center,

@@ -303,6 +303,7 @@ class ClearCartError extends CartEvent {}
 
 class CartBloc extends Bloc<CartEvent, CartState> {
   final PosDatabase _db = getIt<PosDatabase>();
+  Map<String, String>? _cachedSettings;
 
   CartBloc() : super(const CartState()) {
     on<LoadParkedCarts>(_onLoadParkedCarts);
@@ -621,8 +622,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
           (activeDiscount.startDate == null ||
               !now.isBefore(activeDiscount.startDate!)) &&
           (activeDiscount.endDate == null ||
-              (activeDiscount.endDate == null || // Ligne 362
-                  !now.isAfter(activeDiscount.endDate!)));
+              !now.isAfter(activeDiscount.endDate!));
 
       // Vérification de la limite d'usage
       final isLimitOk =
@@ -652,19 +652,19 @@ class CartBloc extends Bloc<CartEvent, CartState> {
                 globalDiscount)
             .clamp(0, double.infinity);
 
+    double calculatedLoyalty = 0;
     if (currentCustomerId != null) {
-      // On pourrait aussi faire cet appel de manière asynchrone,
-      // mais lire une Map de settings en mémoire est instantané.
-      _db.getAllSettings().then((settings) {
-        if (settings['loyalty_enabled'] == '1') {
-          final rate =
-              double.tryParse(settings['loyalty_points_rate'] ?? '0.01') ??
-              0.01;
-          // Exemple : 1000 FCFA -> 10 points si le taux est 0.01
-          final earned = finalTotal * rate;
-          add(_UpdateLoyaltyPoints(earned));
-        }
-      });
+      // Utilisation d'un cache pour éviter les lectures DB à chaque micro-changement du panier
+      _cachedSettings ??= await _db.getAllSettings();
+
+      if (_cachedSettings!['loyalty_enabled'] == '1') {
+        final rate =
+            double.tryParse(
+              _cachedSettings!['loyalty_points_rate'] ?? '0.01',
+            ) ??
+            0.01;
+        calculatedLoyalty = finalTotal * rate;
+      }
     }
 
     return CartState(
@@ -675,8 +675,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       note: state.note,
       couponCode: couponCode,
       appliedDiscount: activeDiscount,
-      loyaltyPointsEarned:
-          state.loyaltyPointsEarned, // Sera mis à jour par l'événement interne
+      loyaltyPointsEarned: calculatedLoyalty,
       parkedSales: state.parkedSales,
       error: currentError,
     );

@@ -12,7 +12,7 @@ Product makeProduct({
   int id = 1,
   String name = 'Produit Test',
   double priceHt = 1000.0,
-  double taxRate = 0.18,   // 18% TVA — standard Sénégal
+  double taxRate = 0.18, // 18% TVA — standard Sénégal
   int stockQty = 100,
   int? categoryId,
   DateTime? expiryDate,

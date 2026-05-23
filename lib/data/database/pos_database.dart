@@ -467,6 +467,14 @@ class Expenses extends Table {
   TextColumn get remoteId => text().nullable()();
 }
 
+class ProductTags extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text().withLength(min: 1, max: 50)();
+  TextColumn get color => text().withDefault(const Constant('#9E9E9E'))();
+  TextColumn get shopId => text().nullable().references(Shops, #id)();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
 // ─── DATABASE ─────────────────────────────────────────────────
 
 @DriftDatabase(
@@ -497,6 +505,7 @@ class Expenses extends Table {
     PurchaseOrderItems,
     ProductRecipes,
     ParkedCarts,
+    ProductTags,
   ],
   daos: [SalesDao],
 )
@@ -504,7 +513,7 @@ class PosDatabase extends _$PosDatabase {
   PosDatabase() : super(openConnection());
 
   @override
-  int get schemaVersion => 44;
+  int get schemaVersion => 45;
 
   static Future<File> getDatabaseFile() async {
     final dbFolder = await getApplicationDocumentsDirectory();
@@ -772,6 +781,9 @@ class PosDatabase extends _$PosDatabase {
         } catch (e) {
           if (!e.toString().contains('duplicate column name')) rethrow;
         }
+      }
+      if (from < 45) {
+        await m.createTable(productTags);
       }
     },
     beforeOpen: (details) async {
@@ -3168,5 +3180,76 @@ extension ProductExtension on Product {
     final path = p.join(directory.path, 'product_images', imagePath);
 
     return path;
+  }
+}
+
+// ── EXTENSIONS DE SERVICES ─────────────────────────────────
+
+extension StockPredictorDbExtension on PosDatabase {
+  /// Récupère les mouvements de stock d'un produit depuis une date
+  Future<List<StockMovement>> getStockMovementsForProduct({
+    required int productId,
+    required DateTime since,
+    String? type,
+  }) async {
+    final query = select(stockMovements)
+      ..where(
+        (m) =>
+            m.productId.equals(productId) &
+            m.movedAt.isBiggerOrEqualValue(since),
+      );
+    if (type != null) {
+      query.where((m) => m.type.equals(type));
+    }
+    query.orderBy([(m) => OrderingTerm.asc(m.movedAt)]);
+    return query.get();
+  }
+
+  /// Récupère tous les produits actifs
+  Future<List<Product>> getActiveProducts() async {
+    return (select(products)
+          ..where((p) => p.isActive.equals(true))
+          ..orderBy([(p) => OrderingTerm.asc(p.name)]))
+        .get();
+  }
+}
+
+extension AiReportDbExtension on PosDatabase {
+  Future<List<Sale>> getSalesInPeriod({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    return (select(sales)..where(
+          (s) =>
+              s.createdAt.isBiggerOrEqualValue(from) &
+              s.createdAt.isSmallerThanValue(to) &
+              s.status.equals('completed'),
+        ))
+        .get();
+  }
+
+  Future<List<SaleItem>> getSaleItemsForSales(List<int> saleIds) async {
+    if (saleIds.isEmpty) return [];
+    return (select(saleItems)..where((i) => i.saleId.isIn(saleIds))).get();
+  }
+
+  Future<List<Product>> getLowStockProductsInExtension() async {
+    return (select(products)
+          ..where(
+            (p) =>
+                p.isActive.equals(true) &
+                p.stockQty.isSmallerOrEqual(p.stockAlert),
+          )
+          ..orderBy([(p) => OrderingTerm.asc(p.stockQty)]))
+        .get();
+  }
+}
+
+extension LicenseDbExtension on PosDatabase {
+  Future<int> getActiveProductsCount() async {
+    final result = await (select(
+      products,
+    )..where((p) => p.isActive.equals(true))).get();
+    return result.length;
   }
 }

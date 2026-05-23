@@ -11,7 +11,8 @@ class SyncStatusWidget extends StatefulWidget {
   State<SyncStatusWidget> createState() => _SyncStatusWidgetState();
 }
 
-class _SyncStatusWidgetState extends State<SyncStatusWidget> with SingleTickerProviderStateMixin {
+class _SyncStatusWidgetState extends State<SyncStatusWidget>
+    with SingleTickerProviderStateMixin {
   late AnimationController _rotationController;
 
   @override
@@ -38,7 +39,7 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> with SingleTickerPr
       initialData: syncService.currentProgress,
       builder: (context, snapshot) {
         final progress = snapshot.data!;
-        
+
         Color iconColor;
         IconData iconData;
         bool isRotating = false;
@@ -74,7 +75,9 @@ class _SyncStatusWidgetState extends State<SyncStatusWidget> with SingleTickerPr
                   child: Icon(iconData, color: iconColor),
                 )
               : Icon(iconData, color: iconColor),
-          tooltip: progress.message.isNotEmpty ? progress.message : 'Statut synchro',
+          tooltip: progress.message.isNotEmpty
+              ? progress.message
+              : 'Statut synchro',
           onPressed: () {
             Navigator.push(
               context,

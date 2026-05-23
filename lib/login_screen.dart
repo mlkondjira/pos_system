@@ -53,8 +53,12 @@ class _LoginScreenState extends State<LoginScreen> {
     }
     if (value == 'back') {
       if (_pinController.text.isNotEmpty) {
-        setState(() => _pinController.text =
-            _pinController.text.substring(0, _pinController.text.length - 1));
+        setState(
+          () => _pinController.text = _pinController.text.substring(
+            0,
+            _pinController.text.length - 1,
+          ),
+        );
       }
       return;
     }
@@ -70,16 +74,16 @@ class _LoginScreenState extends State<LoginScreen> {
   void _onLoginPressed() {
     if (_isEmailMode) {
       context.read<AuthBloc>().add(
-            LoginWithEmailRequested(
-              _emailController.text.trim(),
-              _passwordController.text,
-            ),
-          );
+        LoginWithEmailRequested(
+          _emailController.text.trim(),
+          _passwordController.text,
+        ),
+      );
     } else {
       if (_selectedUser != null && _pinController.text.length == 4) {
         context.read<AuthBloc>().add(
-              LoginRequested(_pinController.text, _selectedUser!.id),
-            );
+          LoginRequested(_pinController.text, _selectedUser!.id),
+        );
       }
     }
   }
@@ -92,11 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Stack(
           children: [
             // Bouton flottant pour basculer le mode (Propriétaire / Staff)
-            Positioned(
-              top: 50,
-              right: 20,
-              child: _buildModeToggle(),
-            ),
+            Positioned(top: 50, right: 20, child: _buildModeToggle()),
 
             // 3. Contenu principal
             BlocListener<AuthBloc, AuthState>(
@@ -108,7 +108,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       backgroundColor: AppColors.danger,
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   );
                   _pinController.clear();
@@ -122,26 +123,27 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                       child: Container(
-                        constraints:
-                            BoxConstraints(maxWidth: _isEmailMode ? 420 : 480),
+                        constraints: BoxConstraints(
+                          maxWidth: _isEmailMode ? 420 : 480,
+                        ),
                         padding: const EdgeInsets.all(40),
                         decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surface
-                              .withValues(alpha: 0.4),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surface.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(40),
                           border: Border.all(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .surface
-                                  .withValues(alpha: 0.5),
-                              width: 1.5),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surface.withValues(alpha: 0.5),
+                            width: 1.5,
+                          ),
                           boxShadow: [
                             BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.12),
-                                blurRadius: 50,
-                                offset: const Offset(0, 25))
+                              color: Colors.black.withValues(alpha: 0.12),
+                              blurRadius: 50,
+                              offset: const Offset(0, 25),
+                            ),
                           ],
                         ),
                         child: Column(
@@ -197,20 +199,24 @@ class _LoginScreenState extends State<LoginScreen> {
       style: OutlinedButton.styleFrom(
         backgroundColor: Colors.white.withValues(alpha: 0.2),
         side: BorderSide(
-            color:
-                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5)),
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+        ),
         shape: const StadiumBorder(),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
-      icon: Icon(_isEmailMode ? Icons.dialpad_rounded : Icons.cloud_outlined,
-          size: 18, color: Colors.white),
+      icon: Icon(
+        _isEmailMode ? Icons.dialpad_rounded : Icons.cloud_outlined,
+        size: 18,
+        color: Colors.white,
+      ),
       label: Text(
         _isEmailMode ? 'MODE STAFF' : 'MODE CLOUD',
         style: const TextStyle(
-            color: Colors.white, // Ligne 223
-            fontSize: 11,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1),
+          color: Colors.white, // Ligne 223
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1,
+        ),
       ),
     );
   }
@@ -225,7 +231,10 @@ class _LoginScreenState extends State<LoginScreen> {
             _buildRoleCard('owner', 'Owner', Icons.stars_rounded),
             const SizedBox(width: 8),
             _buildRoleCard(
-                'admin', 'Gérant', Icons.admin_panel_settings_rounded),
+              'admin',
+              'Gérant',
+              Icons.admin_panel_settings_rounded,
+            ),
             const SizedBox(width: 8),
             _buildRoleCard('cashier', 'Caissier', Icons.person_outline_rounded),
           ],
@@ -245,9 +254,10 @@ class _LoginScreenState extends State<LoginScreen> {
               if (filteredUsers.isEmpty) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Text('Aucun utilisateur inscrit pour ce rôle',
-                      style:
-                          TextStyle(color: AppColors.textMuted, fontSize: 13)),
+                  child: Text(
+                    'Aucun utilisateur inscrit pour ce rôle',
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                  ),
                 );
               }
 
@@ -260,7 +270,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   return ChoiceChip(
                     label: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 4),
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
                       child: Text(u.name),
                     ),
                     selected: isSelected,
@@ -268,25 +280,29 @@ class _LoginScreenState extends State<LoginScreen> {
                       _selectedUser = selected ? u : null;
                       _pinController.clear();
                     }),
-                    selectedColor:
-                        AppColors.primary.withValues(alpha: 0.2), // Ligne 280
+                    selectedColor: AppColors.primary.withValues(
+                      alpha: 0.2,
+                    ), // Ligne 280
                     backgroundColor: Colors.white.withValues(alpha: 0.4),
                     labelStyle: TextStyle(
-                      color: isSelected // Use withValues
-                          ? AppColors.primary // Use withValues
-                          : Theme.of(context)
-                              .colorScheme
-                              .onSurface, // Use withValues
+                      color:
+                          isSelected // Use withValues
+                          ? AppColors
+                                .primary // Use withValues
+                          : Theme.of(
+                              context,
+                            ).colorScheme.onSurface, // Use withValues
                       fontWeight: // Use withValues
-                          isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal, // Use withValues
+                      isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal, // Use withValues
                       fontSize: 13,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(
-                        color: isSelected // Ligne 298
+                        color:
+                            isSelected // Ligne 298
                             ? AppColors.primary
                             : Colors.white.withValues(alpha: 0.6),
                         width: 1,
@@ -321,21 +337,23 @@ class _LoginScreenState extends State<LoginScreen> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isFilled
-                ? AppColors.primary // Ligne 322
+                ? AppColors
+                      .primary // Ligne 322
                 : Colors.white.withValues(alpha: 0.3),
             border: Border.all(
-                color: isFilled
-                    ? AppColors.primary
-                    : Theme.of(context)
-                        .colorScheme
-                        .onSurfaceVariant
-                        .withValues(alpha: 0.5),
-                width: 2),
+              color: isFilled
+                  ? AppColors.primary
+                  : Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              width: 2,
+            ),
             boxShadow: isFilled
                 ? [
                     BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.4),
-                        blurRadius: 10)
+                      color: AppColors.primary.withValues(alpha: 0.4),
+                      blurRadius: 10,
+                    ),
                   ]
                 : [],
           ),
@@ -355,8 +373,17 @@ class _LoginScreenState extends State<LoginScreen> {
         childAspectRatio: 1.2,
         physics: const NeverScrollableScrollPhysics(),
         children: [
-          ...['1', '2', '3', '4', '5', '6', '7', '8', '9']
-              .map((n) => _numpadButton(n)),
+          ...[
+            '1',
+            '2',
+            '3',
+            '4',
+            '5',
+            '6',
+            '7',
+            '8',
+            '9',
+          ].map((n) => _numpadButton(n)),
           _numpadButton('clear', icon: Icons.refresh_rounded),
           _numpadButton('0'),
           _numpadButton('back', icon: Icons.backspace_outlined),
@@ -377,19 +404,22 @@ class _LoginScreenState extends State<LoginScreen> {
             color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-                color: Theme.of(context)
-                    .colorScheme
-                    .surface
-                    .withValues(alpha: 0.4)),
+              color: Theme.of(
+                context,
+              ).colorScheme.surface.withValues(alpha: 0.4),
+            ),
           ),
           child: Center(
             child: icon != null
                 ? Icon(icon, color: AppColors.textPrimary, size: 22)
-                : Text(value,
+                : Text(
+                    value,
                     style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        color: Theme.of(context).colorScheme.onSurface)),
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
           ),
         ),
       ),
@@ -422,9 +452,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     : FontWeight.normal, // Use withValues
                 color: isSelected
                     ? Theme.of(context).colorScheme.onSurface
-                    : Theme.of(context)
-                        .colorScheme
-                        .onSurfaceVariant, // Use withValues
+                    : Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant, // Use withValues
               ),
             ),
           ],
@@ -469,10 +499,12 @@ class _LoginScreenState extends State<LoginScreen> {
           child: ElevatedButton(
             onPressed: _onLoginPressed,
             style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 18)),
-            child: const Text('ACCÉDER AU CLOUD',
-                style:
-                    TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+              padding: const EdgeInsets.symmetric(vertical: 18),
+            ),
+            child: const Text(
+              'ACCÉDER AU CLOUD',
+              style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1),
+            ),
           ),
         ),
       ],

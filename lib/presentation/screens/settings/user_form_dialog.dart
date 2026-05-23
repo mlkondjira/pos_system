@@ -52,43 +52,51 @@ class _UserFormDialogState extends State<UserFormDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Erreur: Utilisateur non authentifié.'),
-              backgroundColor: AppColors.danger),
+            content: Text('Erreur: Utilisateur non authentifié.'),
+            backgroundColor: AppColors.danger,
+          ),
         );
         Navigator.pop(context);
       }
       return;
     }
     try {
-      final shopId = await getIt<PosDatabase>().getSetting('shop_id') ??
+      final shopId =
+          await getIt<PosDatabase>().getSetting('shop_id') ??
           ''; // Utiliser getIt directement
 
       if (widget.user == null) {
         // Add new user
-        usersBloc.add(AddUser(
-          name: _nameCtrl.text.trim(),
-          pin: _pinCtrl.text,
-          role: _role,
-          shopId: shopId,
-          actorId: currentActor.id,
-        ));
+        usersBloc.add(
+          AddUser(
+            name: _nameCtrl.text.trim(),
+            pin: _pinCtrl.text,
+            role: _role,
+            shopId: shopId,
+            actorId: currentActor.id,
+          ),
+        );
       } else {
         // Update existing user
-        usersBloc.add(UpdateUser(
-          userId: widget.user!.id,
-          name: _nameCtrl.text.trim(),
-          role: _role,
-          isActive: _isActive,
-          actorId: currentActor.id,
-          newPin: _pinCtrl.text.isNotEmpty ? _pinCtrl.text : null,
-        ));
+        usersBloc.add(
+          UpdateUser(
+            userId: widget.user!.id,
+            name: _nameCtrl.text.trim(),
+            role: _role,
+            isActive: _isActive,
+            actorId: currentActor.id,
+            newPin: _pinCtrl.text.isNotEmpty ? _pinCtrl.text : null,
+          ),
+        );
       }
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Erreur: $e'), backgroundColor: AppColors.danger),
+            content: Text('Erreur: $e'),
+            backgroundColor: AppColors.danger,
+          ),
         );
       }
     } finally {
@@ -99,9 +107,9 @@ class _UserFormDialogState extends State<UserFormDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.user == null
-          ? 'Ajouter un utilisateur'
-          : 'Modifier utilisateur'),
+      title: Text(
+        widget.user == null ? 'Ajouter un utilisateur' : 'Modifier utilisateur',
+      ),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -120,7 +128,9 @@ class _UserFormDialogState extends State<UserFormDialog> {
                 items: const [
                   DropdownMenuItem(value: 'cashier', child: Text('Caissier')),
                   DropdownMenuItem(
-                      value: 'admin', child: Text('Administrateur')),
+                    value: 'admin',
+                    child: Text('Administrateur'),
+                  ),
                   DropdownMenuItem(value: 'owner', child: Text('Propriétaire')),
                 ],
                 onChanged: (v) => setState(() => _role = v!),
@@ -190,7 +200,10 @@ class _UserFormDialogState extends State<UserFormDialog> {
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white))
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
               : const Text('Enregistrer'),
         ),
       ],

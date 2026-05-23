@@ -66,9 +66,11 @@ class InventoryListState extends Equatable {
     if (searchQuery.isNotEmpty) {
       final q = searchQuery.toLowerCase();
       result = result
-          .where((s) =>
-              s.ref.toLowerCase().contains(q) ||
-              s.notes.toLowerCase().contains(q))
+          .where(
+            (s) =>
+                s.ref.toLowerCase().contains(q) ||
+                s.notes.toLowerCase().contains(q),
+          )
           .toList();
     }
 
@@ -82,24 +84,27 @@ class InventoryListState extends Equatable {
     bool? isLoading,
     String? errorMessage,
     bool clearError = false,
-  }) =>
-      InventoryListState(
-        sessions: sessions ?? this.sessions,
-        searchQuery: searchQuery ?? this.searchQuery,
-        statusFilter: statusFilter ?? this.statusFilter,
-        isLoading: isLoading ?? this.isLoading,
-        errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-      );
+  }) => InventoryListState(
+    sessions: sessions ?? this.sessions,
+    searchQuery: searchQuery ?? this.searchQuery,
+    statusFilter: statusFilter ?? this.statusFilter,
+    isLoading: isLoading ?? this.isLoading,
+    errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+  );
 
   @override
-  List<Object?> get props =>
-      [sessions, searchQuery, statusFilter, isLoading, errorMessage];
+  List<Object?> get props => [
+    sessions,
+    searchQuery,
+    statusFilter,
+    isLoading,
+    errorMessage,
+  ];
 }
 
 // ── BLOC ──────────────────────────────────────────────────────
 
-class InventoryListBloc
-    extends Bloc<InventoryListEvent, InventoryListState> {
+class InventoryListBloc extends Bloc<InventoryListEvent, InventoryListState> {
   final PosDatabase _db;
 
   InventoryListBloc(this._db) : super(const InventoryListState()) {
@@ -112,24 +117,24 @@ class InventoryListBloc
 
   // ── Chargement réactif via stream ─────────────────────────
   Future<void> _onLoad(
-      LoadInventoryList event, Emitter<InventoryListState> emit) async {
+    LoadInventoryList event,
+    Emitter<InventoryListState> emit,
+  ) async {
     emit(state.copyWith(isLoading: true));
     await emit.forEach(
       _db.watchInventorySessions(),
-      onData: (sessions) => state.copyWith(
-        sessions: sessions,
-        isLoading: false,
-      ),
-      onError: (err, _) => state.copyWith(
-        isLoading: false,
-        errorMessage: err.toString(),
-      ),
+      onData: (sessions) =>
+          state.copyWith(sessions: sessions, isLoading: false),
+      onError: (err, _) =>
+          state.copyWith(isLoading: false, errorMessage: err.toString()),
     );
   }
 
   // ── Création d'une nouvelle session d'inventaire ──────────
   Future<void> _onCreate(
-      CreateInventory event, Emitter<InventoryListState> emit) async {
+    CreateInventory event,
+    Emitter<InventoryListState> emit,
+  ) async {
     try {
       final now = DateTime.now();
       final ref =
@@ -142,20 +147,26 @@ class InventoryListBloc
 
       await _db.transaction(() async {
         // Insertion de la session — sans 'label' (absent de la table)
-        final sessionId = await _db.into(_db.inventorySessions).insert(
+        final sessionId = await _db
+            .into(_db.inventorySessions)
+            .insert(
               InventorySessionsCompanion.insert(
                 ref: ref,
                 userId: event.userId,
                 terminalId: Value(terminalId),
                 totalProducts: Value(products.length),
-                status: const Value('in_progress'), // <-- CORRECTION: Démarrer en 'in_progress'
+                status: const Value(
+                  'in_progress',
+                ), // <-- CORRECTION: Démarrer en 'in_progress'
                 notes: Value(event.notes),
               ),
             );
 
         // Ligne d'inventaire pour chaque produit avec son stock actuel
         for (final p in products) {
-          await _db.into(_db.inventoryLines).insert(
+          await _db
+              .into(_db.inventoryLines)
+              .insert(
                 InventoryLinesCompanion.insert(
                   sessionId: sessionId,
                   productId: p.id,
@@ -169,18 +180,15 @@ class InventoryListBloc
       });
       // watchInventorySessions() se met à jour automatiquement via stream
     } catch (e) {
-      emit(state.copyWith(
-          errorMessage: 'Erreur création inventaire : $e'));
+      emit(state.copyWith(errorMessage: 'Erreur création inventaire : $e'));
     }
   }
 
-  void _onSearch(
-      SearchQueryChanged event, Emitter<InventoryListState> emit) {
+  void _onSearch(SearchQueryChanged event, Emitter<InventoryListState> emit) {
     emit(state.copyWith(searchQuery: event.query));
   }
 
-  void _onFilter(
-      FilterStatusChanged event, Emitter<InventoryListState> emit) {
+  void _onFilter(FilterStatusChanged event, Emitter<InventoryListState> emit) {
     emit(state.copyWith(statusFilter: event.status));
   }
 

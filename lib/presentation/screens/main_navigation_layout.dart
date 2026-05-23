@@ -26,7 +26,8 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth >= 1200;
-        final bool isTablet = constraints.maxWidth >= 600 &&
+        final bool isTablet =
+            constraints.maxWidth >= 600 &&
             constraints.maxWidth < 1200; // Réintroduit
         final bool isMobile = constraints.maxWidth < 600; // Reste inchangé
 
@@ -36,7 +37,9 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
               children: [
                 if (!isMobile)
                   _buildNavigationRail(
-                      isDesktop, isTablet), // Passage de isTablet
+                    isDesktop,
+                    isTablet,
+                  ), // Passage de isTablet
                 Expanded(
                   child: ClipRRect(
                     // On peut ajouter un arrondi sur le contenu principal pour l'effet "Dashboard"
@@ -64,10 +67,12 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
             : 72, // Exemple: une largeur compacte légèrement plus grande pour les tablettes
         extended: extended,
         minExtendedWidth: 200,
-        backgroundColor:
-            Theme.of(context).colorScheme.surface.withValues(alpha: 0.7),
+        backgroundColor: Theme.of(
+          context,
+        ).colorScheme.surface.withValues(alpha: 0.7),
         unselectedIconTheme: IconThemeData(
-            color: Theme.of(context).colorScheme.onSurfaceVariant),
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
         selectedIconTheme: const IconThemeData(color: Colors.white),
         leading: Padding(
           padding: const EdgeInsets.symmetric(vertical: 20),
@@ -86,9 +91,10 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
                   ? AppColors.primary
                   : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-            label: Text(d.label,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            label: Text(
+              d.label,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
           );
         }).toList(),
       ),
@@ -110,10 +116,10 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
         unselectedFontSize: 11,
         onTap: (index) => setState(() => _selectedIndex = index),
         items: _destinations
-            .map((d) => BottomNavigationBarItem(
-                  icon: Icon(d.icon),
-                  label: d.label,
-                ))
+            .map(
+              (d) =>
+                  BottomNavigationBarItem(icon: Icon(d.icon), label: d.label),
+            )
             .toList(),
       ),
     );
@@ -124,18 +130,22 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
       duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
-        mainAxisAlignment:
-            extended ? MainAxisAlignment.start : MainAxisAlignment.center,
+        mainAxisAlignment: extended
+            ? MainAxisAlignment.start
+            : MainAxisAlignment.center,
         children: [
           const Icon(Icons.bolt_rounded, color: AppColors.primary, size: 28),
           if (extended) ...[
             const SizedBox(width: 12),
-            const Text('GPOS',
-                style: TextStyle(
-                    fontWeight: FontWeight.w900, // Ligne 68
-                    fontSize: 20,
-                    letterSpacing: 1.2,
-                    color: AppColors.textPrimary)),
+            const Text(
+              'GPOS',
+              style: TextStyle(
+                fontWeight: FontWeight.w900, // Ligne 68
+                fontSize: 20,
+                letterSpacing: 1.2,
+                color: AppColors.textPrimary,
+              ),
+            ),
           ],
         ],
       ),
@@ -150,7 +160,8 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
       switchOutCurve: Curves.easeOut,
       child: Container(
         key: ValueKey<int>(
-            _selectedIndex), // CRUCIAL pour déclencher l'animation
+          _selectedIndex,
+        ), // CRUCIAL pour déclencher l'animation
         child: Center(
           child: Text(
             'Écran: ${_destinations[_selectedIndex].label}',

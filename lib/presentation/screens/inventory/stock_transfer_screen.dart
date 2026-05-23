@@ -87,17 +87,19 @@ class _StockTransferScreenState extends State<StockTransferScreen>
             : PreferredSize(
                 preferredSize: const Size.fromHeight(48.0),
                 child: StreamBuilder<List<StockTransfer>>(
-                    stream: _db.watchIncomingTransfers(_myShopId!),
-                    builder: (context, snapshot) {
-                      final incomingCount = snapshot.data?.length ?? 0;
-                      return TabBar(
-                        controller: _tabController,
-                        tabs: [
-                          _buildTabWithBadge('À Recevoir', incomingCount),
-                          const Tab(text: 'Historique / Envoi'),
-                        ],
-                      );
-                    })),
+                  stream: _db.watchIncomingTransfers(_myShopId!),
+                  builder: (context, snapshot) {
+                    final incomingCount = snapshot.data?.length ?? 0;
+                    return TabBar(
+                      controller: _tabController,
+                      tabs: [
+                        _buildTabWithBadge('À Recevoir', incomingCount),
+                        const Tab(text: 'Historique / Envoi'),
+                      ],
+                    );
+                  },
+                ),
+              ),
       ),
       body: _myShopId == null
           ? const Center(child: CircularProgressIndicator())
@@ -105,9 +107,13 @@ class _StockTransferScreenState extends State<StockTransferScreen>
               controller: _tabController,
               children: [
                 _IncomingTransfersList(
-                    shopId: _myShopId!, searchQuery: _searchQuery),
+                  shopId: _myShopId!,
+                  searchQuery: _searchQuery,
+                ),
                 _OutgoingTransfersList(
-                    shopId: _myShopId!, searchQuery: _searchQuery),
+                  shopId: _myShopId!,
+                  searchQuery: _searchQuery,
+                ),
               ],
             ),
       floatingActionButton: FloatingActionButton.extended(
@@ -144,10 +150,7 @@ class _StockTransferScreenState extends State<StockTransferScreen>
             ),
             child: Text(
               count.toString(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-              ),
+              style: const TextStyle(color: Colors.white, fontSize: 11),
             ),
           ),
         ],
@@ -159,8 +162,10 @@ class _StockTransferScreenState extends State<StockTransferScreen>
 class _IncomingTransfersList extends StatelessWidget {
   final String shopId;
   final String searchQuery;
-  const _IncomingTransfersList(
-      {required this.shopId, required this.searchQuery});
+  const _IncomingTransfersList({
+    required this.shopId,
+    required this.searchQuery,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -181,9 +186,12 @@ class _IncomingTransfersList extends StatelessWidget {
 
         if (list.isEmpty) {
           return Center(
-              child: Text(searchQuery.isEmpty
+            child: Text(
+              searchQuery.isEmpty
                   ? 'Aucun transfert en attente'
-                  : 'Aucun résultat trouvé'));
+                  : 'Aucun résultat trouvé',
+            ),
+          );
         }
 
         return ListView.builder(
@@ -197,10 +205,13 @@ class _IncomingTransfersList extends StatelessWidget {
                   backgroundColor: AppColors.infoSoft,
                   child: Icon(Icons.download_rounded, color: AppColors.info),
                 ),
-                title:
-                    _ShopNameText(prefix: 'De:', shopId: transfer.sourceShopId),
-                subtitle:
-                    Text('Ref: ${transfer.ref}\nStatut: ${transfer.status}'),
+                title: _ShopNameText(
+                  prefix: 'De:',
+                  shopId: transfer.sourceShopId,
+                ),
+                subtitle: Text(
+                  'Ref: ${transfer.ref}\nStatut: ${transfer.status}',
+                ),
                 isThreeLine: true,
                 trailing: ElevatedButton(
                   onPressed: () => _showReceiveDialog(context, transfer),
@@ -226,8 +237,10 @@ class _IncomingTransfersList extends StatelessWidget {
 class _OutgoingTransfersList extends StatelessWidget {
   final String shopId;
   final String searchQuery;
-  const _OutgoingTransfersList(
-      {required this.shopId, required this.searchQuery});
+  const _OutgoingTransfersList({
+    required this.shopId,
+    required this.searchQuery,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -248,11 +261,13 @@ class _OutgoingTransfersList extends StatelessWidget {
 
         if (list.isEmpty) {
           return Center(
-              child: Text(
-                  searchQuery.isEmpty
-                      ? 'Aucun envoi effectué'
-                      : 'Aucun résultat trouvé',
-                  style: const TextStyle(color: AppColors.textMuted)));
+            child: Text(
+              searchQuery.isEmpty
+                  ? 'Aucun envoi effectué'
+                  : 'Aucun résultat trouvé',
+              style: const TextStyle(color: AppColors.textMuted),
+            ),
+          );
         }
 
         return ListView.builder(
@@ -273,31 +288,40 @@ class _OutgoingTransfersList extends StatelessWidget {
               child: ListTile(
                 leading: CircleAvatar(
                   backgroundColor: statusColor.withValues(alpha: 0.1),
-                  child:
-                      Icon(Icons.upload_rounded, color: statusColor, size: 20),
+                  child: Icon(
+                    Icons.upload_rounded,
+                    color: statusColor,
+                    size: 20,
+                  ),
                 ),
                 title: _ShopNameText(
-                    prefix: 'Vers:',
-                    shopId: transfer.targetShopId,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                  prefix: 'Vers:',
+                  shopId: transfer.targetShopId,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 subtitle: Text(
-                    'Ref: ${transfer.ref}\nLe: ${Fmt.dateTime(transfer.createdAt)}'),
+                  'Ref: ${transfer.ref}\nLe: ${Fmt.dateTime(transfer.createdAt)}',
+                ),
                 isThreeLine: true,
                 trailing: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border:
-                        Border.all(color: statusColor.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: statusColor.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Text(
                     _translateStatus(transfer.status),
                     style: TextStyle(
-                        fontSize: 11,
-                        color: statusColor,
-                        fontWeight: FontWeight.bold),
+                      fontSize: 11,
+                      color: statusColor,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -309,18 +333,18 @@ class _OutgoingTransfersList extends StatelessWidget {
   }
 
   Color _getStatusColor(String status) => switch (status) {
-        'pending' => AppColors.warning,
-        'completed' => AppColors.success,
-        'rejected' => AppColors.danger,
-        _ => AppColors.textMuted,
-      };
+    'pending' => AppColors.warning,
+    'completed' => AppColors.success,
+    'rejected' => AppColors.danger,
+    _ => AppColors.textMuted,
+  };
 
   String _translateStatus(String status) => switch (status) {
-        'pending' => 'En attente',
-        'completed' => 'Reçu',
-        'rejected' => 'Rejeté',
-        _ => status,
-      };
+    'pending' => 'En attente',
+    'completed' => 'Reçu',
+    'rejected' => 'Rejeté',
+    _ => status,
+  };
 }
 
 class _TransferDetailsDialog extends StatefulWidget {
@@ -347,8 +371,9 @@ class _TransferDetailsDialogState extends State<_TransferDetailsDialog> {
 
   Future<void> _loadItems() async {
     try {
-      final items =
-          await _db.getStockTransferItemsWithProducts(widget.transfer.id);
+      final items = await _db.getStockTransferItemsWithProducts(
+        widget.transfer.id,
+      );
       if (mounted) {
         setState(() {
           _items = items;
@@ -378,63 +403,70 @@ class _TransferDetailsDialogState extends State<_TransferDetailsDialog> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? Text('Erreur: $_error',
-                    style: const TextStyle(color: AppColors.danger))
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                          'Veuillez vérifier les produits et quantités reçus :',
-                          style: TextStyle(fontSize: 13)),
-                      const SizedBox(height: 16),
-                      Flexible(
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: _items!.length,
-                          itemBuilder: (context, index) {
-                            final item = _items![index];
-                            final qtySent = item.item.quantitySent;
-                            final qtyReceived =
-                                _receivedQuantities[item.item.id] ?? qtySent;
-
-                            return ListTile(
-                              dense: true,
-                              contentPadding: EdgeInsets.zero,
-                              leading: const Icon(Icons.inventory_2_outlined,
-                                  color: AppColors.textMuted),
-                              title: Text(item.product.name),
-                              subtitle: Text('Envoyé: $qtySent'),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.remove, size: 18),
-                                    onPressed: () =>
-                                        _updateQty(item.item.id, -1),
-                                  ),
-                                  Text('$qtyReceived',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15)),
-                                  IconButton(
-                                    icon: const Icon(Icons.add, size: 18),
-                                    onPressed: () =>
-                                        _updateQty(item.item.id, 1),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
+            ? Text(
+                'Erreur: $_error',
+                style: const TextStyle(color: AppColors.danger),
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Veuillez vérifier les produits et quantités reçus :',
+                    style: TextStyle(fontSize: 13),
                   ),
+                  const SizedBox(height: 16),
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: _items!.length,
+                      itemBuilder: (context, index) {
+                        final item = _items![index];
+                        final qtySent = item.item.quantitySent;
+                        final qtyReceived =
+                            _receivedQuantities[item.item.id] ?? qtySent;
+
+                        return ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(
+                            Icons.inventory_2_outlined,
+                            color: AppColors.textMuted,
+                          ),
+                          title: Text(item.product.name),
+                          subtitle: Text('Envoyé: $qtySent'),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.remove, size: 18),
+                                onPressed: () => _updateQty(item.item.id, -1),
+                              ),
+                              Text(
+                                '$qtyReceived',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.add, size: 18),
+                                onPressed: () => _updateQty(item.item.id, 1),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler')),
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Annuler'),
+        ),
         ElevatedButton(
           onPressed: () => _validateReception(context),
           child: const Text('Valider la Réception'),
@@ -459,8 +491,9 @@ class _TransferDetailsDialogState extends State<_TransferDetailsDialog> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Erreur: Utilisateur non identifié.'),
-              backgroundColor: AppColors.danger),
+            content: Text('Erreur: Utilisateur non identifié.'),
+            backgroundColor: AppColors.danger,
+          ),
         );
         Navigator.pop(context);
       }
@@ -478,16 +511,18 @@ class _TransferDetailsDialogState extends State<_TransferDetailsDialog> {
       Navigator.pop(context); // Ferme le dialog
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Transfert validé et stock mis à jour.'),
-            backgroundColor: AppColors.success),
+          content: Text('Transfert validé et stock mis à jour.'),
+          backgroundColor: AppColors.success,
+        ),
       );
     } catch (e) {
       if (!context.mounted) return;
       Navigator.pop(context); // Ferme le dialog
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('Erreur lors de la validation: $e'),
-            backgroundColor: AppColors.danger),
+          content: Text('Erreur lors de la validation: $e'),
+          backgroundColor: AppColors.danger,
+        ),
       );
     }
   }
@@ -507,15 +542,13 @@ class _ShopNameText extends StatelessWidget {
     final db = getIt<PosDatabase>();
     return FutureBuilder<Shop?>(
       // Requête simple pour obtenir le magasin par son ID
-      future: (db.select(db.shops)..where((s) => s.id.equals(shopId)))
-          .getSingleOrNull(),
+      future: (db.select(
+        db.shops,
+      )..where((s) => s.id.equals(shopId))).getSingleOrNull(),
       builder: (context, snapshot) {
         // Affiche l'ID si le nom n'est pas (encore) dans la base locale
         final shopName = snapshot.data?.name ?? shopId;
-        return Text(
-          '$prefix $shopName',
-          style: style,
-        );
+        return Text('$prefix $shopName', style: style);
       },
     );
   }

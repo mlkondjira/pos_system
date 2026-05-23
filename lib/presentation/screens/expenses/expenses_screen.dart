@@ -26,7 +26,10 @@ class ExpensesScreen extends StatefulWidget {
 class _ExpensesScreenState extends State<ExpensesScreen> {
   final _db = getIt<PosDatabase>();
   DateTime _from = DateTime(
-      DateTime.now().year, DateTime.now().month, 1); // Début du mois par défaut
+    DateTime.now().year,
+    DateTime.now().month,
+    1,
+  ); // Début du mois par défaut
   DateTime _to = DateTime.now();
 
   @override
@@ -80,12 +83,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             padding: const EdgeInsets.all(20),
                             gridDelegate:
                                 SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount:
-                                  isDesktop ? 4 : (isTablet ? 2 : 1),
-                              childAspectRatio: isDesktop ? 2.8 : 3.8,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 12,
-                            ),
+                                  crossAxisCount: isDesktop
+                                      ? 4
+                                      : (isTablet ? 2 : 1),
+                                  childAspectRatio: isDesktop ? 2.8 : 3.8,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 12,
+                                ),
                             itemCount: list.length,
                             itemBuilder: (context, index) => _ExpenseCard(
                               expense: list[index],
@@ -128,12 +132,15 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     final qrData =
         'GPOS_EXP|ID:${expense.id}|AMT:${expense.amount}|TS:${expense.date.millisecondsSinceEpoch}';
 
-    final success =
-        await getIt<PrinterService>().printReport(text, qrData: qrData);
+    final success = await getIt<PrinterService>().printReport(
+      text,
+      qrData: qrData,
+    );
     if (mounted && !success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Imprimante non connectée ou introuvable.')),
+          content: Text('Imprimante non connectée ou introuvable.'),
+        ),
       );
     }
   }
@@ -145,38 +152,30 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       child: Row(
         children: [
           Expanded(
-            child: _dateChip(
-              'Du',
-              _from,
-              () async {
-                final d = await showDatePicker(
-                  context: context,
-                  initialDate: _from,
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime.now(),
-                );
-                if (d != null) setState(() => _from = d);
-              },
-            ),
+            child: _dateChip('Du', _from, () async {
+              final d = await showDatePicker(
+                context: context,
+                initialDate: _from,
+                firstDate: DateTime(2020),
+                lastDate: DateTime.now(),
+              );
+              if (d != null) setState(() => _from = d);
+            }),
           ),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 8),
             child: Text('→', style: TextStyle(color: AppColors.textMuted)),
           ),
           Expanded(
-            child: _dateChip(
-              'Au',
-              _to,
-              () async {
-                final d = await showDatePicker(
-                  context: context,
-                  initialDate: _to,
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime.now(),
-                );
-                if (d != null) setState(() => _to = d);
-              },
-            ),
+            child: _dateChip('Au', _to, () async {
+              final d = await showDatePicker(
+                context: context,
+                initialDate: _to,
+                firstDate: DateTime(2020),
+                lastDate: DateTime.now(),
+              );
+              if (d != null) setState(() => _to = d);
+            }),
           ),
         ],
       ),
@@ -199,11 +198,16 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           children: [
             Text(
               '$label : ${Fmt.date(date)}', // Ligne 123
-              style:
-                  const TextStyle(color: AppColors.textPrimary, fontSize: 12),
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 12,
+              ),
             ),
-            const Icon(Icons.calendar_today,
-                size: 14, color: AppColors.textMuted),
+            const Icon(
+              Icons.calendar_today,
+              size: 14,
+              color: AppColors.textMuted,
+            ),
           ],
         ),
       ),
@@ -219,7 +223,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.border),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 20)
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 20,
+          ),
         ],
       ),
       child: Row(
@@ -228,18 +235,24 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start, // Ligne 143
             children: [
-              const Text('SOLDE DES DÉPENSES',
-                  style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                      letterSpacing: 1)),
+              const Text(
+                'SOLDE DES DÉPENSES',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  letterSpacing: 1,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(Fmt.currency(total),
-                  style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 28)),
+              Text(
+                Fmt.currency(total),
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 28,
+                ),
+              ),
             ],
           ),
           if (isDesktop)
@@ -248,9 +261,12 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
               icon: const Icon(Icons.add),
               label: const Text('Nouvelle écriture'),
               style: ElevatedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 20)),
-            )
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 20,
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -269,14 +285,16 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   Future<void> _exportReport() async {
     final shopId = await _db.getSetting('shop_id') ?? '';
     // Récupère les données filtrées actuelles
-    final expenses =
-        await _db.watchExpenses(shopId, from: _from, to: _to).first;
+    final expenses = await _db
+        .watchExpenses(shopId, from: _from, to: _to)
+        .first;
 
     if (expenses.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Aucune dépense à exporter sur cette période.')),
+            content: Text('Aucune dépense à exporter sur cette période.'),
+          ),
         );
       }
       return;
@@ -291,14 +309,17 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         content: const Text('Sélectionnez le format souhaité.'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, 'CSV'),
-              child: const Text('Excel (CSV)')),
+            onPressed: () => Navigator.pop(ctx, 'CSV'),
+            child: const Text('Excel (CSV)'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(ctx, 'PREVIEW'),
-              child: const Text('Aperçu PDF')),
+            onPressed: () => Navigator.pop(ctx, 'PREVIEW'),
+            child: const Text('Aperçu PDF'),
+          ),
           ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, 'PDF'),
-              child: const Text('Partager PDF')),
+            onPressed: () => Navigator.pop(ctx, 'PDF'),
+            child: const Text('Partager PDF'),
+          ),
         ],
       ),
     );
@@ -318,7 +339,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     final shopName = await _db.getSetting('shop_name') ?? 'Mon Magasin';
     final total = list.fold(0.0, (sum, e) => sum + e.amount);
 
-    final introText = 'RAPPORT DE DÉPENSES\n'
+    final introText =
+        'RAPPORT DE DÉPENSES\n'
         'Période : ${Fmt.date(_from)} au ${Fmt.date(_to)}\n'
         'Magasin : $shopName';
 
@@ -326,15 +348,17 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       'Description',
       'Catégorie',
       'Date',
-      'Montant'
+      'Montant',
     ];
     final List<List<String>> data = list
-        .map((e) => [
-              e.description,
-              e.category,
-              Fmt.date(e.date),
-              Fmt.currency(e.amount),
-            ])
+        .map(
+          (e) => [
+            e.description,
+            e.category,
+            Fmt.date(e.date),
+            Fmt.currency(e.amount),
+          ],
+        )
         .toList();
     data.add(['', '', 'TOTAL', Fmt.currency(total)]);
 
@@ -350,7 +374,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     final shopName = await _db.getSetting('shop_name') ?? 'Mon Magasin';
     final total = list.fold(0.0, (sum, e) => sum + e.amount);
 
-    final introText = 'RAPPORT DE DÉPENSES\n'
+    final introText =
+        'RAPPORT DE DÉPENSES\n'
         'Période : ${Fmt.date(_from)} au ${Fmt.date(_to)}\n'
         'Magasin : $shopName';
 
@@ -358,15 +383,17 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       'Description',
       'Catégorie',
       'Date',
-      'Montant'
+      'Montant',
     ];
     final List<List<String>> data = list
-        .map((e) => [
-              e.description,
-              e.category,
-              Fmt.date(e.date),
-              Fmt.currency(e.amount),
-            ])
+        .map(
+          (e) => [
+            e.description,
+            e.category,
+            Fmt.date(e.date),
+            Fmt.currency(e.amount),
+          ],
+        )
         .toList();
     data.add(['', '', 'TOTAL', Fmt.currency(total)]);
 
@@ -383,24 +410,29 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   Future<void> _exportCsv(List<Expense> list) async {
     final rows = [
       ['Description', 'Catégorie', 'Date', 'Montant'],
-      ...list.map((e) => [
-            e.description,
-            e.category,
-            Fmt.date(e.date),
-            e.amount.toStringAsFixed(2)
-          ]),
+      ...list.map(
+        (e) => [
+          e.description,
+          e.category,
+          Fmt.date(e.date),
+          e.amount.toStringAsFixed(2),
+        ],
+      ),
     ];
 
     final csv = rows.map((r) => r.join(';')).join('\n');
     final directory = await getTemporaryDirectory();
-    final path = p.join(directory.path,
-        'depenses_${DateTime.now().millisecondsSinceEpoch}.csv');
+    final path = p.join(
+      directory.path,
+      'depenses_${DateTime.now().millisecondsSinceEpoch}.csv',
+    );
     final file = File(path);
     await file.writeAsBytes([0xEF, 0xBB, 0xBF] + utf8.encode(csv));
 
     await SharePlus.instance.share(
       ShareParams(
         files: [XFile(path, mimeType: 'text/csv')],
+        text: 'Export Dépenses',
         subject: 'Export Dépenses',
       ),
     );
@@ -412,8 +444,11 @@ class _ExpenseCard extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback? onPrint;
 
-  const _ExpenseCard(
-      {required this.expense, required this.onDelete, this.onPrint});
+  const _ExpenseCard({
+    required this.expense,
+    required this.onDelete,
+    this.onPrint,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -424,7 +459,10 @@ class _ExpenseCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.border),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+          ),
         ],
       ),
       child: Column(
@@ -434,25 +472,36 @@ class _ExpenseCard extends StatelessWidget {
             child: InkWell(
               onTap: (expense.imagePath != null)
                   ? () => _showFullScreenImage(
-                      context, expense.imagePath!, expense.description)
+                      context,
+                      expense.imagePath!,
+                      expense.description,
+                    )
                   : null,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
               child: Container(
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                    color: AppColors.bg,
-                    borderRadius: BorderRadius.circular(14)),
+                  color: AppColors.bg,
+                  borderRadius: BorderRadius.circular(14),
+                ),
                 child: Center(
                   child: expense.imagePath != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(14),
-                          child: Image.file(File(expense.imagePath!),
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity))
-                      : const Icon(Icons.receipt_long_outlined,
-                          color: AppColors.textMuted, size: 32),
+                          child: Image.file(
+                            File(expense.imagePath!),
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.receipt_long_outlined,
+                          color: AppColors.textMuted,
+                          size: 32,
+                        ),
                 ),
               ),
             ),
@@ -462,34 +511,55 @@ class _ExpenseCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(expense.description,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w800, fontSize: 14)),
+                Text(
+                  expense.description,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text('${expense.category} • ${Fmt.date(expense.date)}',
-                    style: const TextStyle(
-                        fontSize: 11, color: AppColors.textMuted)),
+                Text(
+                  '${expense.category} • ${Fmt.date(expense.date)}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textMuted,
+                  ),
+                ),
                 const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('- ${Fmt.currency(expense.amount)}',
-                        style: const TextStyle(
-                            color: AppColors.danger,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 16)),
-                    Row(children: [
-                      IconButton(
+                    Text(
+                      '- ${Fmt.currency(expense.amount)}',
+                      style: const TextStyle(
+                        color: AppColors.danger,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
                           onPressed: onPrint,
-                          icon: const Icon(Icons.print_rounded,
-                              size: 18, color: AppColors.primary)),
-                      IconButton(
+                          icon: const Icon(
+                            Icons.print_rounded,
+                            size: 18,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        IconButton(
                           onPressed: onDelete,
-                          icon: const Icon(Icons.delete_outline_rounded,
-                              size: 18, color: AppColors.danger)),
-                    ]),
+                          icon: const Icon(
+                            Icons.delete_outline_rounded,
+                            size: 18,
+                            color: AppColors.danger,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ],
@@ -503,7 +573,10 @@ class _ExpenseCard extends StatelessWidget {
 
 /// Affiche l'image du reçu en plein écran avec support du zoom (pinch-to-zoom).
 void _showFullScreenImage(
-    BuildContext context, String imagePath, String title) {
+  BuildContext context,
+  String imagePath,
+  String title,
+) {
   showDialog(
     context: context,
     builder: (ctx) => Scaffold(
@@ -539,9 +612,10 @@ void _showFullScreenImage(
                 title,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500),
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ),
@@ -572,13 +646,15 @@ class _ExpenseFormDialogState extends State<_ExpenseFormDialog> {
     'Transport',
     'Fournitures',
     'Marketing',
-    'Autre'
+    'Autre',
   ];
 
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final XFile? image =
-          await _picker.pickImage(source: source, maxWidth: 800);
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        maxWidth: 800,
+      );
       if (image == null) return;
 
       final directory = await getApplicationDocumentsDirectory();
@@ -625,12 +701,18 @@ class _ExpenseFormDialogState extends State<_ExpenseFormDialog> {
                     : const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.add_a_photo_outlined,
-                              color: AppColors.textMuted),
+                          Icon(
+                            Icons.add_a_photo_outlined,
+                            color: AppColors.textMuted,
+                          ),
                           SizedBox(height: 4),
-                          Text('Prendre en photo le reçu',
-                              style: TextStyle(
-                                  fontSize: 11, color: AppColors.textMuted)),
+                          Text(
+                            'Prendre en photo le reçu',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
                         ],
                       ),
               ),
@@ -639,14 +721,17 @@ class _ExpenseFormDialogState extends State<_ExpenseFormDialog> {
             TextFormField(
               controller: _descCtrl,
               decoration: const InputDecoration(
-                  labelText: 'Description (ex: Facture Senelec)'),
+                labelText: 'Description (ex: Facture Senelec)',
+              ),
               validator: (v) => v!.isEmpty ? 'Requis' : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _amountCtrl,
               decoration: const InputDecoration(
-                  labelText: 'Montant', suffixText: 'FCFA'),
+                labelText: 'Montant',
+                suffixText: 'FCFA',
+              ),
               keyboardType: TextInputType.number,
               validator: (v) =>
                   double.tryParse(v ?? '') == null ? 'Montant invalide' : null,
@@ -665,8 +750,9 @@ class _ExpenseFormDialogState extends State<_ExpenseFormDialog> {
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler')),
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Annuler'),
+        ),
         ElevatedButton(onPressed: _save, child: const Text('Valider')),
       ],
     );
@@ -679,19 +765,21 @@ class _ExpenseFormDialogState extends State<_ExpenseFormDialog> {
         child: Wrap(
           children: [
             ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Appareil photo'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _pickImage(ImageSource.camera);
-                }),
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Appareil photo'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.camera);
+              },
+            ),
             ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Galerie'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _pickImage(ImageSource.gallery);
-                }),
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Galerie'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
           ],
         ),
       ),
@@ -705,15 +793,17 @@ class _ExpenseFormDialogState extends State<_ExpenseFormDialog> {
     final shopId = await db.getSetting('shop_id') ?? '';
     final terminalId = await db.getSetting('terminal_id') ?? '';
 
-    await db.upsertExpense(ExpensesCompanion.insert(
-      description: _descCtrl.text.trim(),
-      amount: double.parse(_amountCtrl.text),
-      category: _category,
-      userId: user.id,
-      shopId: Value(shopId),
-      terminalId: Value(terminalId),
-      imagePath: Value(_imagePath), // Enregistrement du chemin
-    ));
+    await db.upsertExpense(
+      ExpensesCompanion.insert(
+        description: _descCtrl.text.trim(),
+        amount: double.parse(_amountCtrl.text),
+        category: _category,
+        userId: user.id,
+        shopId: Value(shopId),
+        terminalId: Value(terminalId),
+        imagePath: Value(_imagePath), // Enregistrement du chemin
+      ),
+    );
     if (mounted) Navigator.pop(context);
   }
 }

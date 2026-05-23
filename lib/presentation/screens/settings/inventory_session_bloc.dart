@@ -59,7 +59,14 @@ class UpdateCountedQuantity extends InventorySessionEvent {
   });
 
   @override
-  List<Object?> get props => [lineId, quantity, notes, defectiveQty, obsoleteQty, expiredQty];
+  List<Object?> get props => [
+    lineId,
+    quantity,
+    notes,
+    defectiveQty,
+    obsoleteQty,
+    expiredQty,
+  ];
 }
 
 class _LinesUpdated extends InventorySessionEvent {
@@ -110,32 +117,55 @@ class InventorySessionState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [lines, filter, searchQuery, showScanner, isValidating, errorMessage, isSuccess];
+  List<Object?> get props => [
+    lines,
+    filter,
+    searchQuery,
+    showScanner,
+    isValidating,
+    errorMessage,
+    isSuccess,
+  ];
 }
 
 // --- Bloc ---
-class InventorySessionBloc extends Bloc<InventorySessionEvent, InventorySessionState> {
+class InventorySessionBloc
+    extends Bloc<InventorySessionEvent, InventorySessionState> {
   final PosDatabase _db;
   StreamSubscription? _subscription;
 
   InventorySessionBloc(this._db) : super(const InventorySessionState()) {
     on<LoadInventoryLines>(_onLoadLines);
-    on<_LinesUpdated>((event, emit) => emit(state.copyWith(lines: event.lines)));
-    on<UpdateSearchQuery>((event, emit) => emit(state.copyWith(searchQuery: event.query)));
-    on<UpdateFilter>((event, emit) => emit(state.copyWith(filter: event.filter)));
-    on<ToggleScanner>((event, emit) => emit(state.copyWith(showScanner: !state.showScanner)));
+    on<_LinesUpdated>(
+      (event, emit) => emit(state.copyWith(lines: event.lines)),
+    );
+    on<UpdateSearchQuery>(
+      (event, emit) => emit(state.copyWith(searchQuery: event.query)),
+    );
+    on<UpdateFilter>(
+      (event, emit) => emit(state.copyWith(filter: event.filter)),
+    );
+    on<ToggleScanner>(
+      (event, emit) => emit(state.copyWith(showScanner: !state.showScanner)),
+    );
     on<UpdateCountedQuantity>(_onUpdateQuantity);
     on<ValidateSession>(_onValidateSession);
   }
 
-  Future<void> _onLoadLines(LoadInventoryLines event, Emitter<InventorySessionState> emit) async {
+  Future<void> _onLoadLines(
+    LoadInventoryLines event,
+    Emitter<InventorySessionState> emit,
+  ) async {
     await _subscription?.cancel();
-    _subscription = _db.watchInventoryLines(event.sessionId).listen(
-      (lines) => add(_LinesUpdated(lines)),
-    );
+    _subscription = _db
+        .watchInventoryLines(event.sessionId)
+        .listen((lines) => add(_LinesUpdated(lines)));
   }
 
-  Future<void> _onUpdateQuantity(UpdateCountedQuantity event, Emitter<InventorySessionState> emit) async {
+  Future<void> _onUpdateQuantity(
+    UpdateCountedQuantity event,
+    Emitter<InventorySessionState> emit,
+  ) async {
     await _db.updateInventoryLine(
       lineId: event.lineId,
       countedQty: event.quantity,
@@ -146,10 +176,16 @@ class InventorySessionBloc extends Bloc<InventorySessionEvent, InventorySessionS
     );
   }
 
-  Future<void> _onValidateSession(ValidateSession event, Emitter<InventorySessionState> emit) async {
+  Future<void> _onValidateSession(
+    ValidateSession event,
+    Emitter<InventorySessionState> emit,
+  ) async {
     emit(state.copyWith(isValidating: true));
     try {
-      await _db.validateInventorySession(sessionId: event.sessionId, userId: event.userId);
+      await _db.validateInventorySession(
+        sessionId: event.sessionId,
+        userId: event.userId,
+      );
       emit(state.copyWith(isValidating: false, isSuccess: true));
     } catch (e) {
       emit(state.copyWith(isValidating: false, errorMessage: e.toString()));

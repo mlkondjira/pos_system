@@ -43,29 +43,20 @@ class _MainLayoutState extends State<MainLayout> {
               elevation: 0,
             )
           : null,
-      
+
       // Le Drawer utilise notre MainSidebar existante
-      drawer: isMobile
-          ? Drawer(
-              width: 280,
-              child: _buildSidebar(false),
-            )
-          : null,
+      drawer: isMobile ? Drawer(width: 280, child: _buildSidebar(false)) : null,
 
       body: Row(
         children: [
           // Si on n'est pas sur mobile, la sidebar est injectée directement dans le body
-          if (!isMobile)
-            _buildSidebar(isTablet),
-          
+          if (!isMobile) _buildSidebar(isTablet),
+
           Expanded(
             child: Container(
               color: AppColors.bg,
               // On utilise un IndexedStack pour garder l'état des pages
-              child: IndexedStack(
-                index: _currentIndex,
-                children: _pages,
-              ),
+              child: IndexedStack(index: _currentIndex, children: _pages),
             ),
           ),
         ],
@@ -75,7 +66,7 @@ class _MainLayoutState extends State<MainLayout> {
 
   Widget _buildSidebar(bool collapsed) {
     // On simule un shopId, idéalement récupéré depuis vos préférences
-    const String shopId = 'current_shop_id'; 
+    const String shopId = 'current_shop_id';
 
     return StreamBuilder<int>(
       stream: _db.watchIncomingTransfersCount(shopId),
@@ -85,7 +76,9 @@ class _MainLayoutState extends State<MainLayout> {
           isCollapsed: collapsed,
           userName: 'Admin',
           userRole: 'Propriétaire',
-          notifications: {3: snapshot.data ?? 0}, // Index 3 = Commandes & Stocks
+          notifications: {
+            3: snapshot.data ?? 0,
+          }, // Index 3 = Commandes & Stocks
           onIndexChanged: (index) {
             setState(() => _currentIndex = index);
             if (Navigator.canPop(context)) {

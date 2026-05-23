@@ -70,7 +70,10 @@ class _PinConfirmationDialogState extends State<PinConfirmationDialog> {
     return AlertDialog(
       backgroundColor: Colors.white.withValues(alpha: 0.15),
       surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28), side: const BorderSide(color: Colors.white24)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(28),
+        side: const BorderSide(color: Colors.white24),
+      ),
       title: Text(widget.title, style: const TextStyle(color: Colors.white)),
       content: SingleChildScrollView(
         child: Column(
@@ -88,7 +91,9 @@ class _PinConfirmationDialogState extends State<PinConfirmationDialog> {
                   width: 16,
                   height: 16,
                   decoration: BoxDecoration(
-                    color: filled ? AppColors.primaryLight : AppColors.surfaceLight,
+                    color: filled
+                        ? AppColors.primaryLight
+                        : AppColors.surfaceLight,
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: filled ? AppColors.primaryLight : AppColors.border,
@@ -100,7 +105,14 @@ class _PinConfirmationDialogState extends State<PinConfirmationDialog> {
             if (_error != null)
               Padding(
                 padding: const EdgeInsets.only(top: 8.0),
-                child: Text(_error!, style: const TextStyle(color: AppColors.dangerLight, fontSize: 12, fontWeight: FontWeight.bold)),
+                child: Text(
+                  _error!,
+                  style: const TextStyle(
+                    color: AppColors.dangerLight,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             const SizedBox(height: 24),
             // Pavé numérique
@@ -140,7 +152,11 @@ class _PinConfirmationDialogState extends State<PinConfirmationDialog> {
         ),
         child: Text(
           text,
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
       ),
     );

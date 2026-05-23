@@ -97,9 +97,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
     // de lister les clients existants ET d'en créer un nouveau.
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const CustomerSelectionScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const CustomerSelectionScreen()),
     );
 
     if (result != null && mounted) {
@@ -159,9 +157,9 @@ class _PaymentDialogState extends State<PaymentDialog> {
       // Récupérer l'UUID du client (String) à partir de son ID local (int)
       String? customerRemoteId;
       if (cart.customerId != null) {
-        final customer = await (widget.db.select(widget.db.customers)
-              ..where((c) => c.id.equals(cart.customerId!)))
-            .getSingleOrNull();
+        final customer = await (widget.db.select(
+          widget.db.customers,
+        )..where((c) => c.id.equals(cart.customerId!))).getSingleOrNull();
         customerRemoteId = customer?.remoteId;
       }
 
@@ -177,25 +175,28 @@ class _PaymentDialogState extends State<PaymentDialog> {
 
       // Construire les SaleItems
       final items = cart.items
-          .map((i) => SaleItemsCompanion(
-                productId: Value(i.productId),
-                productName: Value(i.product.name),
-                unitPriceHt: Value(i.product.priceHt),
-                taxRate: Value(i.product.taxRate ?? 0.0),
-                quantity: Value(i.quantity),
-                discountPct: Value(i.discountPct),
-                discountAmount: Value(i.discountAmount),
-                lineTotal: Value(i.lineTotalTtc),
-                barcode: Value(i.product.barcode),
-                costPriceAtSale: Value(i.product.costPrice ?? 0.0),
-              ))
+          .map(
+            (i) => SaleItemsCompanion(
+              productId: Value(i.productId),
+              productName: Value(i.product.name),
+              unitPriceHt: Value(i.product.priceHt),
+              taxRate: Value(i.product.taxRate ?? 0.0),
+              quantity: Value(i.quantity),
+              discountPct: Value(i.discountPct),
+              discountAmount: Value(i.discountAmount),
+              lineTotal: Value(i.lineTotalTtc),
+              barcode: Value(i.product.barcode),
+              costPriceAtSale: Value(i.product.costPrice ?? 0.0),
+            ),
+          )
           .toList();
 
       final amountDue = (_method == 'credit')
           ? (total - paid).clamp(0.0, double.infinity)
           : 0.0;
-      final paymentStatus =
-          (_method == 'credit' && amountDue > 0) ? 'due' : 'paid';
+      final paymentStatus = (_method == 'credit' && amountDue > 0)
+          ? 'due'
+          : 'paid';
 
       final saleId = await widget.db.salesDao.createSale(
         userId: userId,
@@ -246,19 +247,21 @@ class _PaymentDialogState extends State<PaymentDialog> {
       final printer = getIt<PrinterService>();
       final cashierName =
           context.read<AuthBloc>().state.user?.name ?? 'Caissier';
-      final sale = await (widget.db.select(widget.db.sales)
-            ..where((s) => s.id.equals(saleId)))
-          .getSingle();
+      final sale = await (widget.db.select(
+        widget.db.sales,
+      )..where((s) => s.id.equals(saleId))).getSingle();
       final saleItems = await widget.db.salesDao.getSaleItems(saleId);
 
       final printItems = saleItems
-          .map((i) => {
-                'name': i.productName,
-                'barcode': i.barcode,
-                'qty': i.quantity,
-                'price': i.unitPriceHt * (1 + i.taxRate),
-                'total': i.lineTotal,
-              })
+          .map(
+            (i) => {
+              'name': i.productName,
+              'barcode': i.barcode,
+              'qty': i.quantity,
+              'price': i.unitPriceHt * (1 + i.taxRate),
+              'total': i.lineTotal,
+            },
+          )
           .toList();
 
       final success = await printer
@@ -305,16 +308,16 @@ class _PaymentDialogState extends State<PaymentDialog> {
     if (_createdSaleId == null) return;
 
     try {
-      final sale = await (widget.db.select(widget.db.sales)
-            ..where((s) => s.id.equals(_createdSaleId!)))
-          .getSingle();
+      final sale = await (widget.db.select(
+        widget.db.sales,
+      )..where((s) => s.id.equals(_createdSaleId!))).getSingle();
       final items = await widget.db.salesDao.getSaleItems(_createdSaleId!);
 
       Customer? customer;
       if (sale.customerId != null) {
-        customer = await (widget.db.select(widget.db.customers)
-              ..where((c) => c.remoteId.equals(sale.customerId!)))
-            .getSingleOrNull();
+        customer = await (widget.db.select(
+          widget.db.customers,
+        )..where((c) => c.remoteId.equals(sale.customerId!))).getSingleOrNull();
       }
 
       if (!mounted) return;
@@ -328,37 +331,49 @@ class _PaymentDialogState extends State<PaymentDialog> {
           context: context,
           backgroundColor: Colors.white,
           shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
           builder: (ctx) => SafeArea(
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              const Padding(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Padding(
                   padding: EdgeInsets.all(16),
-                  child: Text('Options d\'envoi numérique',
-                      style: TextStyle(fontWeight: FontWeight.bold))),
-              ListTile(
-                leading:
-                    const Icon(Icons.chat_outlined, color: AppColors.success),
-                title: const Text('WhatsApp Rapide (Texte)'),
-                subtitle: Text('Envoi direct au ${customer!.phone}'),
-                onTap: () => Navigator.pop(ctx, 'WHATSAPP'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.picture_as_pdf_outlined,
-                    color: AppColors.danger),
-                title: const Text('Partager le reçu PDF complet'),
-                onTap: () => Navigator.pop(ctx, 'PDF'),
-              ),
-              const SizedBox(height: 8),
-            ]),
+                  child: Text(
+                    'Options d\'envoi numérique',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.chat_outlined,
+                    color: AppColors.success,
+                  ),
+                  title: const Text('WhatsApp Rapide (Texte)'),
+                  subtitle: Text('Envoi direct au ${customer!.phone}'),
+                  onTap: () => Navigator.pop(ctx, 'WHATSAPP'),
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.picture_as_pdf_outlined,
+                    color: AppColors.danger,
+                  ),
+                  title: const Text('Partager le reçu PDF complet'),
+                  onTap: () => Navigator.pop(ctx, 'PDF'),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
         );
 
         if (choice == 'WHATSAPP') {
           await getIt<PrinterService>().shareSaleViaWhatsApp(
-              sale: sale,
-              items: items,
-              phone: customer.phone!,
-              customerName: customer.name);
+            sale: sale,
+            items: items,
+            phone: customer.phone!,
+            customerName: customer.name,
+          );
           return;
         } else if (choice == null) {
           return;
@@ -443,8 +458,10 @@ class _PaymentDialogState extends State<PaymentDialog> {
                       ],
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(Icons.close_rounded,
-                            color: AppColors.textMuted),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: AppColors.textMuted,
+                        ),
                         onPressed: widget.isEmbedded
                             ? widget.onCancel
                             : () => Navigator.pop(context),
@@ -477,9 +494,10 @@ class _PaymentDialogState extends State<PaymentDialog> {
                         const Text(
                           'TOTAL À PAYER',
                           style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                              letterSpacing: 1),
+                            color: Colors.white70,
+                            fontSize: 12,
+                            letterSpacing: 1,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         FittedBox(
@@ -502,9 +520,10 @@ class _PaymentDialogState extends State<PaymentDialog> {
                   const Text(
                     'Mode de paiement',
                     style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: AppColors.textPrimary),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   Wrap(
@@ -512,19 +531,40 @@ class _PaymentDialogState extends State<PaymentDialog> {
                     runSpacing: 8,
                     children: [
                       _methodBtn(
-                          'cash', Icons.payments_outlined, 'Espèces', cart,
-                          width: 105),
-                      _methodBtn('wave', Icons.water_drop_rounded, 'Wave', cart,
-                          width: 105),
-                      _methodBtn('orange_money', Icons.smartphone_rounded,
-                          'Orange', cart,
-                          width: 105),
+                        'cash',
+                        Icons.payments_outlined,
+                        'Espèces',
+                        cart,
+                        width: 105,
+                      ),
                       _methodBtn(
-                          'card', Icons.credit_card_outlined, 'Carte', cart,
-                          width: 105),
-                      _methodBtn('credit', Icons.person_search_outlined,
-                          'Crédit', cart,
-                          width: 105),
+                        'wave',
+                        Icons.water_drop_rounded,
+                        'Wave',
+                        cart,
+                        width: 105,
+                      ),
+                      _methodBtn(
+                        'orange_money',
+                        Icons.smartphone_rounded,
+                        'Orange',
+                        cart,
+                        width: 105,
+                      ),
+                      _methodBtn(
+                        'card',
+                        Icons.credit_card_outlined,
+                        'Carte',
+                        cart,
+                        width: 105,
+                      ),
+                      _methodBtn(
+                        'credit',
+                        Icons.person_search_outlined,
+                        'Crédit',
+                        cart,
+                        width: 105,
+                      ),
                     ],
                   ),
 
@@ -534,9 +574,10 @@ class _PaymentDialogState extends State<PaymentDialog> {
                         ? 'Client bénéficiaire du crédit'
                         : 'Client (Fidélité)',
                     style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: AppColors.textPrimary),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   _customerPickerTile(cart),
@@ -550,9 +591,10 @@ class _PaymentDialogState extends State<PaymentDialog> {
                           ? 'Montant reçu'
                           : 'Acompte versé (optionnel)',
                       style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                          color: AppColors.textPrimary),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     TextField(
@@ -560,9 +602,10 @@ class _PaymentDialogState extends State<PaymentDialog> {
                       keyboardType: TextInputType.number,
                       onChanged: (value) => setState(() {}),
                       style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold),
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                       decoration: const InputDecoration(
                         suffixText: 'FCFA',
                         hintText: '0',
@@ -578,8 +621,9 @@ class _PaymentDialogState extends State<PaymentDialog> {
                               (v) => ActionChip(
                                 label: Text(Fmt.currency(v.toDouble())),
                                 onPressed: () {
-                                  _amountCtrl.text =
-                                      (paid + v).toStringAsFixed(0);
+                                  _amountCtrl.text = (paid + v).toStringAsFixed(
+                                    0,
+                                  );
                                   setState(() {});
                                 },
                               ),
@@ -594,7 +638,8 @@ class _PaymentDialogState extends State<PaymentDialog> {
                           color: AppColors.success.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                              color: AppColors.success.withValues(alpha: 0.3)),
+                            color: AppColors.success.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -602,15 +647,17 @@ class _PaymentDialogState extends State<PaymentDialog> {
                             const Text(
                               'Rendu monnaie',
                               style: TextStyle(
-                                  color: AppColors.success,
-                                  fontWeight: FontWeight.w600),
+                                color: AppColors.success,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             Text(
                               Fmt.currency(change),
                               style: const TextStyle(
-                                  color: AppColors.success,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 16),
+                                color: AppColors.success,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                              ),
                             ),
                           ],
                         ),
@@ -622,25 +669,31 @@ class _PaymentDialogState extends State<PaymentDialog> {
                           color: AppColors.warning.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                              color: AppColors.warning.withValues(alpha: 0.3)),
+                            color: AppColors.warning.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Reste à payer',
-                                  style: TextStyle(
-                                    color: AppColors.warning,
-                                    fontWeight: FontWeight.w600,
-                                  )),
-                              Text(
-                                  Fmt.currency(
-                                      (total - paid).clamp(0, double.infinity)),
-                                  style: const TextStyle(
-                                    color: AppColors.warning,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 16,
-                                  )),
-                            ]),
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Reste à payer',
+                              style: TextStyle(
+                                color: AppColors.warning,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              Fmt.currency(
+                                (total - paid).clamp(0, double.infinity),
+                              ),
+                              style: const TextStyle(
+                                color: AppColors.warning,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                   ],
 
@@ -649,87 +702,120 @@ class _PaymentDialogState extends State<PaymentDialog> {
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.dangerSoft,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                            color: AppColors.danger.withValues(alpha: 0.3)),
+                          color: AppColors.danger.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(children: [
-                            const Icon(Icons.error_outline_rounded,
-                                color: AppColors.danger, size: 20),
-                            const SizedBox(width: 8),
-                            Expanded(
-                                child: Text('L\'impression n\'a pas pu aboutir',
-                                    style: TextStyle(
-                                        color: AppColors.danger
-                                            .withValues(alpha: 0.9),
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13))),
-                          ]),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.error_outline_rounded,
+                                color: AppColors.danger,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'L\'impression n\'a pas pu aboutir',
+                                  style: TextStyle(
+                                    color: AppColors.danger.withValues(
+                                      alpha: 0.9,
+                                    ),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 4),
                           Text(
-                              '• Vérifiez que l\'imprimante est allumée\n• Vérifiez qu\'il reste du papier\n• Le Bluetooth doit être activé',
-                              style: TextStyle(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                  fontSize: 11,
-                                  height: 1.4)),
+                            '• Vérifiez que l\'imprimante est allumée\n• Vérifiez qu\'il reste du papier\n• Le Bluetooth doit être activé',
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                              fontSize: 11,
+                              height: 1.4,
+                            ),
+                          ),
                           const SizedBox(height: 12),
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton.icon(
                               onPressed: _shareReceipt,
                               icon: const Icon(Icons.share_rounded, size: 18),
-                              label: const Text('ENVOYER PAR WHATSAPP / SMS',
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold)),
+                              label: const Text(
+                                'ENVOYER PAR WHATSAPP / SMS',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.success,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 10),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                ),
                               ),
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Row(children: [
-                            Expanded(
+                          Row(
+                            children: [
+                              Expanded(
                                 child: OutlinedButton(
-                              onPressed: _finalize,
-                              style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.textSecondary,
-                                  side: const BorderSide(
-                                      color: AppColors.borderDark)),
-                              child: const Text('IGNORER',
-                                  style: TextStyle(fontSize: 12)),
-                            )),
-                            const SizedBox(width: 8),
-                            Expanded(
-                                child: ElevatedButton(
-                              onPressed: _isPrinting
-                                  ? null
-                                  : () => _attemptPrint(_createdSaleId!),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
+                                  onPressed: _finalize,
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.textSecondary,
+                                    side: const BorderSide(
+                                      color: AppColors.borderDark,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'IGNORER',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                ),
                               ),
-                              child: _isPrinting
-                                  ? const SizedBox(
-                                      width: 15,
-                                      height: 15,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2, color: Colors.white))
-                                  : const Text('RÉESSAYER',
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold)),
-                            )),
-                          ]),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: _isPrinting
+                                      ? null
+                                      : () => _attemptPrint(_createdSaleId!),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                  ),
+                                  child: _isPrinting
+                                      ? const SizedBox(
+                                          width: 15,
+                                          height: 15,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'RÉESSAYER',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -737,25 +823,37 @@ class _PaymentDialogState extends State<PaymentDialog> {
 
                   if (_error != null) ...[
                     const SizedBox(height: 12),
-                    Text(_error!,
-                        style: const TextStyle(
-                            color: AppColors.danger, fontSize: 13)),
+                    Text(
+                      _error!,
+                      style: const TextStyle(
+                        color: AppColors.danger,
+                        fontSize: 13,
+                      ),
+                    ),
                   ],
 
                   if (!_printerReady && _createdSaleId == null) ...[
                     const SizedBox(height: 12),
-                    const Row(children: [
-                      Icon(Icons.warning_amber_rounded,
-                          color: AppColors.warning, size: 16),
-                      SizedBox(width: 6),
-                      Expanded(
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          color: AppColors.warning,
+                          size: 16,
+                        ),
+                        SizedBox(width: 6),
+                        Expanded(
                           child: Text(
-                              'Attention: L\'imprimante n\'est pas prête. Le ticket ne sortira pas automatiquement.',
-                              style: TextStyle(
-                                  color: AppColors.warning,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500))),
-                    ]),
+                            'Attention: L\'imprimante n\'est pas prête. Le ticket ne sortira pas automatiquement.',
+                            style: TextStyle(
+                              color: AppColors.warning,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
 
                   const SizedBox(height: 20),
@@ -768,35 +866,41 @@ class _PaymentDialogState extends State<PaymentDialog> {
                               backgroundColor: AppColors.success,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 16),
-                              disabledBackgroundColor:
-                                  AppColors.success.withValues(alpha: 0.4),
+                              disabledBackgroundColor: AppColors.success
+                                  .withValues(alpha: 0.4),
                             ),
                             child: _processing || _isPrinting
                                 ? Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       const SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                              color: Colors.white,
-                                              strokeWidth: 2)),
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
                                       const SizedBox(width: 12),
                                       Text(
                                         _isPrinting
                                             ? 'IMPRESSION DU TICKET...'
                                             : 'ENREGISTREMENT...',
                                         style: const TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 14,
-                                            letterSpacing: 1),
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 14,
+                                          letterSpacing: 1,
+                                        ),
                                       ),
                                     ],
                                   )
-                                : const Text('Valider la vente',
+                                : const Text(
+                                    'Valider la vente',
                                     style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 15)),
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 15,
+                                    ),
+                                  ),
                           )
                         : const SizedBox.shrink(),
                   ),
@@ -820,92 +924,107 @@ class _PaymentDialogState extends State<PaymentDialog> {
   }
 
   Widget _customerPickerTile(CartState cart) => InkWell(
-        onTap: _selectCustomer,
+    onTap: _selectCustomer,
+    borderRadius: BorderRadius.circular(12),
+    child: Container(
+      padding: const EdgeInsets.all(12), // Use withValues
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.all(12), // Use withValues
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Theme.of(context).dividerColor),
-          ),
-          child: Row(children: [
-            const Icon(Icons.person_outline, color: AppColors.primary),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    cart.customerName ?? 'Cliquer pour choisir un client',
-                    style: TextStyle(
-                      color: cart.customerName != null
-                          ? AppColors.textPrimary
-                          : AppColors.textMuted,
-                      fontWeight: cart.customerName != null
-                          ? FontWeight.w600
-                          : FontWeight.normal,
-                    ),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.person_outline, color: AppColors.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  cart.customerName ?? 'Cliquer pour choisir un client',
+                  style: TextStyle(
+                    color: cart.customerName != null
+                        ? AppColors.textPrimary
+                        : AppColors.textMuted,
+                    fontWeight: cart.customerName != null
+                        ? FontWeight.w600
+                        : FontWeight.normal,
                   ),
-                  if (cart.customerName == null)
-                    const Text('Requis pour les ventes à crédit',
-                        style:
-                            TextStyle(fontSize: 11, color: AppColors.danger)),
-                ],
-              ),
+                ),
+                if (cart.customerName == null)
+                  const Text(
+                    'Requis pour les ventes à crédit',
+                    style: TextStyle(fontSize: 11, color: AppColors.danger),
+                  ),
+              ],
             ),
-            const Icon(Icons.arrow_forward_ios,
-                size: 14, color: AppColors.textMuted),
-          ]),
-        ),
-      );
-
-  Widget _methodBtn(String value, IconData icon, String label, CartState cart,
-          {double? width}) =>
-      InkWell(
-        onTap: () => _onMethodChanged(value, cart),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: width,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: _method == value
-                ? AppColors.primary
-                : Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: _method == value
-                ? [
-                    BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4))
-                  ]
-                : [],
-            border: Border.all(
-                color: _method == value
-                    ? AppColors.primary
-                    : Theme.of(context).dividerColor),
           ),
-          child: Column(children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              child: Icon(icon,
-                  size: 22,
-                  color: _method == value
-                      ? Colors.white
-                      : AppColors.textSecondary),
-            ),
-            const SizedBox(height: 4),
-            Text(label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight:
-                      _method == value ? FontWeight.bold : FontWeight.w500,
-                  color: _method == value
-                      ? Colors.white
-                      : Theme.of(context).colorScheme.onSurfaceVariant,
-                )),
-          ]),
+          const Icon(
+            Icons.arrow_forward_ios,
+            size: 14,
+            color: AppColors.textMuted,
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _methodBtn(
+    String value,
+    IconData icon,
+    String label,
+    CartState cart, {
+    double? width,
+  }) => InkWell(
+    onTap: () => _onMethodChanged(value, cart),
+    borderRadius: BorderRadius.circular(12),
+    child: Container(
+      width: width,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: _method == value
+            ? AppColors.primary
+            : Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: _method == value
+            ? [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : [],
+        border: Border.all(
+          color: _method == value
+              ? AppColors.primary
+              : Theme.of(context).dividerColor,
         ),
-      );
+      ),
+      child: Column(
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            child: Icon(
+              icon,
+              size: 22,
+              color: _method == value ? Colors.white : AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: _method == value ? FontWeight.bold : FontWeight.w500,
+              color: _method == value
+                  ? Colors.white
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

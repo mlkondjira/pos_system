@@ -1,6 +1,10 @@
 @echo off
 SETLOCAL ENABLEDELAYEDEXPANSION
 
+echo [0/4] Fermeture des instances existantes de Gpos...
+taskkill /F /IM Gpos.exe /T >nul 2>&1
+timeout /t 1 /nobreak >nul
+
 REM Utilisation de GOTO pour éviter les blocs de parenthèses qui plantent avec le PATH
 if /i "%1"=="--clean" goto :do_clean
 echo [1/3] Skip Nettoyage (utilisez --clean pour une recompilation totale)...
@@ -8,7 +12,10 @@ goto :after_clean
 
 :do_clean
 echo [1/3] Nettoyage complet du projet...
-call flutter clean
+call flutter clean || (
+    echo [!] flutter clean a echoue, suppression manuelle du dossier build...
+    rmdir /s /q build 2>nul
+)
 
 :after_clean
 

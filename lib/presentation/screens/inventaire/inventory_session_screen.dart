@@ -2,10 +2,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:path/path.dart' as p;
 import '../../blocs/auth_bloc.dart';
 import '../../../core/theme/app_theme.dart';
@@ -118,9 +118,8 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'STOCK THÉORIQUE', // Ligne 110
+                      'STOCK THÉORIQUE', // Ligne 120
                       style: TextStyle(
-                        // Ligne 110
                         color: AppColors.textSecondary,
                         fontWeight: FontWeight.w800,
                         fontSize: 10,
@@ -128,7 +127,7 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
                       ),
                     ),
                     Text(
-                      '${line.expectedQty}', // Ligne 120
+                      '${line.expectedQty}',
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 20, // Ligne 120
@@ -143,12 +142,14 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
               TextFormField(
                 controller: ctrl,
                 autofocus: true,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                keyboardType: TextInputType.number, // Ligne 150
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ], // Ligne 150
                 style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 32,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  fontWeight: FontWeight.w900, // Ligne 150
+                  fontSize: 32, // Ligne 150
+                  color: Theme.of(context).colorScheme.onSurface, // Ligne 150
                 ),
                 textAlign: TextAlign.center,
                 decoration: const InputDecoration(
@@ -286,14 +287,13 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
                   children: [
                     const Icon(
                       Icons.warning_amber_rounded,
-                      color: AppColors.warning, // Ligne 207
+                      color: AppColors.warning,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         '$uncounted produit(s) non compté(s).\nIls ne seront pas ajustés.',
                         style: const TextStyle(
-                          // Ligne 207
                           color: AppColors.warning,
                           fontSize: 13,
                         ),
@@ -410,6 +410,7 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
       // Partager le fichier
       await SharePlus.instance.share(
         ShareParams(
+          text: 'Rapport d\'inventaire - ${session.ref}',
           files: [
             XFile(
               filePath,
@@ -487,6 +488,7 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
               mimeType: 'application/pdf',
             ),
           ],
+          text: 'Rapport des pertes d\'inventaire - ${session.ref}',
           subject: 'Rapport des pertes d\'inventaire - ${session.ref}',
         ),
       );
@@ -544,7 +546,7 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
             widget.session.ref,
             style: const TextStyle(
               fontFamily: 'SpaceGrotesk',
-              fontWeight: FontWeight.w700, // Ligne 351
+              fontWeight: FontWeight.w700,
               fontSize: 16,
             ),
           ),
@@ -572,9 +574,7 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
                   IconButton(
                     icon: Icon(
                       Icons.qr_code_scanner_rounded,
-                      color:
-                          state
-                              .showScanner // Ligne 370
+                      color: state.showScanner
                           ? AppColors.accent
                           : AppColors.textSecondary,
                     ),
@@ -606,7 +606,7 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
                                 color: Colors.white,
                                 strokeWidth: 2,
                               ),
-                            ) // Ligne 386
+                            )
                           : const Text(
                               'Valider',
                               style: TextStyle(
@@ -773,7 +773,7 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
                 }
 
                 return ListView.separated(
-                  padding: const EdgeInsets.all(12), // Ligne 456
+                  padding: const EdgeInsets.all(12),
                   itemCount: lines.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 6),
                   itemBuilder: (_, i) => _InventoryLineTile(
@@ -840,8 +840,8 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
                       '$counted / ${lines.length}',
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
-                        fontSize: 18, // Ligne 495
-                        color: AppColors.primary, // Ligne 496
+                        fontSize: 18,
+                        color: AppColors.primary,
                       ),
                     ),
                   ],
@@ -853,9 +853,7 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
                     value: lines.isEmpty ? 0 : counted / lines.length,
                     minHeight: 10,
                     backgroundColor: AppColors.bg,
-                    valueColor: const AlwaysStoppedAnimation(
-                      AppColors.primary,
-                    ), // Ligne 505
+                    valueColor: const AlwaysStoppedAnimation(AppColors.primary),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -907,7 +905,6 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
             const Text(
               'PRODUITS AVEC ÉCARTS',
               style: TextStyle(
-                // Ligne 531
                 fontWeight: FontWeight.w800,
                 fontSize: 11,
                 letterSpacing: 1,
@@ -934,7 +931,7 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
                         l.productName,
                         style: const TextStyle(
                           fontWeight: FontWeight.w500,
-                          fontSize: 13, // Ligne 550
+                          fontSize: 13,
                         ),
                       ),
                     ),
@@ -981,7 +978,6 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                // Ligne 586
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.border),
@@ -993,7 +989,7 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
                     size: 16,
                     color: AppColors.textMuted,
                   ),
-                  const SizedBox(width: 8), // Ligne 595
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       widget.session.notes,
@@ -1040,7 +1036,6 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
       ..sort((a, b) => (b.id).compareTo(a.id));
     if (validated.isEmpty) {
       return const Center(
-        // Ligne 631
         child: Text(
           'Aucun produit compté pour l\'instant',
           style: TextStyle(color: AppColors.textMuted),
@@ -1055,7 +1050,7 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
         final l = validated[i];
         final diff = l.difference ?? 0;
         return Container(
-          padding: const EdgeInsets.all(12), // Ligne 644
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: AppColors.surfaceCard(context),
             borderRadius: BorderRadius.circular(10),
@@ -1076,7 +1071,7 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
                     ? AppColors.info
                     : AppColors.danger,
               ),
-              const SizedBox(width: 10), // Ligne 668
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   l.productName,
@@ -1097,7 +1092,6 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
               Text(
                 'Compté: ${l.countedQty}',
                 style: TextStyle(
-                  // Ligne 679
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: diff == 0
@@ -1131,7 +1125,7 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
         width: 8,
         height: 8,
         decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-      ), // Ligne 703
+      ),
       const SizedBox(width: 6),
       Text(
         label,
@@ -1158,7 +1152,7 @@ class _InventorySessionScreenState extends State<InventorySessionScreen>
                 color: color,
               ),
             ),
-            const SizedBox(height: 4), // Ligne 730
+            const SizedBox(height: 4),
             Text(
               label,
               style: const TextStyle(
@@ -1211,7 +1205,7 @@ class _InventoryLineTile extends StatelessWidget {
       onTap: isReadOnly ? null : onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.all(14), // Ligne 750
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppColors.surfaceCard(context),
           borderRadius: BorderRadius.circular(16),
@@ -1235,7 +1229,7 @@ class _InventoryLineTile extends StatelessWidget {
             // Indicateur statut
             Container(
               width: 36,
-              height: 36, // Ligne 770
+              height: 36,
               decoration: BoxDecoration(
                 color: !counted
                     ? AppColors.surface
@@ -1266,10 +1260,10 @@ class _InventoryLineTile extends StatelessWidget {
                 children: [
                   Text(
                     line.productName,
-                    style: const TextStyle(
-                      // Ligne 796
+                    style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1278,7 +1272,7 @@ class _InventoryLineTile extends StatelessWidget {
                     Text(
                       line.barcode!,
                       style: const TextStyle(
-                        fontSize: 11, // Ligne 806
+                        fontSize: 11,
                         color: AppColors.textMuted,
                       ),
                     ),
@@ -1297,7 +1291,7 @@ class _InventoryLineTile extends StatelessWidget {
                       line.obsoleteQty > 0 ||
                       line.expiredQty > 0)
                     Padding(
-                      padding: const EdgeInsets.only(top: 2), // Ligne 824
+                      padding: const EdgeInsets.only(top: 2),
                       child: Text(
                         'Pertes: ${line.defectiveQty + line.obsoleteQty + line.expiredQty} unité(s)',
                         style: const TextStyle(
@@ -1325,7 +1319,7 @@ class _InventoryLineTile extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${line.expectedQty}', // Ligne 840
+                      '${line.expectedQty}',
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -1342,7 +1336,7 @@ class _InventoryLineTile extends StatelessWidget {
                           fontSize: 11,
                           color: AppColors.textMuted,
                         ),
-                      ), // Ligne 850
+                      ),
                       Text(
                         '${line.countedQty}',
                         style: const TextStyle(

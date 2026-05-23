@@ -33,14 +33,15 @@ class AppColors {
   static const surfaceLight = Color(0x99FFFFFF); // Blanc 60%
   static Color surfaceCard(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
-          ? const Color(0xFF1A1C1D)
-          : const Color(0xFFFFFFFF);
+      ? const Color(0xFF1A1C1D)
+      : const Color(0xFFFFFFFF);
   static const card = Colors.white;
 
   static const border = Color(0xFFEEEFF1); // Bordure plus subtile
   static const borderDark = Color(0xFFC9CCCF);
-  static const glassBorder =
-      Color(0x66FFFFFF); // Bordure de lumière plus marquée
+  static const glassBorder = Color(
+    0x66FFFFFF,
+  ); // Bordure de lumière plus marquée
   static const glassHighlight = Color(0x4DFFFFFF); // Reflet sur le dessus
   static const softShadow = Color(0x1A007AFF); // Ombre du nouveau bleu
 
@@ -74,7 +75,7 @@ class AppColors {
       colors: isDark
           ? [
               const Color(0xFF0F172A),
-              const Color(0xFF1E1B4B)
+              const Color(0xFF1E1B4B),
             ] // Nuit profonde vers Bleu nuit
           : [const Color(0xFFF8FAFC), const Color(0xFFF1F5F9)],
     );
@@ -83,20 +84,14 @@ class AppColors {
   static const gradientSubtle = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0xFFFFFFFF),
-      Color(0xFFF8FAFC),
-    ],
+    colors: [Color(0xFFFFFFFF), Color(0xFFF8FAFC)],
   );
 
   // Dégradé pour les écrans de contenu (liste produits, etc.)
   static const gradientContent = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0xFFF0F4FF),
-      Color(0xFFE8EEFF),
-    ],
+    colors: [Color(0xFFF0F4FF), Color(0xFFE8EEFF)],
   );
 }
 
@@ -120,7 +115,7 @@ class AppTheme {
 
     textSelectionTheme: TextSelectionThemeData(
       cursorColor: AppColors.primary,
-      selectionColor: AppColors.primary.withValues(alpha: 0.3), // Ligne 105
+      selectionColor: AppColors.primary.withValues(alpha: 0.3),
       selectionHandleColor: AppColors.primary,
     ),
 
@@ -155,26 +150,18 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(
-          color: AppColors.primary,
-          width: 2.0,
-        ),
+        borderSide: const BorderSide(color: AppColors.primary, width: 2.0),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(
-          color: AppColors.danger,
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       labelStyle: const TextStyle(
         color: AppColors.textSecondary,
         fontWeight: FontWeight.w600,
       ),
-      hintStyle: const TextStyle(
-        color: AppColors.textMuted,
-      ),
+      hintStyle: const TextStyle(color: AppColors.textMuted),
       floatingLabelStyle: const TextStyle(
         color: AppColors.primary,
         fontWeight: FontWeight.bold,
@@ -183,41 +170,38 @@ class AppTheme {
     ),
 
     elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 22, // Hauteur massive type Shopify POS
-        ),
-        elevation: 0,
-        textStyle: const TextStyle(
-          fontSize: 17,
-          fontWeight: FontWeight.w800, // Texte très clair et affirmé
-          letterSpacing: 0.5,
-        ),
-      ).copyWith(
-        backgroundColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.pressed)) {
-            return AppColors.primaryDark;
-          }
-          return AppColors.primary;
-        }),
-      ),
+      style:
+          ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 22, // Hauteur massive type Shopify POS
+            ),
+            elevation: 0,
+            textStyle: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800, // Texte très clair et affirmé
+              letterSpacing: 0.5,
+            ),
+          ).copyWith(
+            backgroundColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.pressed)) {
+                return AppColors.primaryDark;
+              }
+              return AppColors.primary;
+            }),
+          ),
     ),
 
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(
-        foregroundColor: AppColors.primary,
-      ),
+      style: TextButton.styleFrom(foregroundColor: AppColors.primary),
     ),
 
-    iconTheme: const IconThemeData(
-      color: AppColors.textSecondary,
-    ),
+    iconTheme: const IconThemeData(color: AppColors.textSecondary),
 
     dialogTheme: DialogThemeData(
       backgroundColor: Colors.white,
@@ -225,10 +209,7 @@ class AppTheme {
       elevation: 8, // Plus sobre et moderne
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(
-          color: AppColors.border,
-          width: 0.8,
-        ),
+        side: const BorderSide(color: AppColors.border, width: 0.8),
       ),
       titleTextStyle: const TextStyle(
         color: AppColors.textPrimary,
@@ -255,34 +236,24 @@ class AppTheme {
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(28),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         side: BorderSide(color: Colors.white, width: 1),
       ),
     ),
 
     snackBarTheme: SnackBarThemeData(
       backgroundColor: AppColors.textPrimary,
-      contentTextStyle: const TextStyle(
-        color: Colors.white,
-      ),
+      contentTextStyle: const TextStyle(color: Colors.white),
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
     ),
 
     chipTheme: ChipThemeData(
       backgroundColor: AppColors.bg,
       selectedColor: AppColors.primary,
       labelStyle: const TextStyle(color: AppColors.textPrimary),
-      side: const BorderSide(
-        color: AppColors.border,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
+      side: const BorderSide(color: AppColors.border),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     ),
   );
 
@@ -304,8 +275,8 @@ class AppTheme {
       onSecondary: Colors.white,
     ),
     textSelectionTheme: TextSelectionThemeData(
-      cursorColor: AppColors.primary,
-      selectionColor: AppColors.primary.withValues(alpha: 0.4), // Ligne 214
+      cursorColor: AppColors.primary, // Ligne 214
+      selectionColor: AppColors.primary.withValues(alpha: 0.4),
       selectionHandleColor: AppColors.primary,
     ),
     cardTheme: CardThemeData(
@@ -318,7 +289,7 @@ class AppTheme {
       margin: const EdgeInsets.symmetric(vertical: 6),
     ),
     inputDecorationTheme: InputDecorationTheme(
-      filled: true,
+      filled: true, // Ligne 230
       fillColor: const Color(0xFF1A1C1D).withValues(alpha: 0.8),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(18), // Harmonisation Premium
@@ -326,10 +297,7 @@ class AppTheme {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(18),
-        borderSide: const BorderSide(
-          color: Color(0xFF242627),
-          width: 1.0,
-        ),
+        borderSide: const BorderSide(color: Color(0xFF242627), width: 1.0),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(18),
@@ -343,9 +311,7 @@ class AppTheme {
         color: Color(0xFFB1B3B5),
         fontWeight: FontWeight.w600,
       ),
-      hintStyle: const TextStyle(
-        color: Color(0xFF8C9196),
-      ),
+      hintStyle: const TextStyle(color: Color(0xFF8C9196)),
       floatingLabelStyle: const TextStyle(
         color: AppColors.primary,
         fontWeight: FontWeight.bold,
@@ -374,14 +340,18 @@ class AppTheme {
         side: const BorderSide(color: Color(0xFF2F3133), width: 0.8),
       ),
       titleTextStyle: const TextStyle(
-          color: Color(0xFFE3E3E3), fontSize: 17, fontWeight: FontWeight.w900),
+        color: Color(0xFFE3E3E3),
+        fontSize: 17,
+        fontWeight: FontWeight.w900,
+      ),
       contentTextStyle: const TextStyle(color: Color(0xFFB1B3B5), fontSize: 13),
     ),
     bottomSheetTheme: const BottomSheetThemeData(
       backgroundColor: Color(0xFF1A1C1D),
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
     ),
     snackBarTheme: SnackBarThemeData(
       backgroundColor: const Color(0xFF202223),

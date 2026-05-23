@@ -20,11 +20,14 @@ class _AdminOverrideDialogState extends State<AdminOverrideDialog> {
 
   Future<void> _verify() async {
     if (_pinCtrl.text.length < 4) return;
-    
-    setState(() { _loading = true; _error = null; });
-    
+
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
     final admin = await _db.verifyAdminOverride(_pinCtrl.text);
-    
+
     if (admin != null) {
       if (mounted) Navigator.pop(context, admin);
     } else {
@@ -52,7 +55,14 @@ class _AdminOverrideDialogState extends State<AdminOverrideDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(widget.reason, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+          Text(
+            widget.reason,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+            ),
+          ),
           const SizedBox(height: 20),
           TextField(
             controller: _pinCtrl,
@@ -62,7 +72,12 @@ class _AdminOverrideDialogState extends State<AdminOverrideDialog> {
             keyboardType: TextInputType.number,
             maxLength: 4,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 24, letterSpacing: 10, fontWeight: FontWeight.bold, color: Colors.black),
+            style: const TextStyle(
+              fontSize: 24,
+              letterSpacing: 10,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
             decoration: InputDecoration(
               hintText: 'PIN',
               errorText: _error,
@@ -73,12 +88,19 @@ class _AdminOverrideDialogState extends State<AdminOverrideDialog> {
           if (_loading)
             const Padding(
               padding: EdgeInsets.only(top: 16),
-              child: SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 2)),
+              child: SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
             ),
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Annuler'),
+        ),
       ],
     );
   }

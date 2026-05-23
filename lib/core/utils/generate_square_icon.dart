@@ -21,10 +21,10 @@ void main() async {
 
   // Déterminer la taille du carré (le plus grand côté)
   final int size = image.width > image.height ? image.width : image.height;
-  
+
   // Créer une image carrée transparente
   final squareImage = img.Image(width: size, height: size, numChannels: 4);
-  
+
   // Centrer le logo
   final int x = (size - image.width) ~/ 2;
   final int y = (size - image.height) ~/ 2;
@@ -33,6 +33,8 @@ void main() async {
 
   // Sauvegarder
   await File(outputPath).writeAsBytes(img.encodePng(squareImage));
-  stdout.writeln('✅ Icône carrée générée avec succès : $outputPath (${size}x${size}px)');
+  stdout.writeln(
+    '✅ Icône carrée générée avec succès : $outputPath (${size}x${size}px)',
+  );
   exit(0);
 }

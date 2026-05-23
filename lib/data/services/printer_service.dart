@@ -385,9 +385,9 @@ class PrinterService {
         files: [
           XFile(filePath, name: '$fileName.pdf', mimeType: 'application/pdf'),
         ],
-        subject: 'Bons de Commande du Matin',
         text:
             'Veuillez trouver ci-joint les bons de commande générés ce matin.',
+        subject: 'Bons de Commande du Matin',
       ),
     );
   }
@@ -807,6 +807,7 @@ class PrinterService {
     List<String>? tableHeaders,
     List<List<String>>? tableData,
     String? qrData,
+    String? signatureText, // NOUVEAU
   }) async {
     final settings = await _db.getAllSettings();
     final shopName = settings['shop_name'] ?? 'Mon Magasin';
@@ -853,7 +854,7 @@ class PrinterService {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  if (logoPdfWidget != null) logoPdfWidget,
+                  ?logoPdfWidget,
                   if (logoPdfWidget != null) pw.SizedBox(width: 10),
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.end,
@@ -968,6 +969,22 @@ class PrinterService {
               ),
             ],
 
+            // NOUVEAU : Ligne de signature
+            if (signatureText != null &&
+                signatureText.isNotEmpty &&
+                !useReceiptFormat) ...[
+              pw.SizedBox(height: 40), // Plus d'espace pour la signature
+              pw.Text(
+                signatureText,
+                style: const pw.TextStyle(
+                  fontSize: 10,
+                  color: PdfColors.grey700,
+                ),
+                textAlign: pw.TextAlign.center,
+              ),
+              pw.SizedBox(height: 20),
+            ],
+
             if (!useReceiptFormat) pw.Spacer(),
             pw.Center(
               child: pw.Text(
@@ -995,6 +1012,7 @@ class PrinterService {
     List<String>? tableHeaders,
     List<List<String>>? tableData,
     String? qrData,
+    String? signatureText, // NOUVEAU
   }) async {
     // 1. Générer les octets du PDF (format A4 par défaut pour le partage)
     final pdfBytes = await generateReportPdfBytes(
@@ -1003,6 +1021,7 @@ class PrinterService {
       tableHeaders: tableHeaders,
       tableData: tableData,
       qrData: qrData,
+      signatureText: signatureText, // Passer le nouveau paramètre
     );
 
     // 2. Sauvegarder dans un fichier temporaire
@@ -1015,11 +1034,11 @@ class PrinterService {
     // 3. Déclencher le menu de partage système
     await SharePlus.instance.share(
       ShareParams(
+        text: shareMessage,
         files: [
           XFile(filePath, name: '$cleanName.pdf', mimeType: 'application/pdf'),
         ],
         subject: subject,
-        text: shareMessage,
       ),
     );
   }

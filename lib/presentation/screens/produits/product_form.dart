@@ -394,64 +394,64 @@ class _ProductFormState extends State<ProductForm> {
   Future<void> _openScanner() async {
     final controller = MobileScannerController(
       detectionSpeed: DetectionSpeed.noDuplicates,
-      formats: [
-        BarcodeFormat.ean13,
-        BarcodeFormat.qrCode,
-      ],
+      formats: [BarcodeFormat.ean13, BarcodeFormat.qrCode],
     );
 
-    final String? code = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Scanner un code-barres'),
-        content: SizedBox(
-          width: 300,
-          height: 300,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Stack(
-              children: [
-                MobileScanner(
-                  controller: controller,
-                  onDetect: (capture) {
-                    final barcode = capture.barcodes.firstOrNull?.rawValue;
-                    if (barcode != null) {
-                      HapticFeedback.lightImpact();
-                      Navigator.pop(ctx, barcode);
-                    }
-                  },
-                ),
-                // ─── VISEUR (Ligne rouge centrée) ───
-                IgnorePointer(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          height: 1,
-                          margin: const EdgeInsets.symmetric(horizontal: 40),
-                          color: Colors.red.withValues(alpha: 0.6),
-                        ),
-                      ],
+    final String? code =
+        await showDialog<String>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Scanner un code-barres'),
+            content: SizedBox(
+              width: 300,
+              height: 300,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Stack(
+                  children: [
+                    MobileScanner(
+                      controller: controller,
+                      onDetect: (capture) {
+                        final barcode = capture.barcodes.firstOrNull?.rawValue;
+                        if (barcode != null) {
+                          HapticFeedback.lightImpact();
+                          Navigator.pop(ctx, barcode);
+                        }
+                      },
                     ),
-                  ),
+                    // ─── VISEUR (Ligne rouge centrée) ───
+                    IgnorePointer(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              height: 1,
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 40,
+                              ),
+                              color: Colors.red.withValues(alpha: 0.6),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Fermer'),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Fermer'),
-          ),
-        ],
-      ),
-    ).then((val) {
-      controller.dispose();
-      return val;
-    });
+        ).then((val) {
+          controller.dispose();
+          return val;
+        });
 
     if (code != null) {
       setState(() => _barcodeCtrl.text = code);
@@ -475,7 +475,10 @@ class _ProductFormState extends State<ProductForm> {
       // Optimisation pour le forfait gratuit Supabase :
       // Redimensionnement et compression à la source.
       final XFile? image = await _picker.pickImage(
-          source: source, maxWidth: 600, imageQuality: 70);
+        source: source,
+        maxWidth: 600,
+        imageQuality: 70,
+      );
       if (image != null) {
         final String? previousPath = _imagePath;
 
@@ -505,8 +508,9 @@ class _ProductFormState extends State<ProductForm> {
             decoded = img.copyResize(decoded, width: 600);
           }
           // Enregistrement compressé (JPG 70% est idéal pour un catalogue POS)
-          await File(localPath)
-              .writeAsBytes(img.encodeJpg(decoded, quality: 70));
+          await File(
+            localPath,
+          ).writeAsBytes(img.encodeJpg(decoded, quality: 70));
         } else {
           await File(image.path).copy(localPath);
         }
@@ -550,8 +554,10 @@ class _ProductFormState extends State<ProductForm> {
             if (_imagePath != null)
               ListTile(
                 leading: const Icon(Icons.delete, color: AppColors.danger),
-                title: const Text('Supprimer la photo',
-                    style: TextStyle(color: AppColors.danger)),
+                title: const Text(
+                  'Supprimer la photo',
+                  style: TextStyle(color: AppColors.danger),
+                ),
                 onTap: () {
                   Navigator.pop(ctx);
                   setState(() => _imagePath = null);
@@ -576,326 +582,404 @@ class _ProductFormState extends State<ProductForm> {
           child: Container(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
             decoration: BoxDecoration(
-              color:
-                  Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
+              color: Theme.of(
+                context,
+              ).colorScheme.surface.withValues(alpha: 0.9),
               border: Border(
-                  top: BorderSide(
-                      color: Theme.of(context)
-                          .dividerColor
-                          .withValues(alpha: 0.3))),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(28)),
+                top: BorderSide(
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
+                ),
+              ),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
             ),
             child: Form(
               key: _formKey,
-              child: ListView(controller: ctrl, children: [
-                // Handle
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.border,
-                      borderRadius: BorderRadius.circular(2),
+              child: ListView(
+                controller: ctrl,
+                children: [
+                  // Handle
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.border,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                ),
 
-                Text(
-                  widget.product == null
-                      ? 'Nouveau produit'
-                      : 'Modifier — ${widget.product!.name}',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                  Text(
+                    widget.product == null
+                        ? 'Nouveau produit'
+                        : 'Modifier — ${widget.product!.name}',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-                // ── Photo du produit ─────────────
-                Center(
-                  child: Stack(
-                    children: [
-                      Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest
-                              .withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: _imagePath != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(15),
-                                child: Image.file(File(_imagePath!),
-                                    fit: BoxFit.cover),
-                              )
-                            : const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.add_a_photo_outlined,
-                                      color: AppColors.textMuted, size: 32),
-                                  SizedBox(height: 4),
-                                  Text('Logo',
+                  // ── Photo du produit ─────────────
+                  Center(
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest
+                                .withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: _imagePath != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(15),
+                                  child: Image.file(
+                                    File(_imagePath!),
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.add_a_photo_outlined,
+                                      color: AppColors.textMuted,
+                                      size: 32,
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      'Logo',
                                       style: TextStyle(
-                                          fontSize: 11,
-                                          color: AppColors.textMuted)),
-                                ],
-                              ),
-                      ),
-                      Positioned(
-                        bottom: -5,
-                        right: -5,
-                        child: IconButton(
-                          onPressed: _showImageSourceActionSheet,
-                          icon: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
+                                        fontSize: 11,
+                                        color: AppColors.textMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                        Positioned(
+                          bottom: -5,
+                          right: -5,
+                          child: IconButton(
+                            onPressed: _showImageSourceActionSheet,
+                            icon: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
                                 color: AppColors.primary,
-                                shape: BoxShape.circle),
-                            child: const Icon(Icons.edit,
-                                size: 16, color: Colors.white),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.edit,
+                                size: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ── Nom ──────────────────────────
+                  _label('Nom du produit *'),
+                  _field(
+                    _nameCtrl,
+                    'Ex: Riz parfumé 5kg',
+                    validator: (v) =>
+                        v == null || v.isEmpty ? 'Champ requis' : null,
+                  ),
+                  const SizedBox(height: 14),
+
+                  // ── Code-barres ──────────────────
+                  _label('Code-barres'),
+                  TextFormField(
+                    controller: _barcodeCtrl,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontSize: 14,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'EAN-13, QR, code interne...',
+                      suffixIcon: IconButton(
+                        icon: const Icon(
+                          Icons.qr_code_scanner,
+                          size: 18,
+                          color: AppColors.primaryLight,
+                        ),
+                        onPressed: _openScanner,
+                        tooltip: 'Scanner un code-barres',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // ── Prix ─────────────────────────
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _label('Prix de vente HT *'),
+                            _field(
+                              _priceCtrl,
+                              '0',
+                              keyboard: TextInputType.number,
+                              validator: (v) => double.tryParse(v ?? '') == null
+                                  ? 'Nombre requis'
+                                  : null,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _label("Prix d'achat"),
+                            _field(
+                              _costCtrl,
+                              '0',
+                              keyboard: TextInputType.number,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // ── Taxe ─────────────────────────
+                  _label('Taux de taxe (TVA)'),
+                  DropdownButtonFormField<double>(
+                    initialValue: _taxRate,
+                    dropdownColor: Theme.of(context).colorScheme.surface,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontSize: 14,
+                    ),
+                    decoration: const InputDecoration(),
+                    items: _taxRates
+                        .map(
+                          (t) => DropdownMenuItem(
+                            value: t.$1,
+                            child: Text(
+                              t.$2,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => _taxRate = v ?? 0),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // ── Stock ─────────────────────────
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _label('Stock initial'),
+                            _field(
+                              _stockCtrl,
+                              '0',
+                              keyboard: TextInputType.number,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _label("Seuil d'alerte"),
+                            _field(
+                              _alertCtrl,
+                              '5',
+                              keyboard: TextInputType.number,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // ── Unité ─────────────────────────
+                  _label('Unité de mesure'),
+                  DropdownButtonFormField<String>(
+                    initialValue: _unit,
+                    dropdownColor: Theme.of(context).colorScheme.surface,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontSize: 14,
+                    ),
+                    decoration: const InputDecoration(),
+                    items: _units
+                        .map(
+                          (u) => DropdownMenuItem(
+                            value: u,
+                            child: Text(
+                              u,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => _unit = v ?? 'pce'),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // ── Date d'expiration ─────────────
+                  _label("Date d'expiration (optionnel)"),
+                  InkWell(
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate:
+                            _expiryDate ??
+                            DateTime.now().add(const Duration(days: 30)),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(
+                          const Duration(days: 3650),
+                        ),
+                      );
+                      if (date != null) setState(() => _expiryDate = date);
+                    },
+                    child: InputDecorator(
+                      decoration: const InputDecoration(),
+                      child: Text(
+                        _expiryDate != null
+                            ? Fmt.date(_expiryDate!)
+                            : 'Non définie',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // ── Catégorie ─────────────────────
+                  _label('Catégorie'),
+                  DropdownButtonFormField<int?>(
+                    initialValue: _categories.any((c) => c.id == _categoryId)
+                        ? _categoryId
+                        : null,
+                    dropdownColor: Theme.of(context).colorScheme.surface,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontSize: 14,
+                    ),
+                    decoration: const InputDecoration(),
+                    items: [
+                      DropdownMenuItem<int?>(
+                        value: null,
+                        child: Text(
+                          'Sans catégorie',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      ..._categories.map(
+                        (c) => DropdownMenuItem<int?>(
+                          value: c.id,
+                          child: Row(
+                            children: [
+                              Icon(
+                                _getCategoryIcon(c.icon ?? c.name),
+                                size: 18,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                c.name,
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                    onChanged: (v) => setState(() => _categoryId = v),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // ── Description ───────────────────
+                  _label('Description (optionnel)'),
+                  TextFormField(
+                    controller: _descCtrl,
+                    maxLines: 2,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontSize: 14,
+                    ),
+                    decoration: const InputDecoration(
+                      hintText: 'Notes sur le produit...',
+                      hintStyle: TextStyle(color: AppColors.textMuted),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+
+                  // ── Boutons ───────────────────────
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Annuler'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton.icon(
+                          onPressed: _saving ? null : _save,
+                          icon: _saving
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.save_rounded, size: 18),
+                          label: Text(
+                            _saving ? 'Enregistrement...' : 'Enregistrer',
                           ),
                         ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 20),
-
-                // ── Nom ──────────────────────────
-                _label('Nom du produit *'),
-                _field(_nameCtrl, 'Ex: Riz parfumé 5kg',
-                    validator: (v) =>
-                        v == null || v.isEmpty ? 'Champ requis' : null),
-                const SizedBox(height: 14),
-
-                // ── Code-barres ──────────────────
-                _label('Code-barres'),
-                TextFormField(
-                  controller: _barcodeCtrl,
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: 'EAN-13, QR, code interne...',
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.qr_code_scanner,
-                          size: 18, color: AppColors.primaryLight),
-                      onPressed: _openScanner,
-                      tooltip: 'Scanner un code-barres',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // ── Prix ─────────────────────────
-                Row(children: [
-                  Expanded(
-                      child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _label('Prix de vente HT *'),
-                      _field(_priceCtrl, '0',
-                          keyboard: TextInputType.number,
-                          validator: (v) => double.tryParse(v ?? '') == null
-                              ? 'Nombre requis'
-                              : null),
-                    ],
-                  )),
-                  const SizedBox(width: 12),
-                  Expanded(
-                      child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _label("Prix d'achat"),
-                      _field(_costCtrl, '0', keyboard: TextInputType.number),
-                    ],
-                  )),
-                ]),
-                const SizedBox(height: 14),
-
-                // ── Taxe ─────────────────────────
-                _label('Taux de taxe (TVA)'),
-                DropdownButtonFormField<double>(
-                  initialValue: _taxRate,
-                  dropdownColor: Theme.of(context).colorScheme.surface,
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontSize: 14),
-                  decoration: const InputDecoration(),
-                  items: _taxRates
-                      .map((t) => DropdownMenuItem(
-                          value: t.$1,
-                          child: Text(t.$2,
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurface))))
-                      .toList(),
-                  onChanged: (v) => setState(() => _taxRate = v ?? 0),
-                ),
-                const SizedBox(height: 14),
-
-                // ── Stock ─────────────────────────
-                Row(children: [
-                  Expanded(
-                      child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _label('Stock initial'),
-                      _field(_stockCtrl, '0', keyboard: TextInputType.number),
-                    ],
-                  )),
-                  const SizedBox(width: 12),
-                  Expanded(
-                      child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _label("Seuil d'alerte"),
-                      _field(_alertCtrl, '5', keyboard: TextInputType.number),
-                    ],
-                  )),
-                ]),
-                const SizedBox(height: 14),
-
-                // ── Unité ─────────────────────────
-                _label('Unité de mesure'),
-                DropdownButtonFormField<String>(
-                  initialValue: _unit,
-                  dropdownColor: Theme.of(context).colorScheme.surface,
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontSize: 14),
-                  decoration: const InputDecoration(),
-                  items: _units
-                      .map((u) => DropdownMenuItem(
-                          value: u,
-                          child: Text(u,
-                              style: TextStyle(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurface))))
-                      .toList(),
-                  onChanged: (v) => setState(() => _unit = v ?? 'pce'),
-                ),
-                const SizedBox(height: 14),
-
-                // ── Date d'expiration ─────────────
-                _label("Date d'expiration (optionnel)"),
-                InkWell(
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _expiryDate ??
-                          DateTime.now().add(const Duration(days: 30)),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(const Duration(days: 3650)),
-                    );
-                    if (date != null) setState(() => _expiryDate = date);
-                  },
-                  child: InputDecorator(
-                    decoration: const InputDecoration(),
-                    child: Text(
-                        _expiryDate != null
-                            ? Fmt.date(_expiryDate!)
-                            : 'Non définie',
-                        style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface,
-                            fontSize: 14)),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // ── Catégorie ─────────────────────
-                _label('Catégorie'),
-                DropdownButtonFormField<int?>(
-                  initialValue: _categories.any((c) => c.id == _categoryId)
-                      ? _categoryId
-                      : null,
-                  dropdownColor: Theme.of(context).colorScheme.surface,
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontSize: 14),
-                  decoration: const InputDecoration(),
-                  items: [
-                    DropdownMenuItem<int?>(
-                        value: null,
-                        child: Text('Sans catégorie',
-                            style: TextStyle(
-                                color:
-                                    Theme.of(context).colorScheme.onSurface))),
-                    ..._categories.map((c) => DropdownMenuItem<int?>(
-                        value: c.id,
-                        child: Row(
-                          children: [
-                            Icon(
-                              _getCategoryIcon(c.icon ?? c.name),
-                              size: 18,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              c.name,
-                              style: TextStyle(
-                                  color:
-                                      Theme.of(context).colorScheme.onSurface),
-                            ),
-                          ],
-                        ))),
-                  ],
-                  onChanged: (v) => setState(() => _categoryId = v),
-                ),
-                const SizedBox(height: 14),
-
-                // ── Description ───────────────────
-                _label('Description (optionnel)'),
-                TextFormField(
-                  controller: _descCtrl,
-                  maxLines: 2,
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontSize: 14),
-                  decoration: const InputDecoration(
-                    hintText: 'Notes sur le produit...',
-                    hintStyle: TextStyle(color: AppColors.textMuted),
-                  ),
-                ),
-                const SizedBox(height: 28),
-
-                // ── Boutons ───────────────────────
-                Row(children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Annuler'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton.icon(
-                      onPressed: _saving ? null : _save,
-                      icon: _saving
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2))
-                          : const Icon(Icons.save_rounded, size: 18),
-                      label:
-                          Text(_saving ? 'Enregistrement...' : 'Enregistrer'),
-                    ),
-                  ),
-                ]),
-                const SizedBox(height: 8),
-              ]),
+                  const SizedBox(height: 8),
+                ],
+              ),
             ),
           ),
         ),
@@ -904,32 +988,35 @@ class _ProductFormState extends State<ProductForm> {
   }
 
   Widget _label(String text) => Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Text(text,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            )),
-      );
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text(
+      text,
+      style: TextStyle(
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+  );
 
   Widget _field(
     TextEditingController ctrl,
     String hint, {
     TextInputType? keyboard,
     String? Function(String?)? validator,
-  }) =>
-      TextFormField(
-        controller: ctrl,
-        keyboardType: keyboard,
-        validator: validator,
-        style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurface, fontSize: 14),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(color: AppColors.textMuted),
-        ),
-      );
+  }) => TextFormField(
+    controller: ctrl,
+    keyboardType: keyboard,
+    validator: validator,
+    style: TextStyle(
+      color: Theme.of(context).colorScheme.onSurface,
+      fontSize: 14,
+    ),
+    decoration: InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(color: AppColors.textMuted),
+    ),
+  );
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
@@ -950,7 +1037,8 @@ class _ProductFormState extends State<ProductForm> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                    'Erreur : Le code-barres "$barcodeValue" est déjà utilisé par le produit "${existing.name}".'),
+                  'Erreur : Le code-barres "$barcodeValue" est déjà utilisé par le produit "${existing.name}".',
+                ),
                 backgroundColor: AppColors.danger,
               ),
             );
@@ -1004,10 +1092,12 @@ class _ProductFormState extends State<ProductForm> {
     } catch (e) {
       setState(() => _saving = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Erreur: $e'),
-          backgroundColor: AppColors.danger,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
       }
     }
   }

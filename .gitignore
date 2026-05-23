@@ -49,6 +49,9 @@ windows/flutter/ephemeral/
 .env*
 
 # Secrets — NE JAMAIS COMMITER
+ffmpeg.exe
+ffplay.exe
+ffprobe.exe
 lib/core/constants/supabase_config.dart
 android/app/*.jks
 android/key.properties

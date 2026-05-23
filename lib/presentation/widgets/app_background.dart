@@ -6,11 +6,7 @@ class AppBackground extends StatelessWidget {
   final Widget child;
   final bool showBlobs;
 
-  const AppBackground({
-    super.key,
-    required this.child,
-    this.showBlobs = false,
-  });
+  const AppBackground({super.key, required this.child, this.showBlobs = false});
 
   @override
   Widget build(BuildContext context) {
@@ -28,17 +24,29 @@ class AppBackground extends StatelessWidget {
           Positioned(
             top: -100,
             right: -50,
-            child: _buildBackgroundBlob(300, AppColors.primary.withValues(alpha: 0.15)),
+            child: _buildBackgroundBlob(
+              // Ligne 19
+              300, // Ligne 19
+              AppColors.primary.withValues(alpha: 0.15),
+            ),
           ),
           Positioned(
             bottom: -80,
             left: -60,
-            child: _buildBackgroundBlob(250, AppColors.accent.withValues(alpha: 0.12)),
+            child: _buildBackgroundBlob(
+              // Ligne 26
+              250, // Ligne 26
+              AppColors.accent.withValues(alpha: 0.12),
+            ),
           ),
           Positioned(
             top: MediaQuery.of(context).size.height * 0.4,
             left: -100,
-            child: _buildBackgroundBlob(200, AppColors.primary.withValues(alpha: 0.1)),
+            child: _buildBackgroundBlob(
+              // Ligne 33
+              200, // Ligne 33
+              AppColors.primary.withValues(alpha: 0.1),
+            ),
           ),
         ],
 
@@ -55,7 +63,12 @@ class AppBackground extends StatelessWidget {
       decoration: BoxDecoration(shape: BoxShape.circle, color: color),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
-        child: Container(decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.transparent)),
+        child: Container(
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.transparent,
+          ),
+        ),
       ),
     );
   }

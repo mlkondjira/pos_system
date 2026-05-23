@@ -29,6 +29,9 @@ jobs:
     name: Build Windows MSIX
     runs-on: windows-latest
 
+    env:
+      CL: /D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS
+
     steps:
       # ── 1. Checkout ────────────────────────────────────────
       - name: Checkout
@@ -45,11 +48,7 @@ jobs:
       - name: Installer les dépendances
         run: flutter pub get
 
-      # ── 4. Génération Drift ────────────────────────────────
-      - name: Générer les fichiers Drift
-        run: dart run build_runner build --delete-conflicting-outputs
-
-      # ── 5. Injecter les secrets Supabase ───────────────────
+      # ── 4. Injecter les secrets Supabase (DOIT ÊTRE AVANT build_runner) ──
       - name: Injecter les clés Supabase
         shell: pwsh
         run: |
@@ -60,6 +59,10 @@ jobs:
           }
           "@
           Set-Content -Path lib/core/constants/supabase_config.dart -Value $content -Encoding UTF8
+
+      # ── 5. Génération Drift ────────────────────────────────
+      - name: Générer les fichiers Drift
+        run: dart run build_runner build --delete-conflicting-outputs
 
       # ── 6. Certificat MSIX ────────────────────────────────
       - name: Décoder le certificat

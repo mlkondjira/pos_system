@@ -18,7 +18,11 @@ class OverrideReportState extends Equatable {
   @override
   List<Object?> get props => [dateRange, logs, isLoading];
 
-  OverrideReportState copyWith({DateTimeRange? dateRange, List<AuditLogWithActor>? logs, bool? isLoading}) {
+  OverrideReportState copyWith({
+    DateTimeRange? dateRange,
+    List<AuditLogWithActor>? logs,
+    bool? isLoading,
+  }) {
     return OverrideReportState(
       dateRange: dateRange ?? this.dateRange,
       logs: logs ?? this.logs,
@@ -28,33 +32,52 @@ class OverrideReportState extends Equatable {
 }
 
 abstract class OverrideReportEvent extends Equatable {
-  @override List<Object?> get props => [];
+  @override
+  List<Object?> get props => [];
 }
 
 class ChangeDateRange extends OverrideReportEvent {
   final DateTimeRange range;
   ChangeDateRange(this.range);
-  @override List<Object?> get props => [range];
+  @override
+  List<Object?> get props => [range];
 }
 
-class OverrideReportBloc extends Bloc<OverrideReportEvent, OverrideReportState> {
+class OverrideReportBloc
+    extends Bloc<OverrideReportEvent, OverrideReportState> {
   final PosDatabase _db;
   StreamSubscription? _sub;
 
-  OverrideReportBloc(this._db) : super(OverrideReportState(dateRange: DateTimeRange(start: DateTime.now().subtract(const Duration(days: 7)), end: DateTime.now()))) {
+  OverrideReportBloc(this._db)
+    : super(
+        OverrideReportState(
+          dateRange: DateTimeRange(
+            start: DateTime.now().subtract(const Duration(days: 7)),
+            end: DateTime.now(),
+          ),
+        ),
+      ) {
     on<ChangeDateRange>((event, emit) {
       emit(state.copyWith(dateRange: event.range, isLoading: true));
       _sub?.cancel();
-      _sub = _db.watchOverrideLogs(start: event.range.start, end: event.range.end).listen((logs) {
-        add(_InternalUpdateLogs(logs));
-      });
+      _sub = _db
+          .watchOverrideLogs(start: event.range.start, end: event.range.end)
+          .listen((logs) {
+            add(_InternalUpdateLogs(logs));
+          });
     });
-    on<_InternalUpdateLogs>((event, emit) => emit(state.copyWith(logs: event.logs, isLoading: false)));
-    
+    on<_InternalUpdateLogs>(
+      (event, emit) => emit(state.copyWith(logs: event.logs, isLoading: false)),
+    );
+
     add(ChangeDateRange(state.dateRange));
   }
 
-  @override Future<void> close() { _sub?.cancel(); return super.close(); }
+  @override
+  Future<void> close() {
+    _sub?.cancel();
+    return super.close();
+  }
 }
 
 class _InternalUpdateLogs extends OverrideReportEvent {

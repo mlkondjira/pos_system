@@ -19,40 +19,42 @@ dependencies:
   # Base de données locale
   drift: ^2.32.0
   drift_flutter: ^0.3.0
-  sqlite3_flutter_libs: ^0.6.0
+  sqlite3_flutter_libs: ^0.6.0+eol
 
   # Navigation
-  go_router: ^17.1.0
+  go_router: ^14.2.1
 
   # State Management
-  bloc: ^9.0.0
-  flutter_bloc: ^9.1.1
+  bloc: ^8.1.4
+  flutter_bloc: ^8.1.6
   equatable: ^2.0.5
 
   # Injection de dépendances
-  get_it: ^9.2.1
+  get_it: ^7.7.0
 
   # Utilitaires
   uuid: ^4.3.0
   intl: ^0.20.2
+  http: ^1.2.2
   url_launcher: ^6.3.0
   path_provider: ^2.1.2
   path: ^1.9.0
   shared_preferences: ^2.2.2
   collection: ^1.18.0
   crypto: ^3.0.3
-  win32: ^5.10.0
+  pointycastle: ^3.9.1
+  win32: ^5.5.4
   ffi: ^2.1.2
   encrypt: ^5.0.3
 
   # Scan code-barres
-  mobile_scanner: ^7.2.0
-  file_picker: ^11.0.2
-  csv: ^8.0.0
-  tray_manager: ^0.2.2
+  mobile_scanner: ^5.1.1
+  file_picker: ^8.0.6
+  csv: ^6.0.0
+  tray_manager: ^0.2.4
 
   flutter_native_splash: ^2.4.4
-  flutter_local_notifications: ^21.0.0
+  flutter_local_notifications: ^17.2.4
   local_notifier: ^0.1.6
   # Impression Bluetooth thermique
   blue_thermal_printer: ^1.2.3
@@ -62,22 +64,22 @@ dependencies:
   flutter_pos_printer_platform_image_3_sdt: ^1.2.25
   # PDF & Export
   pdf: ^3.10.8
-  printing: ^5.14.2
-  share_plus: ^12.0.1
+  printing: ^5.12.0
+  share_plus: ^12.0.2
 
   supabase_flutter: ^2.5.0
   connectivity_plus: ^7.1.1   # déjà présent
-  internet_connection_checker_plus: ^2.0.0
+  internet_connection_checker_plus: ^3.0.0
 
   # UI
   fl_chart: ^1.2.0
   image_picker: ^1.0.7
   image: ^4.1.7 # Mise à jour pour la compatibilité avec flutter_launcher_icons
-  google_fonts: ^8.0.2
+  google_fonts: ^8.1.0
   flutter_slidable: ^4.0.3
   badges: ^3.1.2
   flutter_animate: ^4.5.0
-  audioplayers: ^6.1.1 # Utilisation de la version de maintenance corrective
+  audioplayers: ^6.0.0 # Utilisation de la version de maintenance corrective
 
 dev_dependencies:
   flutter_test:

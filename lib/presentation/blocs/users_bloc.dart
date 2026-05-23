@@ -18,12 +18,13 @@ class AddUser extends UsersEvent {
   final String role;
   final String shopId;
   final int actorId;
-  const AddUser(
-      {required this.name,
-      required this.pin,
-      required this.role,
-      required this.shopId,
-      required this.actorId});
+  const AddUser({
+    required this.name,
+    required this.pin,
+    required this.role,
+    required this.shopId,
+    required this.actorId,
+  });
   @override
   List<Object?> get props => [name, pin, role, shopId, actorId];
 }
@@ -35,13 +36,14 @@ class UpdateUser extends UsersEvent {
   final bool isActive;
   final int actorId;
   final String? newPin;
-  const UpdateUser(
-      {required this.userId,
-      required this.name,
-      required this.role,
-      required this.isActive,
-      required this.actorId,
-      this.newPin});
+  const UpdateUser({
+    required this.userId,
+    required this.name,
+    required this.role,
+    required this.isActive,
+    required this.actorId,
+    this.newPin,
+  });
   @override
   List<Object?> get props => [userId, name, role, isActive, actorId, newPin];
 }
@@ -91,8 +93,10 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
     on<AddUser>(_onAddUser);
     on<UpdateUser>(_onUpdateUser);
     on<SoftDeleteUser>(_onSoftDeleteUser);
-    on<_UsersUpdated>((event, emit) =>
-        emit(state.copyWith(users: event.users, isLoading: false)));
+    on<_UsersUpdated>(
+      (event, emit) =>
+          emit(state.copyWith(users: event.users, isLoading: false)),
+    );
   }
 
   Future<void> _onLoadUsers(LoadUsers event, Emitter<UsersState> emit) async {
@@ -107,11 +111,12 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
   Future<void> _onAddUser(AddUser event, Emitter<UsersState> emit) async {
     try {
       await _db.createUserWithPin(
-          name: event.name,
-          pin: event.pin,
-          role: event.role,
-          shopId: event.shopId,
-          actorId: event.actorId);
+        name: event.name,
+        pin: event.pin,
+        role: event.role,
+        shopId: event.shopId,
+        actorId: event.actorId,
+      );
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
     }
@@ -120,19 +125,22 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
   Future<void> _onUpdateUser(UpdateUser event, Emitter<UsersState> emit) async {
     try {
       await _db.updateUserWithAudit(
-          userId: event.userId,
-          name: event.name,
-          role: event.role,
-          isActive: event.isActive,
-          actorId: event.actorId,
-          newPin: event.newPin);
+        userId: event.userId,
+        name: event.name,
+        role: event.role,
+        isActive: event.isActive,
+        actorId: event.actorId,
+        newPin: event.newPin,
+      );
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
     }
   }
 
   Future<void> _onSoftDeleteUser(
-      SoftDeleteUser event, Emitter<UsersState> emit) async {
+    SoftDeleteUser event,
+    Emitter<UsersState> emit,
+  ) async {
     try {
       await _db.softDeleteUser(event.userId, event.adminId);
     } catch (e) {

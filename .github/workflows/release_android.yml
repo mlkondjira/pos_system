@@ -62,11 +62,7 @@ jobs:
       - name: Installer les dépendances
         run: flutter pub get
 
-      # ── 5. Génération Drift ────────────────────────────────
-      - name: Générer les fichiers Drift
-        run: dart run build_runner build --delete-conflicting-outputs
-
-      # ── 6. Injecter les secrets Supabase ───────────────────
+      # ── 5. Injecter les secrets Supabase (AVANT build_runner) ──
       - name: Injecter les clés Supabase
         run: |
           cat > lib/core/constants/supabase_config.dart << EOF
@@ -76,16 +72,15 @@ jobs:
           }
           EOF
 
+      # ── 6. Génération Drift ────────────────────────────────
+      - name: Générer les fichiers Drift
+        run: dart run build_runner build --delete-conflicting-outputs
+
       # ── 7. Keystore Android ────────────────────────────────
       - name: Décoder le keystore
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/gpos.jks
-          cat > android/key.properties << EOF
-          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword=${{ secrets.KEY_PASSWORD }}
-          keyAlias=${{ secrets.KEY_ALIAS }}
-          storeFile=gpos.jks
-          EOF
+          echo -n "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/gpos.jks
+          printf "storePassword=${{ secrets.KEYSTORE_PASSWORD }}\nkeyPassword=${{ secrets.KEY_PASSWORD }}\nkeyAlias=${{ secrets.KEY_ALIAS }}\nstoreFile=gpos.jks" > android/key.properties
 
       # ── 8. Extraire la version du tag ──────────────────────
       - name: Extraire la version

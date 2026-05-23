@@ -16124,6 +16124,350 @@ class ParkedCartsCompanion extends UpdateCompanion<ParkedCart> {
   }
 }
 
+class $ProductTagsTable extends ProductTags
+    with TableInfo<$ProductTagsTable, ProductTag> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ProductTagsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 50,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('#9E9E9E'),
+  );
+  static const VerificationMeta _shopIdMeta = const VerificationMeta('shopId');
+  @override
+  late final GeneratedColumn<String> shopId = GeneratedColumn<String>(
+    'shop_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES shops (id)',
+    ),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, color, shopId, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'product_tags';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ProductTag> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
+    if (data.containsKey('shop_id')) {
+      context.handle(
+        _shopIdMeta,
+        shopId.isAcceptableOrUnknown(data['shop_id']!, _shopIdMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ProductTag map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ProductTag(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      )!,
+      shopId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}shop_id'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ProductTagsTable createAlias(String alias) {
+    return $ProductTagsTable(attachedDatabase, alias);
+  }
+}
+
+class ProductTag extends DataClass implements Insertable<ProductTag> {
+  final int id;
+  final String name;
+  final String color;
+  final String? shopId;
+  final DateTime createdAt;
+  const ProductTag({
+    required this.id,
+    required this.name,
+    required this.color,
+    this.shopId,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['color'] = Variable<String>(color);
+    if (!nullToAbsent || shopId != null) {
+      map['shop_id'] = Variable<String>(shopId);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  ProductTagsCompanion toCompanion(bool nullToAbsent) {
+    return ProductTagsCompanion(
+      id: Value(id),
+      name: Value(name),
+      color: Value(color),
+      shopId: shopId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(shopId),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory ProductTag.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ProductTag(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      color: serializer.fromJson<String>(json['color']),
+      shopId: serializer.fromJson<String?>(json['shopId']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'color': serializer.toJson<String>(color),
+      'shopId': serializer.toJson<String?>(shopId),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  ProductTag copyWith({
+    int? id,
+    String? name,
+    String? color,
+    Value<String?> shopId = const Value.absent(),
+    DateTime? createdAt,
+  }) => ProductTag(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    color: color ?? this.color,
+    shopId: shopId.present ? shopId.value : this.shopId,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  ProductTag copyWithCompanion(ProductTagsCompanion data) {
+    return ProductTag(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      color: data.color.present ? data.color.value : this.color,
+      shopId: data.shopId.present ? data.shopId.value : this.shopId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProductTag(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('color: $color, ')
+          ..write('shopId: $shopId, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, color, shopId, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ProductTag &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.color == this.color &&
+          other.shopId == this.shopId &&
+          other.createdAt == this.createdAt);
+}
+
+class ProductTagsCompanion extends UpdateCompanion<ProductTag> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<String> color;
+  final Value<String?> shopId;
+  final Value<DateTime> createdAt;
+  const ProductTagsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.color = const Value.absent(),
+    this.shopId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  ProductTagsCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    this.color = const Value.absent(),
+    this.shopId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : name = Value(name);
+  static Insertable<ProductTag> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? color,
+    Expression<String>? shopId,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (color != null) 'color': color,
+      if (shopId != null) 'shop_id': shopId,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  ProductTagsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<String>? color,
+    Value<String?>? shopId,
+    Value<DateTime>? createdAt,
+  }) {
+    return ProductTagsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      color: color ?? this.color,
+      shopId: shopId ?? this.shopId,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
+    if (shopId.present) {
+      map['shop_id'] = Variable<String>(shopId.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProductTagsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('color: $color, ')
+          ..write('shopId: $shopId, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$PosDatabase extends GeneratedDatabase {
   _$PosDatabase(QueryExecutor e) : super(e);
   $PosDatabaseManager get managers => $PosDatabaseManager(this);
@@ -16158,6 +16502,7 @@ abstract class _$PosDatabase extends GeneratedDatabase {
       $PurchaseOrderItemsTable(this);
   late final $ProductRecipesTable productRecipes = $ProductRecipesTable(this);
   late final $ParkedCartsTable parkedCarts = $ParkedCartsTable(this);
+  late final $ProductTagsTable productTags = $ProductTagsTable(this);
   late final SalesDao salesDao = SalesDao(this as PosDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -16190,6 +16535,7 @@ abstract class _$PosDatabase extends GeneratedDatabase {
     purchaseOrderItems,
     productRecipes,
     parkedCarts,
+    productTags,
   ];
 }
 
@@ -16317,7 +16663,7 @@ final class $$ShopsTableReferences
     final manager = $$SalesTableTableManager(
       $_db,
       $_db.sales,
-    ).filter((f) => f.customerId.remoteId.sqlEquals($_itemColumn<String>('remote_id')!));
+    ).filter((f) => f.shopId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_salesRefsTable($_db));
     return ProcessedTableManager(
@@ -16592,6 +16938,24 @@ final class $$ShopsTableReferences
     ).filter((f) => f.shopId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_parkedCartsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ProductTagsTable, List<ProductTag>>
+  _productTagsRefsTable(_$PosDatabase db) => MultiTypedResultKey.fromTable(
+    db.productTags,
+    aliasName: $_aliasNameGenerator(db.shops.id, db.productTags.shopId),
+  );
+
+  $$ProductTagsTableProcessedTableManager get productTagsRefs {
+    final manager = $$ProductTagsTableTableManager(
+      $_db,
+      $_db.productTags,
+    ).filter((f) => f.shopId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_productTagsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -17117,6 +17481,31 @@ class $$ShopsTableFilterComposer extends Composer<_$PosDatabase, $ShopsTable> {
           }) => $$ParkedCartsTableFilterComposer(
             $db: $db,
             $table: $db.parkedCarts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> productTagsRefs(
+    Expression<bool> Function($$ProductTagsTableFilterComposer f) f,
+  ) {
+    final $$ProductTagsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.productTags,
+      getReferencedColumn: (t) => t.shopId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProductTagsTableFilterComposer(
+            $db: $db,
+            $table: $db.productTags,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -17680,6 +18069,31 @@ class $$ShopsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> productTagsRefs<T extends Object>(
+    Expression<T> Function($$ProductTagsTableAnnotationComposer a) f,
+  ) {
+    final $$ProductTagsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.productTags,
+      getReferencedColumn: (t) => t.shopId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProductTagsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.productTags,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ShopsTableTableManager
@@ -17716,6 +18130,7 @@ class $$ShopsTableTableManager
             bool purchaseOrdersRefs,
             bool purchaseOrderItemsRefs,
             bool parkedCartsRefs,
+            bool productTagsRefs,
           })
         > {
   $$ShopsTableTableManager(_$PosDatabase db, $ShopsTable table)
@@ -17785,6 +18200,7 @@ class $$ShopsTableTableManager
                 purchaseOrdersRefs = false,
                 purchaseOrderItemsRefs = false,
                 parkedCartsRefs = false,
+                productTagsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -17809,6 +18225,7 @@ class $$ShopsTableTableManager
                     if (purchaseOrdersRefs) db.purchaseOrders,
                     if (purchaseOrderItemsRefs) db.purchaseOrderItems,
                     if (parkedCartsRefs) db.parkedCarts,
+                    if (productTagsRefs) db.productTags,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -18185,6 +18602,27 @@ class $$ShopsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (productTagsRefs)
+                        await $_getPrefetchedData<
+                          Shop,
+                          $ShopsTable,
+                          ProductTag
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ShopsTableReferences
+                              ._productTagsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ShopsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).productTagsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.shopId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -18226,6 +18664,7 @@ typedef $$ShopsTableProcessedTableManager =
         bool purchaseOrdersRefs,
         bool purchaseOrderItemsRefs,
         bool parkedCartsRefs,
+        bool productTagsRefs,
       })
     >;
 typedef $$UsersTableCreateCompanionBuilder =
@@ -33055,6 +33494,318 @@ typedef $$ParkedCartsTableProcessedTableManager =
       ParkedCart,
       PrefetchHooks Function({bool shopId})
     >;
+typedef $$ProductTagsTableCreateCompanionBuilder =
+    ProductTagsCompanion Function({
+      Value<int> id,
+      required String name,
+      Value<String> color,
+      Value<String?> shopId,
+      Value<DateTime> createdAt,
+    });
+typedef $$ProductTagsTableUpdateCompanionBuilder =
+    ProductTagsCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<String> color,
+      Value<String?> shopId,
+      Value<DateTime> createdAt,
+    });
+
+final class $$ProductTagsTableReferences
+    extends BaseReferences<_$PosDatabase, $ProductTagsTable, ProductTag> {
+  $$ProductTagsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ShopsTable _shopIdTable(_$PosDatabase db) => db.shops.createAlias(
+    $_aliasNameGenerator(db.productTags.shopId, db.shops.id),
+  );
+
+  $$ShopsTableProcessedTableManager? get shopId {
+    final $_column = $_itemColumn<String>('shop_id');
+    if ($_column == null) return null;
+    final manager = $$ShopsTableTableManager(
+      $_db,
+      $_db.shops,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_shopIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ProductTagsTableFilterComposer
+    extends Composer<_$PosDatabase, $ProductTagsTable> {
+  $$ProductTagsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ShopsTableFilterComposer get shopId {
+    final $$ShopsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.shopId,
+      referencedTable: $db.shops,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ShopsTableFilterComposer(
+            $db: $db,
+            $table: $db.shops,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProductTagsTableOrderingComposer
+    extends Composer<_$PosDatabase, $ProductTagsTable> {
+  $$ProductTagsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ShopsTableOrderingComposer get shopId {
+    final $$ShopsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.shopId,
+      referencedTable: $db.shops,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ShopsTableOrderingComposer(
+            $db: $db,
+            $table: $db.shops,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProductTagsTableAnnotationComposer
+    extends Composer<_$PosDatabase, $ProductTagsTable> {
+  $$ProductTagsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$ShopsTableAnnotationComposer get shopId {
+    final $$ShopsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.shopId,
+      referencedTable: $db.shops,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ShopsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.shops,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ProductTagsTableTableManager
+    extends
+        RootTableManager<
+          _$PosDatabase,
+          $ProductTagsTable,
+          ProductTag,
+          $$ProductTagsTableFilterComposer,
+          $$ProductTagsTableOrderingComposer,
+          $$ProductTagsTableAnnotationComposer,
+          $$ProductTagsTableCreateCompanionBuilder,
+          $$ProductTagsTableUpdateCompanionBuilder,
+          (ProductTag, $$ProductTagsTableReferences),
+          ProductTag,
+          PrefetchHooks Function({bool shopId})
+        > {
+  $$ProductTagsTableTableManager(_$PosDatabase db, $ProductTagsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ProductTagsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ProductTagsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ProductTagsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> color = const Value.absent(),
+                Value<String?> shopId = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => ProductTagsCompanion(
+                id: id,
+                name: name,
+                color: color,
+                shopId: shopId,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                Value<String> color = const Value.absent(),
+                Value<String?> shopId = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => ProductTagsCompanion.insert(
+                id: id,
+                name: name,
+                color: color,
+                shopId: shopId,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ProductTagsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({shopId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (shopId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.shopId,
+                                referencedTable: $$ProductTagsTableReferences
+                                    ._shopIdTable(db),
+                                referencedColumn: $$ProductTagsTableReferences
+                                    ._shopIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ProductTagsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$PosDatabase,
+      $ProductTagsTable,
+      ProductTag,
+      $$ProductTagsTableFilterComposer,
+      $$ProductTagsTableOrderingComposer,
+      $$ProductTagsTableAnnotationComposer,
+      $$ProductTagsTableCreateCompanionBuilder,
+      $$ProductTagsTableUpdateCompanionBuilder,
+      (ProductTag, $$ProductTagsTableReferences),
+      ProductTag,
+      PrefetchHooks Function({bool shopId})
+    >;
 
 class $PosDatabaseManager {
   final _$PosDatabase _db;
@@ -33111,4 +33862,6 @@ class $PosDatabaseManager {
       $$ProductRecipesTableTableManager(_db, _db.productRecipes);
   $$ParkedCartsTableTableManager get parkedCarts =>
       $$ParkedCartsTableTableManager(_db, _db.parkedCarts);
+  $$ProductTagsTableTableManager get productTags =>
+      $$ProductTagsTableTableManager(_db, _db.productTags);
 }

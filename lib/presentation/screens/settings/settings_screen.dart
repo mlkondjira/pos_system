@@ -1,8 +1,8 @@
 // lib/presentation/screens/settings/settings_screen.dart
 import 'dart:convert';
 import 'dart:io';
-import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart' as enc;
+import 'package:pointycastle/export.dart' as pc;
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 import 'package:path_provider/path_provider.dart';
@@ -14,8 +14,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:printing/printing.dart';
 import 'package:image_picker/image_picker.dart';
@@ -25,6 +25,8 @@ import '../../../core/utils/formatters.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/di/injection.dart';
 import '../../../data/database/pos_database.dart';
+import '../../../core/services/license_service.dart';
+import '../subscription/subscription_screen.dart';
 import '../../widgets/app_background.dart';
 import '../../../data/services/printer_service.dart';
 import '../../blocs/cash_session_bloc.dart';
@@ -99,7 +101,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       _shopLogoPath = await _db.getSetting('shop_logo_path') ?? '';
       _syncNotificationsEnabled =
           (await _db.getSetting('sync_backlog_notifications_enabled') ?? '1') ==
-              '1';
+          '1';
       _autoPrintEnabled =
           (await _db.getSetting('auto_print_enabled') ?? '1') == '1';
       _scannerSoundEnabled =
@@ -118,7 +120,8 @@ class _SettingsScreenState extends State<SettingsScreen>
       _animationController.forward();
     } catch (e) {
       debugPrint(
-          'SettingsScreen: Erreur lors du chargement des paramètres: $e');
+        'SettingsScreen: Erreur lors du chargement des paramètres: $e',
+      );
       _showSnack('Erreur de chargement des paramètres', AppColors.danger);
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -132,7 +135,9 @@ class _SettingsScreenState extends State<SettingsScreen>
     await _db.setSetting('terminal_name', _terminalNameCtrl.text.trim());
     await _db.setSetting('receipt_footer', _footerCtrl.text.trim());
     await _db.setSetting(
-        'sync_backlog_threshold', _backlogThresholdCtrl.text.trim());
+      'sync_backlog_threshold',
+      _backlogThresholdCtrl.text.trim(),
+    );
     await _db.setSetting('printer_type', _currentPrinterType.name); // NEW
 
     // Informer le service de synchro du changement de nom
@@ -185,7 +190,9 @@ class _SettingsScreenState extends State<SettingsScreen>
   Future<void> _toggleSyncNotifications(bool value) async {
     setState(() => _syncNotificationsEnabled = value);
     await _db.setSetting(
-        'sync_backlog_notifications_enabled', value ? '1' : '0');
+      'sync_backlog_notifications_enabled',
+      value ? '1' : '0',
+    );
     if (!value) {
       await getIt<NotificationService>().cancelNotification(999);
     }
@@ -211,16 +218,22 @@ class _SettingsScreenState extends State<SettingsScreen>
       _usbVendorId = null; // NEW: Clear USB settings
       _usbProductId = null; // NEW: Clear USB settings
     });
-    _showSnack('Imprimante "${device.name ?? device.address}" connectée',
-        AppColors.success);
+    _showSnack(
+      'Imprimante "${device.name ?? device.address}" connectée',
+      AppColors.success,
+    );
   }
 
   Future<void> _saveUsbPrinter(pos_printer.PrinterDevice printer) async {
     // NEW
     await _db.setSetting(
-        'printer_usb_vendor_id', printer.vendorId?.toString() ?? '');
+      'printer_usb_vendor_id',
+      printer.vendorId?.toString() ?? '',
+    );
     await _db.setSetting(
-        'printer_usb_product_id', printer.productId?.toString() ?? '');
+      'printer_usb_product_id',
+      printer.productId?.toString() ?? '',
+    );
     await _db.setSetting('printer_name', printer.name);
     await _db.setSetting('printer_type', AppPrinterType.usb.name);
     await _db.setSetting('printer_mac', ''); // Clear Bluetooth settings
@@ -248,15 +261,19 @@ class _SettingsScreenState extends State<SettingsScreen>
       _usbVendorId = null;
       _usbProductId = null;
     });
-    _showSnack('Imprimante par défaut définie sur "${printer.name}"',
-        AppColors.success);
+    _showSnack(
+      'Imprimante par défaut définie sur "${printer.name}"',
+      AppColors.success,
+    );
   }
 
   Future<void> _testPrint() async {
     // NEW: Check based on current printer type
     if (_currentPrinterType == AppPrinterType.none) {
       _showSnack(
-          'Veuillez d\'abord configurer une imprimante', AppColors.warning);
+        'Veuillez d\'abord configurer une imprimante',
+        AppColors.warning,
+      );
       return;
     }
 
@@ -266,7 +283,9 @@ class _SettingsScreenState extends State<SettingsScreen>
       final bool printerIsReady = await printerService.isReady();
       if (!printerIsReady) {
         _showSnack(
-            'L\'imprimante n\'est pas connectée ou prête.', AppColors.danger);
+          'L\'imprimante n\'est pas connectée ou prête.',
+          AppColors.danger,
+        );
         return;
       }
       final bool success = await printerService
@@ -281,10 +300,9 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   void _showSnack(String msg, Color color) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      backgroundColor: color,
-    ));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: color));
   }
 
   Future<void> _pickLogo() async {
@@ -321,7 +339,8 @@ class _SettingsScreenState extends State<SettingsScreen>
           if (await oldFile.exists()) await oldFile.delete();
         } catch (e) {
           debugPrint(
-              'SettingsScreen: Impossible de supprimer l\'ancien logo (fichier verrouillé) : $e');
+            'SettingsScreen: Impossible de supprimer l\'ancien logo (fichier verrouillé) : $e',
+          );
         }
       }
     } catch (e) {
@@ -338,11 +357,13 @@ class _SettingsScreenState extends State<SettingsScreen>
       builder: (ctx) => GlassAlertDialog(
         title: const Text('Supprimer le logo'),
         content: const Text(
-            'Voulez-vous vraiment supprimer le logo du magasin et revenir à l\'icône par défaut ?'),
+          'Voulez-vous vraiment supprimer le logo du magasin et revenir à l\'icône par défaut ?',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Annuler')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
@@ -388,11 +409,13 @@ class _SettingsScreenState extends State<SettingsScreen>
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Annuler')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
           ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Démarrer')),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Démarrer'),
+          ),
         ],
       ),
     );
@@ -419,8 +442,9 @@ class _SettingsScreenState extends State<SettingsScreen>
           if (p > 0.02) {
             final totalEstimatedMs = elapsed.inMilliseconds / p;
             final remainingMs = totalEstimatedMs - elapsed.inMilliseconds;
-            remainingLabel =
-                _formatDuration(Duration(milliseconds: remainingMs.toInt()));
+            remainingLabel = _formatDuration(
+              Duration(milliseconds: remainingMs.toInt()),
+            );
           }
 
           setState(() {
@@ -432,8 +456,10 @@ class _SettingsScreenState extends State<SettingsScreen>
       if (_cancelRequested) {
         _showSnack('Synchronisation annulée', AppColors.warning);
       } else {
-        _showSnack('Le catalogue a été ajouté à la file de synchronisation',
-            AppColors.success);
+        _showSnack(
+          'Le catalogue a été ajouté à la file de synchronisation',
+          AppColors.success,
+        );
       }
     } catch (e) {
       _showSnack('Erreur: $e', AppColors.danger);
@@ -450,6 +476,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       await SharePlus.instance.share(
         ShareParams(
           files: [XFile(logFile.path, name: 'logs_pos_$timestamp.txt')],
+          text: 'Logs de maintenance POS - $timestamp',
           subject: 'Logs de maintenance POS - $timestamp',
         ),
       );
@@ -469,11 +496,13 @@ class _SettingsScreenState extends State<SettingsScreen>
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Annuler')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
           ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Nettoyer')),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Nettoyer'),
+          ),
         ],
       ),
     );
@@ -502,8 +531,9 @@ class _SettingsScreenState extends State<SettingsScreen>
         }
       }
       _showSnack(
-          '$purgedCount anciennes photos et $orphanCount fichiers orphelins supprimés.',
-          AppColors.success);
+        '$purgedCount anciennes photos et $orphanCount fichiers orphelins supprimés.',
+        AppColors.success,
+      );
     } catch (e) {
       _showSnack('Erreur lors du nettoyage : $e', AppColors.danger);
     } finally {
@@ -538,7 +568,9 @@ class _SettingsScreenState extends State<SettingsScreen>
       }
 
       _showSnack(
-          '$deletedCount images orphelines supprimées', AppColors.success);
+        '$deletedCount images orphelines supprimées',
+        AppColors.success,
+      );
     } catch (e) {
       _showSnack('Erreur lors du nettoyage : $e', AppColors.danger);
     } finally {
@@ -549,19 +581,23 @@ class _SettingsScreenState extends State<SettingsScreen>
   /// Convertit une liste de lignes en CSV avec séparateur point-virgule
   /// (compatible Excel FR) — sans dépendance externe
   String _convertToCsv(List<List<dynamic>> rows) {
-    return rows.map((row) {
-      return row.map((cell) {
-        final value = cell?.toString() ?? '';
-        // Si la valeur contient un ; ou un guillemet ou un saut de ligne,
-        // on l'entoure de guillemets et on échappe les guillemets internes
-        if (value.contains(';') ||
-            value.contains('"') ||
-            value.contains('\n')) {
-          return '"${value.replaceAll('"', '""')}"';
-        }
-        return value;
-      }).join(';');
-    }).join('\n');
+    return rows
+        .map((row) {
+          return row
+              .map((cell) {
+                final value = cell?.toString() ?? '';
+                // Si la valeur contient un ; ou un guillemet ou un saut de ligne,
+                // on l'entoure de guillemets et on échappe les guillemets internes
+                if (value.contains(';') ||
+                    value.contains('"') ||
+                    value.contains('\n')) {
+                  return '"${value.replaceAll('"', '""')}"';
+                }
+                return value;
+              })
+              .join(';');
+        })
+        .join('\n');
   }
 
   Future<void> _exportSalesToCSV() async {
@@ -583,12 +619,17 @@ class _SettingsScreenState extends State<SettingsScreen>
     setState(() => _loading = true);
     try {
       final shopId = await _db.getSetting('shop_id') ?? '';
-      final filteredSales =
-          await _db.salesDao.getSalesForPeriod(range.start, range.end, shopId);
+      final filteredSales = await _db.salesDao.getSalesForPeriod(
+        range.start,
+        range.end,
+        shopId,
+      );
 
       if (filteredSales.isEmpty) {
         _showSnack(
-            'Aucune vente trouvée pour cette période', AppColors.warning);
+          'Aucune vente trouvée pour cette période',
+          AppColors.warning,
+        );
         return;
       }
 
@@ -602,13 +643,14 @@ class _SettingsScreenState extends State<SettingsScreen>
         'Total TTC',
         'Remise',
         'Statut',
-        'Note'
+        'Note',
       ]);
 
       for (final s in filteredSales) {
         final items = await _db.salesDao.getSaleItems(s.id);
-        final itemsSummary =
-            items.map((i) => '${i.quantity}x ${i.productName}').join(', ');
+        final itemsSummary = items
+            .map((i) => '${i.quantity}x ${i.productName}')
+            .join(', ');
 
         rows.add([
           Fmt.dateTime(s.createdAt),
@@ -642,6 +684,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       await SharePlus.instance.share(
         ShareParams(
           files: [XFile(path, mimeType: 'text/csv')],
+          text: 'Export Ventes POS — $fromStr au $toStr',
           subject: 'Export Ventes POS — $fromStr au $toStr',
         ),
       );
@@ -666,23 +709,28 @@ class _SettingsScreenState extends State<SettingsScreen>
               Text(
                 'Entrez un mot de passe pour chiffrer le fichier (recommandé).',
                 style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: passCtrl,
                 obscureText: true,
                 style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.w600),
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Mot de passe',
                   labelStyle: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                   hintText: 'Laisser vide pour ne pas chiffrer',
                   hintStyle: const TextStyle(color: AppColors.textMuted),
-                  prefixIcon: const Icon(Icons.lock_outline,
-                      color: AppColors.textMuted),
+                  prefixIcon: const Icon(
+                    Icons.lock_outline,
+                    color: AppColors.textMuted,
+                  ),
                 ),
               ),
             ],
@@ -691,7 +739,8 @@ class _SettingsScreenState extends State<SettingsScreen>
             TextButton(
               onPressed: () => Navigator.pop(ctx),
               style: TextButton.styleFrom(
-                  foregroundColor: AppColors.textSecondary),
+                foregroundColor: AppColors.textSecondary,
+              ),
               child: const Text('Annuler'),
             ),
             ElevatedButton(
@@ -725,8 +774,9 @@ class _SettingsScreenState extends State<SettingsScreen>
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
-              style:
-                  ElevatedButton.styleFrom(backgroundColor: AppColors.warning),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.warning,
+              ),
               child: const Text('Exporter quand même'),
             ),
           ],
@@ -760,20 +810,26 @@ class _SettingsScreenState extends State<SettingsScreen>
       if (password.isNotEmpty) {
         final plainBytes = await dbFile.readAsBytes();
 
-        // Dérivation de clé : SHA-256 du mot de passe pour obtenir 32 bytes
-        final keyBytes = sha256.convert(utf8.encode(password)).bytes;
-        final key = enc.Key(Uint8List.fromList(keyBytes));
-        final iv =
-            enc.IV.fromSecureRandom(16); // Vecteur d'initialisation aléatoire
+        // 1. Génération d'un sel aléatoire de 16 octets unique pour cette sauvegarde
+        final salt = enc.IV.fromSecureRandom(16).bytes;
+
+        // 2. Dérivation de clé PBKDF2 (HMAC-SHA256, 100 000 itérations)
+        final derivator = pc.PBKDF2KeyDerivator(pc.HMac(pc.SHA256Digest(), 64))
+          ..init(pc.Pbkdf2Parameters(salt, 100000, 32));
+        final keyBytes = derivator.process(
+          Uint8List.fromList(utf8.encode(password)),
+        );
+
+        final key = enc.Key(keyBytes);
+        final iv = enc.IV.fromSecureRandom(16); // IV unique pour AES
         final encrypter = enc.Encrypter(enc.AES(key));
 
         final encrypted = encrypter.encryptBytes(plainBytes, iv: iv);
 
-        // Écriture du fichier : IV (16 bytes) + Contenu chiffré
-        // L'IV est nécessaire pour déchiffrer, il n'est pas secret mais doit être unique.
+        // 3. Structure du fichier : SEL (16) + IV (16) + DONNÉES CHIFFRÉES
         final tempDir = await getTemporaryDirectory();
         final encFile = File(p.join(tempDir.path, 'backup_pos_$timestamp.enc'));
-        await encFile.writeAsBytes(iv.bytes + encrypted.bytes);
+        await encFile.writeAsBytes(salt + iv.bytes + encrypted.bytes);
 
         finalPath = encFile.path;
         finalName = 'backup_pos_$timestamp.enc';
@@ -783,6 +839,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       await SharePlus.instance.share(
         ShareParams(
           files: [XFile(finalPath, name: finalName)],
+          text: subject,
           subject: subject,
         ),
       );
@@ -795,7 +852,7 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   Future<void> _restoreDatabase() async {
     // 1. Sélection du fichier
-    final result = await FilePicker.pickFiles(
+    final result = await FilePicker.platform.pickFiles(
       type: FileType.any,
       allowMultiple: false,
     );
@@ -808,7 +865,8 @@ class _SettingsScreenState extends State<SettingsScreen>
     // 2. Demander le mot de passe si chiffré
     String password = '';
     if (isEncrypted) {
-      password = await showDialog<String>(
+      password =
+          await showDialog<String>(
             // ignore: use_build_context_synchronously
             context: context,
             builder: (ctx) {
@@ -819,15 +877,18 @@ class _SettingsScreenState extends State<SettingsScreen>
                   controller: ctrl,
                   obscureText: true,
                   decoration: const InputDecoration(
-                      labelText: 'Mot de passe de déchiffrement'),
+                    labelText: 'Mot de passe de déchiffrement',
+                  ),
                 ),
                 actions: [
                   TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Annuler')),
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Annuler'),
+                  ),
                   ElevatedButton(
-                      onPressed: () => Navigator.pop(ctx, ctrl.text),
-                      child: const Text('Déchiffrer')),
+                    onPressed: () => Navigator.pop(ctx, ctrl.text),
+                    child: const Text('Déchiffrer'),
+                  ),
                 ],
               );
             },
@@ -843,16 +904,18 @@ class _SettingsScreenState extends State<SettingsScreen>
       builder: (ctx) => GlassAlertDialog(
         title: const Text('Écraser les données actuelles ?'),
         content: const Text(
-            'Toutes les données actuelles seront remplacées par celles de la sauvegarde. L\'application devra redémarrer.'),
+          'Toutes les données actuelles seront remplacées par celles de la sauvegarde. L\'application devra redémarrer.',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Annuler')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
           ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              style:
-                  ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
-              child: const Text('Restaurer')),
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            child: const Text('Restaurer'),
+          ),
         ],
       ),
     );
@@ -865,15 +928,29 @@ class _SettingsScreenState extends State<SettingsScreen>
 
       if (isEncrypted) {
         final rawBytes = await pickedFile.readAsBytes();
-        final iv = enc.IV(rawBytes.sublist(0, 16));
-        final encryptedBytes = rawBytes.sublist(16);
+        if (rawBytes.length < 32) {
+          throw Exception('Fichier corrompu ou invalide');
+        }
 
-        final keyBytes = sha256.convert(utf8.encode(password)).bytes;
-        final key = enc.Key(Uint8List.fromList(keyBytes));
+        // Extraction du Sel (0-16) et de l'IV (16-32)
+        final salt = rawBytes.sublist(0, 16);
+        final iv = enc.IV(rawBytes.sublist(16, 32));
+        final encryptedBytes = rawBytes.sublist(32);
+
+        // Dérivation de la clé avec le même sel et les mêmes itérations
+        final derivator = pc.PBKDF2KeyDerivator(pc.HMac(pc.SHA256Digest(), 64))
+          ..init(pc.Pbkdf2Parameters(salt, 100000, 32));
+        final keyBytes = derivator.process(
+          Uint8List.fromList(utf8.encode(password)),
+        );
+
+        final key = enc.Key(keyBytes);
         final encrypter = enc.Encrypter(enc.AES(key));
 
-        final decrypted =
-            encrypter.decryptBytes(enc.Encrypted(encryptedBytes), iv: iv);
+        final decrypted = encrypter.decryptBytes(
+          enc.Encrypted(encryptedBytes),
+          iv: iv,
+        );
         bytesToRestore = Uint8List.fromList(decrypted);
       } else {
         bytesToRestore = await pickedFile.readAsBytes();
@@ -891,7 +968,8 @@ class _SettingsScreenState extends State<SettingsScreen>
         builder: (ctx) => GlassAlertDialog(
           title: const Text('Restauration réussie'),
           content: const Text(
-              'La base de données a été restaurée. L\'application va maintenant se fermer pour appliquer les changements.'),
+            'La base de données a été restaurée. L\'application va maintenant se fermer pour appliquer les changements.',
+          ),
           actions: [
             ElevatedButton(
               onPressed: () => SystemNavigator.pop(),
@@ -902,8 +980,9 @@ class _SettingsScreenState extends State<SettingsScreen>
       );
     } catch (e) {
       _showSnack(
-          'Erreur de restauration : Mot de passe incorrect ou fichier corrompu.',
-          AppColors.danger);
+        'Erreur de restauration : Mot de passe incorrect ou fichier corrompu.',
+        AppColors.danger,
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -925,9 +1004,10 @@ class _SettingsScreenState extends State<SettingsScreen>
               controller: ctrl,
               obscureText: true,
               style: TextStyle(
-                  // Ligne 941
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontWeight: FontWeight.bold),
+                // Ligne 941
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
               decoration: const InputDecoration(
                 labelText: 'Minimum 6 caractères',
                 prefixIcon: Icon(Icons.lock_outline, color: Colors.white70),
@@ -935,8 +1015,9 @@ class _SettingsScreenState extends State<SettingsScreen>
             ),
             actions: [
               TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Annuler')),
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Annuler'),
+              ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx, ctrl.text),
                 child: const Text('Valider'),
@@ -947,14 +1028,16 @@ class _SettingsScreenState extends State<SettingsScreen>
       );
 
       // Regex pour : Min 8 caractères, 1 majuscule, 1 chiffre, 1 caractère spécial
-      final passwordRegex =
-          RegExp(r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$');
+      final passwordRegex = RegExp(
+        r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$',
+      );
 
       if (newPassword != null && passwordRegex.hasMatch(newPassword)) {
         try {
           setState(() => _loading = true);
-          await Supabase.instance.client.auth
-              .updateUser(UserAttributes(password: newPassword));
+          await Supabase.instance.client.auth.updateUser(
+            UserAttributes(password: newPassword),
+          );
 
           if (!mounted) return;
 
@@ -965,11 +1048,13 @@ class _SettingsScreenState extends State<SettingsScreen>
             builder: (ctx) => GlassAlertDialog(
               title: const Text('Mot de passe modifié'),
               content: const Text(
-                  'Pour des raisons de sécurité, vous allez être déconnecté. Veuillez vous reconnecter avec votre nouveau mot de passe.'),
+                'Pour des raisons de sécurité, vous allez être déconnecté. Veuillez vous reconnecter avec votre nouveau mot de passe.',
+              ),
               actions: [
                 ElevatedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Compris')),
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Compris'),
+                ),
               ],
             ),
           );
@@ -983,8 +1068,9 @@ class _SettingsScreenState extends State<SettingsScreen>
         }
       } else if (newPassword != null) {
         _showSnack(
-            'Sécurité insuffisante : utilisez 8 caractères min, une majuscule, un chiffre et un symbole.',
-            AppColors.warning);
+          'Sécurité insuffisante : utilisez 8 caractères min, une majuscule, un chiffre et un symbole.',
+          AppColors.warning,
+        );
       }
       return;
     }
@@ -1044,8 +1130,10 @@ class _SettingsScreenState extends State<SettingsScreen>
           children: [
             Icon(Icons.lock_outline, size: 48, color: AppColors.textMuted),
             SizedBox(height: 16),
-            Text('Accès réservé aux administrateurs',
-                style: TextStyle(color: AppColors.textMuted)),
+            Text(
+              'Accès réservé aux administrateurs',
+              style: TextStyle(color: AppColors.textMuted),
+            ),
           ],
         ),
       );
@@ -1068,10 +1156,13 @@ class _SettingsScreenState extends State<SettingsScreen>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text('Préparation du catalogue...',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary)),
+                      const Text(
+                        'Préparation du catalogue...',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
                       const SizedBox(height: 16),
                       LinearProgressIndicator(
                         value: _uploadProgress,
@@ -1080,26 +1171,37 @@ class _SettingsScreenState extends State<SettingsScreen>
                         minHeight: 8,
                       ),
                       const SizedBox(height: 8),
-                      Text('${(_uploadProgress * 100).toInt()}%',
-                          style: const TextStyle(
-                              color: AppColors.textMuted, fontSize: 12)),
+                      Text(
+                        '${(_uploadProgress * 100).toInt()}%',
+                        style: const TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 12,
+                        ),
+                      ),
                       if (_timeRemaining.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
-                          child: Text(_timeRemaining,
-                              style: const TextStyle(
-                                  color: AppColors.primary,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500)),
+                          child: Text(
+                            _timeRemaining,
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
                       const SizedBox(height: 24),
                       TextButton.icon(
                         onPressed: () =>
                             setState(() => _cancelRequested = true),
-                        icon: const Icon(Icons.stop_circle_outlined,
-                            color: AppColors.danger),
-                        label: const Text('Annuler l\'opération',
-                            style: TextStyle(color: AppColors.danger)),
+                        icon: const Icon(
+                          Icons.stop_circle_outlined,
+                          color: AppColors.danger,
+                        ),
+                        label: const Text(
+                          'Annuler l\'opération',
+                          style: TextStyle(color: AppColors.danger),
+                        ),
                       ),
                     ],
                   ),
@@ -1111,8 +1213,10 @@ class _SettingsScreenState extends State<SettingsScreen>
 
     final List<Widget> children = [
       if (isUsingDefaultPin) _defaultPinWarning(),
-      _staticRow('Mode de compilation',
-          kReleaseMode ? 'Optimisé (Release)' : 'Développement (Debug)'),
+      _staticRow(
+        'Mode de compilation',
+        kReleaseMode ? 'Optimisé (Release)' : 'Développement (Debug)',
+      ),
       _section('Affichage', [
         BlocBuilder<ThemeBloc, ThemeState>(
           builder: (context, state) {
@@ -1130,16 +1234,31 @@ class _SettingsScreenState extends State<SettingsScreen>
         _logoPicker(),
         _inputField(_shopNameCtrl, 'Nom du magasin', Icons.store_outlined),
         _inputField(_shopAddressCtrl, 'Adresse', Icons.location_on_outlined),
-        _inputField(_shopPhoneCtrl, 'Téléphone', Icons.phone_outlined,
-            keyboard: TextInputType.phone),
         _inputField(
-            _terminalNameCtrl, 'Nom de cette caisse', Icons.computer_outlined),
-        _actionRow('Changer de magasin', Icons.swap_horiz_rounded,
-            AppColors.primary, _showShopPicker),
+          _shopPhoneCtrl,
+          'Téléphone',
+          Icons.phone_outlined,
+          keyboard: TextInputType.phone,
+        ),
+        _inputField(
+          _terminalNameCtrl,
+          'Nom de cette caisse',
+          Icons.computer_outlined,
+        ),
+        _actionRow(
+          'Changer de magasin',
+          Icons.swap_horiz_rounded,
+          AppColors.primary,
+          _showShopPicker,
+        ),
       ]),
       _section('Outils Rapides', [
-        _actionRow('Vérifier un stock (Scan)', Icons.qr_code_scanner_rounded,
-            AppColors.accent, _openStockCheck),
+        _actionRow(
+          'Vérifier un stock (Scan)',
+          Icons.qr_code_scanner_rounded,
+          AppColors.accent,
+          _openStockCheck,
+        ),
         _switchRow(
           'Sons du scanner',
           'Émettre un bip lors d\'un scan réussi ou échoué',
@@ -1150,17 +1269,41 @@ class _SettingsScreenState extends State<SettingsScreen>
       ]),
       _section('Reçu thermique', [
         _inputField(
-            _footerCtrl, 'Message de pied de reçu', Icons.receipt_outlined,
-            maxLines: 2),
+          _footerCtrl,
+          'Message de pied de reçu',
+          Icons.receipt_outlined,
+          maxLines: 2,
+        ),
         _staticRow('Largeur papier', '80 mm'),
       ]),
       _section('Sécurité', [
-        _actionRow('Modifier mes accès (PIN/Mdp)', Icons.lock_reset,
-            AppColors.accent, _changeCredentials),
-        _actionRow('Gérer les utilisateurs', Icons.manage_accounts_outlined,
-            AppColors.primaryLight, _openUsersScreen),
-        _actionRow('Journal d\'audit', Icons.policy_outlined,
-            AppColors.primaryLight, _openAuditLogScreen),
+        _actionRow(
+          'Modifier mes accès (PIN/Mdp)',
+          Icons.lock_reset,
+          AppColors.accent,
+          _changeCredentials,
+        ),
+        _actionRow(
+          'Abonnement (Plan ${getIt<LicenseService>().currentState.limits.planName})',
+          Icons.workspace_premium_outlined,
+          AppColors.primary,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+          ),
+        ),
+        _actionRow(
+          'Gérer les utilisateurs',
+          Icons.manage_accounts_outlined,
+          AppColors.primaryLight,
+          _openUsersScreen,
+        ),
+        _actionRow(
+          'Journal d\'audit',
+          Icons.policy_outlined,
+          AppColors.primaryLight,
+          _openAuditLogScreen,
+        ),
         if (_fiscalIntegrityOk != null)
           _fiscalIntegrityIndicator(), // Afficher l'indicateur
         BlocBuilder<CashSessionBloc, CashSessionState>(
@@ -1178,12 +1321,20 @@ class _SettingsScreenState extends State<SettingsScreen>
         ),
       ]),
       _section('Promotions', [
-        _actionRow('Gérer les remises et coupons', Icons.discount_outlined,
-            AppColors.primaryLight, _openDiscountsScreen),
+        _actionRow(
+          'Gérer les remises et coupons',
+          Icons.discount_outlined,
+          AppColors.primaryLight,
+          _openDiscountsScreen,
+        ),
       ]),
       _section('Rapports', [
-        _actionRow('Historique des caisses', Icons.history_rounded,
-            AppColors.info, _openCashHistory),
+        _actionRow(
+          'Historique des caisses',
+          Icons.history_rounded,
+          AppColors.info,
+          _openCashHistory,
+        ),
       ]),
       _section('Imprimante', [
         _printerRow(),
@@ -1209,11 +1360,14 @@ class _SettingsScreenState extends State<SettingsScreen>
       _section('Données', [
         if (_cloudUsage != null) _quotaWidget(),
         _actionRow(
-            'Forcer la synchronisation', Icons.sync_rounded, AppColors.info,
-            () async {
-          await getIt<SyncService>().forceSync();
-          _showSnack('Synchronisation manuelle lancée...', AppColors.info);
-        }),
+          'Forcer la synchronisation',
+          Icons.sync_rounded,
+          AppColors.info,
+          () async {
+            await getIt<SyncService>().forceSync();
+            _showSnack('Synchronisation manuelle lancée...', AppColors.info);
+          },
+        ),
         _actionRow(
           'Synchroniser tout le catalogue',
           Icons.cloud_upload_outlined,
@@ -1234,31 +1388,54 @@ class _SettingsScreenState extends State<SettingsScreen>
             Icons.bolt_outlined,
             keyboard: TextInputType.number,
           ),
-        _actionRow('Exporter ventes (CSV)', Icons.download_outlined,
-            AppColors.info, _exportSalesToCSV),
-        _actionRow('Partager les logs techniques', Icons.bug_report_outlined,
-            AppColors.info, _shareLogs),
-        _actionRow('Sauvegarder la base', Icons.shield_outlined,
-            AppColors.warning, _backupDatabase),
         _actionRow(
-            'Restaurer une sauvegarde',
-            Icons.settings_backup_restore_rounded,
-            AppColors.warning,
-            _restoreDatabase),
+          'Exporter ventes (CSV)',
+          Icons.download_outlined,
+          AppColors.info,
+          _exportSalesToCSV,
+        ),
         _actionRow(
-            'Nettoyer le stockage (images)',
-            Icons.cleaning_services_outlined,
-            AppColors.warning,
-            _cleanupImages),
+          'Partager les logs techniques',
+          Icons.bug_report_outlined,
+          AppColors.info,
+          _shareLogs,
+        ),
         _actionRow(
-            'Purger les justificatifs de perte',
-            Icons.auto_delete_outlined,
-            AppColors.warning,
-            _cleanupJustifications),
-        _actionRow('Réinitialiser les données', Icons.delete_forever_outlined,
-            AppColors.danger, () => _confirmReset(hard: false)),
-        _actionRow('WIPE COMPLET (DÉV)', Icons.auto_delete_outlined,
-            AppColors.danger, () => _confirmReset(hard: true)),
+          'Sauvegarder la base',
+          Icons.shield_outlined,
+          AppColors.warning,
+          _backupDatabase,
+        ),
+        _actionRow(
+          'Restaurer une sauvegarde',
+          Icons.settings_backup_restore_rounded,
+          AppColors.warning,
+          _restoreDatabase,
+        ),
+        _actionRow(
+          'Nettoyer le stockage (images)',
+          Icons.cleaning_services_outlined,
+          AppColors.warning,
+          _cleanupImages,
+        ),
+        _actionRow(
+          'Purger les justificatifs de perte',
+          Icons.auto_delete_outlined,
+          AppColors.warning,
+          _cleanupJustifications,
+        ),
+        _actionRow(
+          'Réinitialiser les données',
+          Icons.delete_forever_outlined,
+          AppColors.danger,
+          () => _confirmReset(hard: false),
+        ),
+        _actionRow(
+          'WIPE COMPLET (DÉV)',
+          Icons.auto_delete_outlined,
+          AppColors.danger,
+          () => _confirmReset(hard: true),
+        ),
       ]),
       const SizedBox(height: 24),
       SizedBox(
@@ -1293,29 +1470,26 @@ class _SettingsScreenState extends State<SettingsScreen>
             SliverPadding(
               padding: const EdgeInsets.all(16),
               sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final animation = CurvedAnimation(
-                      parent: _animationController,
-                      curve: Interval(
-                        (0.5 / children.length) * index,
-                        1.0,
-                        curve: Curves.easeOutCubic,
-                      ),
-                    );
-                    return FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0, 0.2),
-                          end: Offset.zero,
-                        ).animate(animation),
-                        child: children[index],
-                      ),
-                    );
-                  },
-                  childCount: children.length,
-                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final animation = CurvedAnimation(
+                    parent: _animationController,
+                    curve: Interval(
+                      (0.5 / children.length) * index,
+                      1.0,
+                      curve: Curves.easeOutCubic,
+                    ),
+                  );
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0, 0.2),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: children[index],
+                    ),
+                  );
+                }, childCount: children.length),
               ),
             ),
           ],
@@ -1357,13 +1531,14 @@ class _SettingsScreenState extends State<SettingsScreen>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label,
-                style:
-                    const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             Text(
-                '${(used / 1024 / 1024).toStringAsFixed(1)} MB / ${(limit / 1024 / 1024).toInt()} MB',
-                style:
-                    const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+              label,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              '${(used / 1024 / 1024).toStringAsFixed(1)} MB / ${(limit / 1024 / 1024).toInt()} MB',
+              style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+            ),
           ],
         ),
         const SizedBox(height: 6),
@@ -1372,8 +1547,9 @@ class _SettingsScreenState extends State<SettingsScreen>
           child: LinearProgressIndicator(
             // Ligne 751
             value: percent,
-            backgroundColor:
-                Theme.of(context).dividerColor.withValues(alpha: 0.1),
+            backgroundColor: Theme.of(
+              context,
+            ).dividerColor.withValues(alpha: 0.1),
             valueColor: AlwaysStoppedAnimation<Color>(color),
             minHeight: 6,
           ),
@@ -1401,22 +1577,30 @@ class _SettingsScreenState extends State<SettingsScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Faille de sécurité critique',
-                      style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontWeight: FontWeight.bold)), // Ligne 1010
+                  Text(
+                    'Faille de sécurité critique',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ), // Ligne 1010
                   const SizedBox(height: 4),
                   const Text(
                     'Votre compte utilise un code PIN non sécurisé. Veuillez le changer immédiatement pour protéger vos données de caisse.',
-                    style:
-                        TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.chevron_right,
-                size: 14, color: AppColors.textMuted),
+            const Icon(
+              Icons.chevron_right,
+              size: 14,
+              color: AppColors.textMuted,
+            ),
           ],
         ),
       ),
@@ -1424,46 +1608,54 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   Widget _section(String title, List<Widget> children) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Padding(
-        padding: const EdgeInsets.only(top: 22, bottom: 8),
-        child: Text(title.toUpperCase(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 22, bottom: 8),
+          child: Text(
+            title.toUpperCase(),
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 10,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.2,
-            )),
-      ),
-      Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border, width: 1),
-          boxShadow: [
-            BoxShadow(
-                color: AppColors.shadow.withValues(
-                    alpha: Theme.of(context).brightness == Brightness.dark
-                        ? 0.0
-                        : 0.02),
-                blurRadius: 10)
-          ],
+            ),
+          ),
         ),
-        child: Column(
-          children: children.expand((w) {
-            final isLast = w == children.last;
-            return [
-              w,
-              if (!isLast)
-                Divider(
+        Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.shadow.withValues(
+                  alpha: Theme.of(context).brightness == Brightness.dark
+                      ? 0.0
+                      : 0.02,
+                ),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+          child: Column(
+            children: children.expand((w) {
+              final isLast = w == children.last;
+              return [
+                w,
+                if (!isLast)
+                  Divider(
                     height: 1,
                     color: AppColors.border.withValues(alpha: 0.5),
-                    indent: 16),
-            ];
-          }).toList(),
+                    indent: 16,
+                  ),
+              ];
+            }).toList(),
+          ),
         ),
-      ),
-    ]);
+      ],
+    );
   }
 
   Widget _logoPicker() {
@@ -1498,12 +1690,18 @@ class _SettingsScreenState extends State<SettingsScreen>
                       : const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.add_photo_alternate_outlined,
-                                color: AppColors.textMuted),
+                            Icon(
+                              Icons.add_photo_alternate_outlined,
+                              color: AppColors.textMuted,
+                            ),
                             SizedBox(height: 4), // Ligne 1074
-                            Text('Logo',
-                                style: TextStyle(
-                                    fontSize: 11, color: AppColors.textMuted)),
+                            Text(
+                              'Logo',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
                           ],
                         ),
                 ),
@@ -1520,9 +1718,14 @@ class _SettingsScreenState extends State<SettingsScreen>
                   icon: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: const BoxDecoration(
-                        color: AppColors.danger, shape: BoxShape.circle),
-                    child: const Icon(Icons.close,
-                        size: 14, color: AppColors.textOnDark),
+                      color: AppColors.danger,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      size: 14,
+                      color: AppColors.textOnDark,
+                    ),
                   ),
                 ),
               ),
@@ -1538,19 +1741,24 @@ class _SettingsScreenState extends State<SettingsScreen>
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
       child: Row(
         children: [
-          Icon(isOk ? Icons.verified_user_outlined : Icons.security_outlined,
-              color: isOk ? AppColors.success : AppColors.danger, size: 18),
+          Icon(
+            isOk ? Icons.verified_user_outlined : Icons.security_outlined,
+            color: isOk ? AppColors.success : AppColors.danger,
+            size: 18,
+          ),
           const SizedBox(width: 12),
           Text(
-              isOk
-                  ? 'Base de données Intègre'
-                  : 'Base de données Corrompue', // Ligne 1103
-              style: TextStyle(
-                  color: isOk
-                      ? Theme.of(context).colorScheme.onSurface
-                      : AppColors.danger,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500)),
+            isOk
+                ? 'Base de données Intègre'
+                : 'Base de données Corrompue', // Ligne 1103
+            style: TextStyle(
+              color: isOk
+                  ? Theme.of(context).colorScheme.onSurface
+                  : AppColors.danger,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
@@ -1565,50 +1773,64 @@ class _SettingsScreenState extends State<SettingsScreen>
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Row(children: [
-        Icon(icon, color: AppColors.textMuted, size: 17),
-        const SizedBox(width: 10),
-        Expanded(
-          child: TextField(
-            controller: ctrl,
-            keyboardType: keyboard,
-            maxLines: maxLines,
-            style: TextStyle(
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.textMuted, size: 17),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: ctrl,
+              keyboardType: keyboard,
+              maxLines: maxLines,
+              style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 15,
-                fontWeight: FontWeight.w500),
-            decoration: InputDecoration(
-              labelText: label,
-              labelStyle: const TextStyle(
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: InputDecoration(
+                labelText: label,
+                labelStyle: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 13,
-                  fontWeight: FontWeight.w600),
-              hintStyle: const TextStyle(color: AppColors.textMuted),
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              isDense: true,
-              contentPadding: EdgeInsets.zero,
-              fillColor: Colors.transparent,
+                  fontWeight: FontWeight.w600,
+                ),
+                hintStyle: const TextStyle(color: AppColors.textMuted),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+                fillColor: Colors.transparent,
+              ),
             ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 
   Widget _staticRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-      child: Row(children: [
-        Text(label,
+      child: Row(
+        children: [
+          Text(
+            label,
             style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface, fontSize: 14)),
-        const Spacer(),
-        Text(value,
-            style:
-                const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-      ]),
+              color: Theme.of(context).colorScheme.onSurface,
+              fontSize: 14,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1622,21 +1844,23 @@ class _SettingsScreenState extends State<SettingsScreen>
       printerStatusText = _printerMac.isEmpty
           ? 'Aucune imprimante Bluetooth configurée'
           : _printerName.isNotEmpty
-              ? '$_printerName ($_printerMac)'
-              : _printerMac;
+          ? '$_printerName ($_printerMac)'
+          : _printerMac;
       printerStatusIcon = Icons.bluetooth_connected;
-      printerStatusColor =
-          _printerMac.isEmpty ? AppColors.textMuted : AppColors.success;
+      printerStatusColor = _printerMac.isEmpty
+          ? AppColors.textMuted
+          : AppColors.success;
     } else if (_currentPrinterType == AppPrinterType.usb) {
       // NEW
       printerStatusText = (_usbVendorId == null || _usbProductId == null)
           ? 'Aucune imprimante USB configurée'
           : _printerName.isNotEmpty
-              ? '$_printerName (USB)'
-              : 'Imprimante USB connectée';
+          ? '$_printerName (USB)'
+          : 'Imprimante USB connectée';
       printerStatusIcon = Icons.usb;
       printerStatusColor = (_usbVendorId == null || _usbProductId == null)
-          ? AppColors.textMuted // Ligne 1180
+          ? AppColors
+                .textMuted // Ligne 1180
           : AppColors.success;
     } else if (_currentPrinterType == AppPrinterType.systemPdf) {
       // NEW
@@ -1645,7 +1869,9 @@ class _SettingsScreenState extends State<SettingsScreen>
           : 'Imprimante système : $_printerName';
       printerStatusIcon = Icons.print_outlined;
       printerStatusColor = // Ligne 1188
-          _printerName.isEmpty ? AppColors.textMuted : AppColors.success;
+      _printerName.isEmpty
+          ? AppColors.textMuted
+          : AppColors.success;
     } else {
       // NEW
       printerStatusText = 'Aucune imprimante configurée';
@@ -1655,55 +1881,77 @@ class _SettingsScreenState extends State<SettingsScreen>
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(children: [
-        Icon(printerStatusIcon,
-            color: AppColors.textMuted, size: 17), // NEW // Ligne 1194
-        const SizedBox(width: 10),
-        Expanded(
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Imprimante',
-                style: TextStyle(
+      child: Row(
+        children: [
+          Icon(
+            printerStatusIcon,
+            color: AppColors.textMuted,
+            size: 17,
+          ), // NEW // Ligne 1194
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Imprimante',
+                  style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 14)),
-            Text(
-              printerStatusText, // NEW
-              style: TextStyle(
-                // NEW
-                color: printerStatusColor, // NEW
-                fontSize: 11,
-              ),
+                    fontSize: 14,
+                  ),
+                ),
+                Text(
+                  printerStatusText, // NEW
+                  style: TextStyle(
+                    // NEW
+                    color: printerStatusColor, // NEW
+                    fontSize: 11,
+                  ),
+                ),
+              ],
             ),
-          ]),
-        ),
-        OutlinedButton.icon(
-          onPressed: _connectPrinter,
-          icon: const Icon(Icons.settings_ethernet, size: 14), // Changed icon
-          label: Text(_currentPrinterType == AppPrinterType.none
-              ? 'Connecter'
-              : 'Modifier'), // NEW
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.info,
-            side: const BorderSide(color: AppColors.info, width: 0.8),
-            textStyle: const TextStyle(fontSize: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           ),
-        ),
-      ]),
+          OutlinedButton.icon(
+            onPressed: _connectPrinter,
+            icon: const Icon(Icons.settings_ethernet, size: 14), // Changed icon
+            label: Text(
+              _currentPrinterType == AppPrinterType.none
+                  ? 'Connecter'
+                  : 'Modifier',
+            ), // NEW
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.info,
+              side: const BorderSide(color: AppColors.info, width: 0.8),
+              textStyle: const TextStyle(fontSize: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _switchRow(String label, String subtitle, IconData icon, bool value,
-      ValueChanged<bool> onChanged) {
+  Widget _switchRow(
+    String label,
+    String subtitle,
+    IconData icon,
+    bool value,
+    ValueChanged<bool> onChanged,
+  ) {
     return SwitchListTile(
       secondary: Icon(icon, color: AppColors.textMuted, size: 18),
-      title: Text(label,
-          style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface,
-              fontSize: 14,
-              fontWeight: FontWeight.w500)),
-      subtitle: Text(subtitle,
-          style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+      ),
       value: value,
       onChanged: onChanged,
       activeThumbColor: AppColors.primary,
@@ -1713,7 +1961,11 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   Widget _actionRow(
-      String label, IconData icon, Color color, VoidCallback onTap) {
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: ListTile(
@@ -1725,17 +1977,22 @@ class _SettingsScreenState extends State<SettingsScreen>
           ),
           child: Icon(icon, color: color, size: 18),
         ),
-        title: Text(label,
-            style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 14,
-                fontWeight: FontWeight.w600)),
+        title: Text(
+          label,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         onTap: onTap,
         hoverColor: color.withValues(alpha: 0.05),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(
-              color: AppColors.border.withValues(alpha: 0.5), width: 1),
+            color: AppColors.border.withValues(alpha: 0.5),
+            width: 1,
+          ),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         visualDensity: VisualDensity.compact,
@@ -1753,7 +2010,9 @@ class _SettingsScreenState extends State<SettingsScreen>
 
     if (shops.isEmpty) {
       _showSnack(
-          'Aucun autre magasin trouvé sur votre compte.', AppColors.warning);
+        'Aucun autre magasin trouvé sur votre compte.',
+        AppColors.warning,
+      );
       return;
     }
 
@@ -1768,8 +2027,9 @@ class _SettingsScreenState extends State<SettingsScreen>
         title: const Text('Sélectionner un magasin'),
         content: ConstrainedBox(
           constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(ctx).size.height * 0.6,
-              maxWidth: double.maxFinite),
+            maxHeight: MediaQuery.of(ctx).size.height * 0.6,
+            maxWidth: double.maxFinite,
+          ),
           child: ListView(
             shrinkWrap: true,
             children: [
@@ -1779,10 +2039,13 @@ class _SettingsScreenState extends State<SettingsScreen>
                     backgroundColor: AppColors.primary,
                     child: Icon(Icons.add, color: Colors.white, size: 20),
                   ), // Ligne 1293
-                  title: const Text('Ajouter un nouveau magasin',
-                      style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold)),
+                  title: const Text(
+                    'Ajouter un nouveau magasin',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   onTap: () {
                     Navigator.pop(ctx);
                     _showCreateShopDialog();
@@ -1803,12 +2066,15 @@ class _SettingsScreenState extends State<SettingsScreen>
                       color: isSelected
                           ? AppColors.success
                           : Theme.of(context).colorScheme.onSurface,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
-                  subtitle: Text(shop['address'] ?? 'Sans adresse',
-                      style: const TextStyle(fontSize: 12)),
+                  subtitle: Text(
+                    shop['address'] ?? 'Sans adresse',
+                    style: const TextStyle(fontSize: 12),
+                  ),
                   trailing: isSelected
                       ? const Icon(Icons.check_circle, color: AppColors.success)
                       : null,
@@ -1818,8 +2084,10 @@ class _SettingsScreenState extends State<SettingsScreen>
                           Navigator.pop(ctx);
                           await syncService.switchShop(shop['id']);
                           _loadSettings(); // Rafraîchir les champs du formulaire
-                          _showSnack('Bascule vers ${shop['name']} réussie',
-                              AppColors.success);
+                          _showSnack(
+                            'Bascule vers ${shop['name']} réussie',
+                            AppColors.success,
+                          );
                         },
                 );
               }),
@@ -1828,7 +2096,9 @@ class _SettingsScreenState extends State<SettingsScreen>
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('Fermer'))
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Fermer'),
+          ),
         ],
       ),
     );
@@ -1850,16 +2120,18 @@ class _SettingsScreenState extends State<SettingsScreen>
             children: [
               TextFormField(
                 controller: nameCtrl,
-                style:
-                    TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
                 decoration: const InputDecoration(labelText: 'Nom du magasin'),
                 validator: (v) => v!.isEmpty ? 'Veuillez saisir un nom' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: addrCtrl,
-                style:
-                    TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
                 decoration: const InputDecoration(labelText: 'Adresse'),
               ),
             ],
@@ -1867,8 +2139,9 @@ class _SettingsScreenState extends State<SettingsScreen>
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Annuler')),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Annuler'),
+          ),
           ElevatedButton(
             onPressed: () async {
               if (!formKey.currentState!.validate()) return;
@@ -1916,12 +2189,13 @@ class _SettingsScreenState extends State<SettingsScreen>
       ];
 
       // Demande de permissions
-      final Map<Permission, PermissionStatus> statuses =
-          await permissions.request();
+      final Map<Permission, PermissionStatus> statuses = await permissions
+          .request();
 
       // 1. Vérifier si l'utilisateur a refusé de façon permanente
-      final bool isPermanentlyDenied =
-          statuses.values.any((s) => s.isPermanentlyDenied);
+      final bool isPermanentlyDenied = statuses.values.any(
+        (s) => s.isPermanentlyDenied,
+      );
 
       if (isPermanentlyDenied) {
         if (!mounted) return;
@@ -1936,8 +2210,9 @@ class _SettingsScreenState extends State<SettingsScreen>
             ),
             actions: [
               TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('ANNULER')),
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('ANNULER'),
+              ),
               ElevatedButton(
                 onPressed: () {
                   openAppSettings(); // Ouvre les paramètres système de l'app
@@ -1954,16 +2229,19 @@ class _SettingsScreenState extends State<SettingsScreen>
       // 2. Vérifier si l'utilisateur a refusé (simple)
       if (statuses.values.any((s) => s.isDenied)) {
         _showSnack(
-            'Les permissions Bluetooth sont nécessaires pour découvrir et connecter l\'imprimante.',
-            AppColors.danger);
+          'Les permissions Bluetooth sont nécessaires pour découvrir et connecter l\'imprimante.',
+          AppColors.danger,
+        );
         return;
       }
 
       // 3. Vérifier si le Bluetooth est activé matériellement
       final printerService = getIt<PrinterService>();
       if (!await printerService.isBluetoothOn()) {
-        _showSnack('Veuillez activer le Bluetooth sur votre appareil.',
-            AppColors.warning);
+        _showSnack(
+          'Veuillez activer le Bluetooth sur votre appareil.',
+          AppColors.warning,
+        );
         // On peut ouvrir directement les paramètres Bluetooth pour aider l'utilisateur
         await BlueThermalPrinter.instance.openSettings;
         return;
@@ -1972,12 +2250,12 @@ class _SettingsScreenState extends State<SettingsScreen>
       if (!mounted) return;
 
       showDialog(
-              context: context,
-              builder: (_) =>
-                  const _BluetoothDeviceListDialog()) // Existing Bluetooth dialog
+            context: context,
+            builder: (_) => const _BluetoothDeviceListDialog(),
+          ) // Existing Bluetooth dialog
           .then((device) {
-        if (device is BluetoothDevice) _savePrinter(device);
-      });
+            if (device is BluetoothDevice) _savePrinter(device);
+          });
     } else if (Platform.isWindows) {
       // Sur Windows, offrir le choix entre USB et imprimante système
       showDialog(
@@ -1993,22 +2271,25 @@ class _SettingsScreenState extends State<SettingsScreen>
                 onTap: () {
                   Navigator.pop(ctx);
                   showDialog(
-                      context: context,
-                      builder: (_) => const _UsbDeviceListDialog()).then((p) {
+                    context: context,
+                    builder: (_) => const _UsbDeviceListDialog(),
+                  ).then((p) {
                     if (p is pos_printer.PrinterDevice) _saveUsbPrinter(p);
                   });
                 },
               ),
               ListTile(
-                leading:
-                    const Icon(Icons.print_outlined, color: AppColors.primary),
+                leading: const Icon(
+                  Icons.print_outlined,
+                  color: AppColors.primary,
+                ),
                 title: const Text('Imprimante système (PDF)'),
                 onTap: () {
                   Navigator.pop(ctx);
                   showDialog(
-                          context: context,
-                          builder: (_) => const _WindowsPrinterListDialog())
-                      .then((p) {
+                    context: context,
+                    builder: (_) => const _WindowsPrinterListDialog(),
+                  ).then((p) {
                     if (p is Printer) _saveSystemPdfPrinter(p);
                   });
                 },
@@ -2017,16 +2298,18 @@ class _SettingsScreenState extends State<SettingsScreen>
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Annuler'))
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Annuler'),
+            ),
           ],
         ),
       );
     } else {
       // Other desktop platforms (Linux, macOS)
       _showSnack(
-          'La sélection d\'imprimante n\'est pas encore implémentée pour cette plateforme.',
-          AppColors.info);
+        'La sélection d\'imprimante n\'est pas encore implémentée pour cette plateforme.',
+        AppColors.info,
+      );
     }
   }
 
@@ -2085,7 +2368,8 @@ class _SettingsScreenState extends State<SettingsScreen>
         builder: (ctx) => GlassAlertDialog(
           title: const Text('Wipe complet réussi'),
           content: const Text(
-              'Toutes les données locales ont été supprimées. L\'application va maintenant se fermer.'),
+            'Toutes les données locales ont été supprimées. L\'application va maintenant se fermer.',
+          ),
           actions: [
             ElevatedButton(
               onPressed: () =>
@@ -2132,7 +2416,8 @@ class _SettingsScreenState extends State<SettingsScreen>
         builder: (ctx) => GlassAlertDialog(
           title: const Text('Réinitialisation terminée'),
           content: const Text(
-              'Les données transactionnelles et le catalogue ont été effacés avec succès.'),
+            'Les données transactionnelles et le catalogue ont été effacés avec succès.',
+          ),
           actions: [
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx),
@@ -2174,8 +2459,9 @@ class _SettingsScreenState extends State<SettingsScreen>
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
           ElevatedButton(
             onPressed: hard ? _performHardReset : _performReset,
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
@@ -2216,10 +2502,11 @@ class _NewPinDialogState extends State<_NewPinDialog> {
             keyboardType: TextInputType.number,
             maxLength: 4,
             style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 24,
-                letterSpacing: 8,
-                fontWeight: FontWeight.bold),
+              color: Theme.of(context).colorScheme.onSurface,
+              fontSize: 24,
+              letterSpacing: 8,
+              fontWeight: FontWeight.bold,
+            ),
             textAlign: TextAlign.center,
             decoration: const InputDecoration(
               hintText: '----',
@@ -2232,8 +2519,9 @@ class _NewPinDialogState extends State<_NewPinDialog> {
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler')),
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Annuler'),
+        ),
         ElevatedButton(
           onPressed: () => Navigator.pop(context, _ctrl.text),
           child: const Text('Enregistrer'),
@@ -2312,8 +2600,11 @@ class _BluetoothDeviceListDialogState extends State<_BluetoothDeviceListDialog>
           RotationTransition(
             turns: _rotationController,
             child: IconButton(
-              icon:
-                  const Icon(Icons.refresh, size: 20, color: AppColors.primary),
+              icon: const Icon(
+                Icons.refresh,
+                size: 20,
+                color: AppColors.primary,
+              ),
               onPressed: _loading ? null : _getPairedDevices,
               tooltip: 'Actualiser la liste',
             ),
@@ -2325,45 +2616,45 @@ class _BluetoothDeviceListDialogState extends State<_BluetoothDeviceListDialog>
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? Text(_error!, style: const TextStyle(color: AppColors.danger))
-                : _devices.isEmpty
-                    ? Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            'Aucune imprimante couplée trouvée.',
-                            style: TextStyle(fontSize: 13),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton.icon(
-                            onPressed: () =>
-                                BlueThermalPrinter.instance.openSettings,
-                            icon: const Icon(Icons.settings_bluetooth),
-                            label: const Text('Appairer un nouvel appareil'),
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.info),
-                          ),
-                        ],
-                      )
-                    : Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildDeviceList(),
-                          const Divider(),
-                          TextButton.icon(
-                            onPressed: () =>
-                                BlueThermalPrinter.instance.openSettings,
-                            icon: const Icon(Icons.add),
-                            label: const Text('Appairer un nouvel appareil'),
-                          ),
-                        ],
-                      ),
+            ? Text(_error!, style: const TextStyle(color: AppColors.danger))
+            : _devices.isEmpty
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Aucune imprimante couplée trouvée.',
+                    style: TextStyle(fontSize: 13),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () => BlueThermalPrinter.instance.openSettings,
+                    icon: const Icon(Icons.settings_bluetooth),
+                    label: const Text('Appairer un nouvel appareil'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.info,
+                    ),
+                  ),
+                ],
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildDeviceList(),
+                  const Divider(),
+                  TextButton.icon(
+                    onPressed: () => BlueThermalPrinter.instance.openSettings,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Appairer un nouvel appareil'),
+                  ),
+                ],
+              ),
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Fermer')),
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Fermer'),
+        ),
       ],
     );
   }
@@ -2372,12 +2663,14 @@ class _BluetoothDeviceListDialogState extends State<_BluetoothDeviceListDialog>
     return ListView(
       shrinkWrap: true,
       children: _devices
-          .map((d) => ListTile(
-                leading: const Icon(Icons.print_outlined),
-                title: Text(d.name ?? 'Appareil inconnu'),
-                subtitle: Text(d.address ?? ''),
-                onTap: () => Navigator.pop(context, d),
-              ))
+          .map(
+            (d) => ListTile(
+              leading: const Icon(Icons.print_outlined),
+              title: Text(d.name ?? 'Appareil inconnu'),
+              subtitle: Text(d.address ?? ''),
+              onTap: () => Navigator.pop(context, d),
+            ),
+          )
           .toList(),
     );
   }
@@ -2444,8 +2737,11 @@ class __WindowsPrinterListDialogState extends State<_WindowsPrinterListDialog>
           RotationTransition(
             turns: _rotationController,
             child: IconButton(
-              icon:
-                  const Icon(Icons.refresh, size: 20, color: AppColors.primary),
+              icon: const Icon(
+                Icons.refresh,
+                size: 20,
+                color: AppColors.primary,
+              ),
               onPressed: _loading ? null : _getSystemPrinters,
               tooltip: 'Actualiser la liste',
             ),
@@ -2457,30 +2753,39 @@ class __WindowsPrinterListDialogState extends State<_WindowsPrinterListDialog>
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? Text(_error!, style: const TextStyle(color: AppColors.danger))
-                : _printers.isEmpty
-                    ? const Text('Aucune imprimante installée sur ce système.',
-                        style: TextStyle(fontSize: 13))
-                    : ListView(
-                        shrinkWrap: true,
-                        children: _printers
-                            .map((p) => ListTile(
-                                  leading: Icon(p.isDefault
-                                      ? Icons.print_rounded
-                                      : Icons.print_outlined),
-                                  title: Text(p.name),
-                                  subtitle: Text(p.isDefault
-                                      ? 'Imprimante par défaut'
-                                      : p.location ?? ''),
-                                  onTap: () => Navigator.pop(context, p),
-                                ))
-                            .toList(),
+            ? Text(_error!, style: const TextStyle(color: AppColors.danger))
+            : _printers.isEmpty
+            ? const Text(
+                'Aucune imprimante installée sur ce système.',
+                style: TextStyle(fontSize: 13),
+              )
+            : ListView(
+                shrinkWrap: true,
+                children: _printers
+                    .map(
+                      (p) => ListTile(
+                        leading: Icon(
+                          p.isDefault
+                              ? Icons.print_rounded
+                              : Icons.print_outlined,
+                        ),
+                        title: Text(p.name),
+                        subtitle: Text(
+                          p.isDefault
+                              ? 'Imprimante par défaut'
+                              : p.location ?? '',
+                        ),
+                        onTap: () => Navigator.pop(context, p),
                       ),
+                    )
+                    .toList(),
+              ),
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Fermer'))
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Fermer'),
+        ),
       ],
     );
   }
@@ -2546,8 +2851,11 @@ class __UsbDeviceListDialogState extends State<_UsbDeviceListDialog>
           RotationTransition(
             turns: _rotationController,
             child: IconButton(
-              icon:
-                  const Icon(Icons.refresh, size: 20, color: AppColors.primary),
+              icon: const Icon(
+                Icons.refresh,
+                size: 20,
+                color: AppColors.primary,
+              ),
               onPressed: _loading ? null : _getUsbPrinters,
               tooltip: 'Actualiser la liste',
             ),
@@ -2559,27 +2867,33 @@ class __UsbDeviceListDialogState extends State<_UsbDeviceListDialog>
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? Text(_error!, style: const TextStyle(color: AppColors.danger))
-                : _usbPrinters.isEmpty
-                    ? const Text('Aucune imprimante USB détectée.',
-                        style: TextStyle(fontSize: 13))
-                    : ListView(
-                        shrinkWrap: true,
-                        children: _usbPrinters
-                            .map((p) => ListTile(
-                                  leading: const Icon(Icons.usb),
-                                  title: Text(p.name),
-                                  subtitle: Text(
-                                      'Vendor ID: ${p.vendorId}, Product ID: ${p.productId}'),
-                                  onTap: () => Navigator.pop(context, p),
-                                ))
-                            .toList(),
+            ? Text(_error!, style: const TextStyle(color: AppColors.danger))
+            : _usbPrinters.isEmpty
+            ? const Text(
+                'Aucune imprimante USB détectée.',
+                style: TextStyle(fontSize: 13),
+              )
+            : ListView(
+                shrinkWrap: true,
+                children: _usbPrinters
+                    .map(
+                      (p) => ListTile(
+                        leading: const Icon(Icons.usb),
+                        title: Text(p.name),
+                        subtitle: Text(
+                          'Vendor ID: ${p.vendorId}, Product ID: ${p.productId}',
+                        ),
+                        onTap: () => Navigator.pop(context, p),
                       ),
+                    )
+                    .toList(),
+              ),
       ),
       actions: [
         TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Fermer'))
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Fermer'),
+        ),
       ],
     );
   }

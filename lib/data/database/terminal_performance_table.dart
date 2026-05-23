@@ -27,7 +27,7 @@ class TerminalPerformanceTable extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (snapshot.hasError) {
           return Center(child: Text('Erreur : ${snapshot.error}'));
         }
@@ -48,21 +48,48 @@ class TerminalPerformanceTable extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             child: DataTable(
               columnSpacing: 24,
-              headingRowColor: WidgetStateProperty.all(AppColors.primary.withValues(alpha: 0.05)),
+              headingRowColor: WidgetStateProperty.all(
+                AppColors.primary.withValues(alpha: 0.05),
+              ),
               columns: const [
-                DataColumn(label: Text('Terminal', style: TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text('Ventes', style: TextStyle(fontWeight: FontWeight.bold)), numeric: true),
-                DataColumn(label: Text('Panier Moyen', style: TextStyle(fontWeight: FontWeight.bold)), numeric: true),
+                DataColumn(
+                  label: Text(
+                    'Terminal',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Ventes',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  numeric: true,
+                ),
+                DataColumn(
+                  label: Text(
+                    'Panier Moyen',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  numeric: true,
+                ),
               ],
               rows: stats.map((stat) {
                 final id = stat['terminalId'] as String;
                 final shortId = id.length > 8 ? id.substring(0, 8) : id;
 
-                return DataRow(cells: [
-                  DataCell(Text('Appareil #$shortId')),
-                  DataCell(Text(stat['saleCount'].toString())),
-                  DataCell(Text(Fmt.currency((stat['averageBasket'] as num?)?.toDouble() ?? 0.0))),
-                ]);
+                return DataRow(
+                  cells: [
+                    DataCell(Text('Appareil #$shortId')),
+                    DataCell(Text(stat['saleCount'].toString())),
+                    DataCell(
+                      Text(
+                        Fmt.currency(
+                          (stat['averageBasket'] as num?)?.toDouble() ?? 0.0,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
               }).toList(),
             ),
           ),

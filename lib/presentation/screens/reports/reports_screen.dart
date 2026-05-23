@@ -41,8 +41,10 @@ class _ReportsScreenState extends State<ReportsScreen>
     setState(() => _loading = true);
     final shopId = await _db.getSetting('shop_id') ?? '';
     final today = await _db.salesDao.getDailySummary(DateTime.now(), shopId);
-    final weekly =
-        await _db.salesDao.getDailySalesChart(days: 7, shopId: shopId);
+    final weekly = await _db.salesDao.getDailySalesChart(
+      days: 7,
+      shopId: shopId,
+    );
     final top = await _db.salesDao.getTopProducts(shopId: shopId);
     setState(() {
       _todaySummary = today;
@@ -54,57 +56,66 @@ class _ReportsScreenState extends State<ReportsScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
-      // Header avec tabs
-      Container(
-        color: Theme.of(context).colorScheme.surface,
-        child: Column(children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.refresh_rounded,
-                      size: 20,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  onPressed: _load,
-                  tooltip: 'Actualiser',
+    return Column(
+      children: [
+        // Header avec tabs
+        Container(
+          color: Theme.of(context).colorScheme.surface,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        Icons.refresh_rounded,
+                        size: 20,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      onPressed: _load,
+                      tooltip: 'Actualiser',
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          TabBar(
-            controller: _tab,
-            tabs: const [
-              Tab(text: "Aujourd'hui"),
-              Tab(text: '7 Jours'),
-              Tab(text: 'Top produits'),
-            ],
-            labelColor: Theme.of(context).colorScheme.primary,
-            unselectedLabelColor:
-                Theme.of(context).colorScheme.onSurfaceVariant,
-            indicatorColor: Theme.of(context).colorScheme.primary,
-            indicatorWeight: 2,
-          ),
-        ]),
-      ),
-
-      Expanded(
-        child: _loading
-            ? Center(
-                child: CircularProgressIndicator(
-                    color: Theme.of(context).colorScheme.primary))
-            : TabBarView(
-                controller: _tab,
-                children: [
-                  _TodayTab(summary: _todaySummary, db: _db),
-                  _WeeklyTab(data: _weeklyData),
-                  _TopProductsTab(products: _topProducts),
-                ],
               ),
-      ),
-    ]);
+              TabBar(
+                controller: _tab,
+                tabs: const [
+                  Tab(text: "Aujourd'hui"),
+                  Tab(text: '7 Jours'),
+                  Tab(text: 'Top produits'),
+                ],
+                labelColor: Theme.of(context).colorScheme.primary,
+                unselectedLabelColor: Theme.of(
+                  context,
+                ).colorScheme.onSurfaceVariant,
+                indicatorColor: Theme.of(context).colorScheme.primary,
+                indicatorWeight: 2,
+              ),
+            ],
+          ),
+        ),
+
+        Expanded(
+          child: _loading
+              ? Center(
+                  child: CircularProgressIndicator(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                )
+              : TabBarView(
+                  controller: _tab,
+                  children: [
+                    _TodayTab(summary: _todaySummary, db: _db),
+                    _WeeklyTab(data: _weeklyData),
+                    _TopProductsTab(products: _topProducts),
+                  ],
+                ),
+        ),
+      ],
+    );
   }
 }
 
@@ -217,8 +228,10 @@ class _WeeklyTab extends StatelessWidget {
   Widget build(BuildContext context) {
     if (data.isEmpty) {
       return const Center(
-        child: Text('Pas encore de données',
-            style: TextStyle(color: AppColors.textMuted)),
+        child: Text(
+          'Pas encore de données',
+          style: TextStyle(color: AppColors.textMuted),
+        ),
       );
     }
 
@@ -241,72 +254,82 @@ class _WeeklyTab extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: AppColors.border),
           ),
-          child: BarChart(BarChartData(
-            maxY: maxRev * 1.25 + 1,
-            gridData: FlGridData(
-              show: true,
-              drawVerticalLine: false,
-              horizontalInterval: maxRev > 0 ? maxRev / 3 : 1,
-              getDrawingHorizontalLine: (_) => const FlLine(
-                color: AppColors.border,
-                strokeWidth: 0.5,
+          child: BarChart(
+            BarChartData(
+              maxY: maxRev * 1.25 + 1,
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                horizontalInterval: maxRev > 0 ? maxRev / 3 : 1,
+                getDrawingHorizontalLine: (_) =>
+                    const FlLine(color: AppColors.border, strokeWidth: 0.5),
               ),
-            ),
-            borderData: FlBorderData(show: false),
-            titlesData: FlTitlesData(
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 58,
-                  getTitlesWidget: (v, _) => Text(
-                    _shortAmount(v),
-                    style: TextStyle(
+              borderData: FlBorderData(show: false),
+              titlesData: FlTitlesData(
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 58,
+                    getTitlesWidget: (v, _) => Text(
+                      _shortAmount(v),
+                      style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 9),
+                        fontSize: 9,
+                      ),
+                    ),
                   ),
                 ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    getTitlesWidget: (v, _) {
+                      final i = v.toInt();
+                      if (i < 0 || i >= data.length) {
+                        return const SizedBox();
+                      }
+                      final d = DateTime.parse(data[i]['day'] as String);
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(
+                          DateFormat('E', 'fr_FR').format(d),
+                          style: const TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 10,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
               ),
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  getTitlesWidget: (v, _) {
-                    final i = v.toInt();
-                    if (i < 0 || i >= data.length) {
-                      return const SizedBox();
-                    }
-                    final d = DateTime.parse(data[i]['day'] as String);
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Text(
-                        DateFormat('E', 'fr_FR').format(d),
-                        style: const TextStyle(
-                            color: AppColors.textMuted, fontSize: 10),
+              barGroups: data.asMap().entries.map((e) {
+                final isToday = e.key == data.length - 1;
+                final rev = (e.value['revenue'] as double);
+                return BarChartGroupData(
+                  x: e.key,
+                  barRods: [
+                    BarChartRodData(
+                      toY: rev,
+                      color: isToday
+                          ? AppColors
+                                .accent // Ligne 273
+                          : AppColors.primaryLight.withValues(alpha: 0.65),
+                      width: 20,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(5),
                       ),
-                    );
-                  },
-                ),
-              ),
-              rightTitles:
-                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              topTitles:
-                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    ),
+                  ],
+                );
+              }).toList(),
             ),
-            barGroups: data.asMap().entries.map((e) {
-              final isToday = e.key == data.length - 1;
-              final rev = (e.value['revenue'] as double);
-              return BarChartGroupData(x: e.key, barRods: [
-                BarChartRodData(
-                  toY: rev,
-                  color: isToday
-                      ? AppColors.accent // Ligne 273
-                      : AppColors.primaryLight.withValues(alpha: 0.65),
-                  width: 20,
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(5)),
-                ),
-              ]);
-            }).toList(),
-          )),
+          ),
         ),
 
         const SizedBox(height: 20),
@@ -332,35 +355,41 @@ class _WeeklyTab extends StatelessWidget {
                     : Theme.of(context).dividerColor,
               ),
             ), // Ligne 300
-            child: Row(children: [
-              Text(
-                isToday
-                    ? "Aujourd'hui"
-                    : DateFormat('EEE d MMM', 'fr_FR').format(date),
-                style: TextStyle(
-                  color: isToday
-                      ? AppColors.primaryLight // Ligne 310
-                      : AppColors.textPrimary,
-                  fontWeight: isToday ? FontWeight.w600 : FontWeight.w400,
-                  fontSize: 13,
+            child: Row(
+              children: [
+                Text(
+                  isToday
+                      ? "Aujourd'hui"
+                      : DateFormat('EEE d MMM', 'fr_FR').format(date),
+                  style: TextStyle(
+                    color: isToday
+                        ? AppColors
+                              .primaryLight // Ligne 310
+                        : AppColors.textPrimary,
+                    fontWeight: isToday ? FontWeight.w600 : FontWeight.w400,
+                    fontSize: 13,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              Text('$cnt vente${cnt > 1 ? 's' : ''}',
+                const Spacer(),
+                Text(
+                  '$cnt vente${cnt > 1 ? 's' : ''}',
                   style: const TextStyle(
-                      // Ligne 317
-                      color: AppColors.textMuted,
-                      fontSize: 12)),
-              const SizedBox(width: 14),
-              Text(
-                Fmt.currency(rev),
-                style: TextStyle(
-                  color: isToday ? AppColors.accent : AppColors.textPrimary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
+                    // Ligne 317
+                    color: AppColors.textMuted,
+                    fontSize: 12,
+                  ),
                 ),
-              ),
-            ]),
+                const SizedBox(width: 14),
+                Text(
+                  Fmt.currency(rev),
+                  style: TextStyle(
+                    color: isToday ? AppColors.accent : AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
           );
         }),
       ],
@@ -386,8 +415,10 @@ class _TopProductsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     if (products.isEmpty) {
       return const Center(
-        child: Text('Pas encore de ventes enregistrées',
-            style: TextStyle(color: AppColors.textMuted)),
+        child: Text(
+          'Pas encore de ventes enregistrées',
+          style: TextStyle(color: AppColors.textMuted),
+        ),
       );
     }
 
@@ -418,40 +449,43 @@ class _TopProductsTab extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppColors.border),
           ),
-          child: Row(children: [
-            // Rang
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: idx < 3
-                    ? AppColors.accent.withValues(alpha: 0.18)
-                    : Theme.of(context)
-                        .colorScheme
-                        .surface
-                        .withValues(alpha: 0.6),
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                '${idx + 1}',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12, // Ligne 394
-                  color: idx < 3 ? AppColors.accentDark : AppColors.textMuted,
+          child: Row(
+            children: [
+              // Rang
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: idx < 3
+                      ? AppColors.accent.withValues(alpha: 0.18)
+                      : Theme.of(
+                          context,
+                        ).colorScheme.surface.withValues(alpha: 0.6),
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  '${idx + 1}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12, // Ligne 394
+                    color: idx < 3 ? AppColors.accentDark : AppColors.textMuted,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(p['name'] as String,
-                        style: const TextStyle(
-                            color: AppColors.textPrimary, // Ligne 400
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13)),
+                    Text(
+                      p['name'] as String,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary, // Ligne 400
+                        fontWeight: FontWeight.w500,
+                        fontSize: 13,
+                      ),
+                    ),
                     const SizedBox(height: 5),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(3),
@@ -464,24 +498,32 @@ class _TopProductsTab extends StatelessWidget {
                         minHeight: 4,
                       ),
                     ),
-                  ]),
-            ),
-            const SizedBox(width: 12),
-            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text(
-                '${p['total_qty']} ${p['unit']}',
-                style: const TextStyle(
-                    color: AppColors.textPrimary, // Ligne 420
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13),
+                  ],
+                ),
               ),
-              Text(
-                Fmt.currency(rev),
-                style:
-                    const TextStyle(color: AppColors.textMuted, fontSize: 11),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${p['total_qty']} ${p['unit']}',
+                    style: const TextStyle(
+                      color: AppColors.textPrimary, // Ligne 420
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                  Text(
+                    Fmt.currency(rev),
+                    style: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
               ),
-            ]),
-          ]),
+            ],
+          ),
         );
       },
     );
@@ -513,29 +555,36 @@ class _StatCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Container(
-          padding: const EdgeInsets.all(7),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(7),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: Icon(icon, color: color, size: 16),
           ),
-          child: Icon(icon, color: color, size: 16),
-        ),
-        const Spacer(),
-        Text(value,
+          const Spacer(),
+          Text(
+            value,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurface,
               fontSize: small ? 16 : 22,
               fontWeight: FontWeight.w700,
-            )),
-        const SizedBox(height: 2),
-        Text(label,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 11,
-            )),
-      ]),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -555,26 +604,32 @@ class _SaleRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.border),
       ),
-      child: Row(children: [
-        Text(sale.ref,
+      child: Row(
+        children: [
+          Text(
+            sale.ref,
             style: const TextStyle(
-                color: AppColors.textSecondary, // Ligne 503
-                fontSize: 11,
-                fontFamily: 'monospace')),
-        const Spacer(),
-        Text(
-          DateFormat('HH:mm').format(sale.createdAt),
-          style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
-        ),
-        const SizedBox(width: 14), // Ligne 512
-        Text(
-          Fmt.currency(sale.totalTtc),
-          style: const TextStyle(
+              color: AppColors.textSecondary, // Ligne 503
+              fontSize: 11,
+              fontFamily: 'monospace',
+            ),
+          ),
+          const Spacer(),
+          Text(
+            DateFormat('HH:mm').format(sale.createdAt),
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+          ),
+          const SizedBox(width: 14), // Ligne 512
+          Text(
+            Fmt.currency(sale.totalTtc),
+            style: const TextStyle(
               color: AppColors.primaryLight,
               fontWeight: FontWeight.w600,
-              fontSize: 13),
-        ),
-      ]),
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -585,12 +640,14 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(text,
-        style: const TextStyle(
-          color: AppColors.textMuted,
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.8,
-        ));
+    return Text(
+      text,
+      style: const TextStyle(
+        color: AppColors.textMuted,
+        fontSize: 10,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.8,
+      ),
+    );
   }
 }
